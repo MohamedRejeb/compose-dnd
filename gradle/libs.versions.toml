@@ -1,0 +1,21 @@
+[versions]
+compose = "1.5.10"
+agp = "8.1.2"
+android-minSdk = "24"
+android-compileSdk = "34"
+android-targetSdk = "34"
+androidx-activityCompose = "1.8.0"
+androidx-core-ktx = "1.12.0"
+kotlin = "1.9.20"
+junit = "4.13.2"
+
+[libraries]
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core-ktx" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
+
+[plugins]
+jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose" }
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
