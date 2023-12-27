@@ -1,7 +1,8 @@
-rootProject.name = "ComposeDnd"
+rootProject.name = "ComposeDndProject"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
+    includeBuild("convention-plugins")
     repositories {
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         google()
@@ -11,6 +12,7 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
+    @Suppress("UnstableApiUsage")
     repositories {
         google()
         mavenCentral()
@@ -19,6 +21,11 @@ dependencyResolutionManagement {
 }
 
 include(
-    ":sample",
     ":compose-dnd",
+
+    // sample
+    ":sample:common",
+    ":sample:android",
+    ":sample:desktop",
+    ":sample:web",
 )

@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.jetbrainsCompose)
-    id("module.publication")
     id("module.spotless")
 }
 
@@ -23,23 +22,30 @@ kotlin {
         browser()
     }
 
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
-
-    sourceSets.commonMain.dependencies {
-        implementation(compose.runtime)
-        implementation(compose.foundation)
-        implementation(compose.material)
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "Common"
+            isStatic = true
+        }
     }
 
-    sourceSets.commonTest.dependencies {
-        implementation(kotlin("test"))
+    sourceSets.commonMain.dependencies {
+        implementation(projects.composeDnd)
+
+        implementation(compose.foundation)
+        implementation(compose.material3)
+        implementation(compose.materialIconsExtended)
+
+        implementation(libs.voyager.navigator)
     }
 }
 
 android {
-    namespace = "com.mohamedrejeb.compose.dnd"
+    namespace = "com.mohamedrejeb.compose.dnd.sample"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
