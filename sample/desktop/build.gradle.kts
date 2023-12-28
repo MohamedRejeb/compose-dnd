@@ -6,7 +6,9 @@ plugins {
 }
 
 kotlin {
-    jvm("desktop")
+    jvm("desktop") {
+        jvmToolchain(11)
+    }
 
     sourceSets["desktopMain"].dependencies {
         implementation(projects.sample.common)

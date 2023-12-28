@@ -20,7 +20,7 @@ jobs:
         strategy:
             matrix:
                 include:
-                    - target: publishAllPublicationsToSonatypeRepository
+                    - target: publish
                       os: macos-latest
         runs-on: ${{ matrix.os }}
         steps:
