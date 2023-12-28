@@ -1,3 +1,18 @@
+/*
+ * Copyright 2023, Mohamed Ben Rejeb and the Compose Dnd project contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.mohamedrejeb.compose.dnd.utils
 
 import androidx.compose.ui.geometry.Offset
@@ -22,17 +37,21 @@ internal object MathUtils {
         topLeft2: Offset,
         size2: Size,
     ): Boolean {
-        if (topLeft1.x > topLeft2.x + size2.width)
+        if (topLeft1.x > topLeft2.x + size2.width) {
             return false
+        }
 
-        if (topLeft1.x + size1.width < topLeft2.x)
+        if (topLeft1.x + size1.width < topLeft2.x) {
             return false
+        }
 
-        if (topLeft1.y > topLeft2.y + size2.height)
+        if (topLeft1.y > topLeft2.y + size2.height) {
             return false
+        }
 
-        if (topLeft1.y + size1.height < topLeft2.y)
+        if (topLeft1.y + size1.height < topLeft2.y) {
             return false
+        }
 
         return true
     }
@@ -68,10 +87,11 @@ internal object MathUtils {
         val width = bottomRight.x - topLeft.x
         val height = bottomRight.y - topLeft.y
 
-        return if (width > 0f && height > 0f)
+        return if (width > 0f && height > 0f) {
             width * height
-        else
+        } else {
             0f
+        }
     }
 
     /**
@@ -87,9 +107,9 @@ internal object MathUtils {
         topLeft: Offset,
         size: Size,
     ): Boolean {
-        return point.x >= topLeft.x
-                && point.x <= topLeft.x + size.width
-                && point.y >= topLeft.y
-                && point.y <= topLeft.y + size.height
+        return point.x >= topLeft.x &&
+                point.x <= topLeft.x + size.width &&
+                point.y >= topLeft.y &&
+                point.y <= topLeft.y + size.height
     }
 }

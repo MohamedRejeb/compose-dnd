@@ -17,8 +17,8 @@ jobs:
         include:
           - target: allTests
             os: ubuntu-latest
-#          - target: spotlessCheck
-#            os: ubuntu-latest
+          - target: spotlessCheck
+            os: ubuntu-latest
     runs-on: ${{ matrix.os }}
 
     steps:
