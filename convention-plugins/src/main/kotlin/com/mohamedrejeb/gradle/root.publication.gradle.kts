@@ -3,7 +3,7 @@ plugins {
 }
 
 allprojects {
-    group = "com.mohamedrejeb.compose.dnd"
+    group = "com.mohamedrejeb"
     version = "0.1.0"
 }
 

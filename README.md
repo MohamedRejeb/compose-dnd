@@ -7,18 +7,18 @@ Compose DND is a library that allows you to easily add drag and drop functionali
 [![MohamedRejeb](https://raw.githubusercontent.com/MohamedRejeb/MohamedRejeb/main/badges/mohamedrejeb.svg)](https://github.com/MohamedRejeb)
 [![Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
 [![BuildPassing](https://shields.io/badge/build-passing-brightgreen)](https://github.com/MohamedRejeb/compose-dnd/actions)
-[![Maven Central](https://img.shields.io/maven-central/v/com.mohamedrejeb.compose/compose-dnd)](https://search.maven.org/search?q=g:%22com.mohamedrejeb.compose%22%20AND%20a:%compose-dnd%22)
+[![Maven Central](https://img.shields.io/maven-central/v/com.mohamedrejeb/compose-dnd)](https://search.maven.org/search?q=g:%22com.mohamedrejeb%22%20AND%20a:%compose-dnd%22)
 
 ![Compose DND thumbnail](docs/images/thumbnail.png)
 
 ## Installation
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.mohamedrejeb.compose/compose-dnd)](https://search.maven.org/search?q=g:%22com.mohamedrejeb.compose%22%20AND%20a:%compose-dnd%22)
+[![Maven Central](https://img.shields.io/maven-central/v/com.mohamedrejeb/compose-dnd)](https://search.maven.org/search?q=g:%22com.mohamedrejeb%22%20AND%20a:%compose-dnd%22)
 
 Add the following dependency to your module `build.gradle.kts` file:
 
 ```kotlin
-implementation("com.mohamedrejeb.compose:compose-dnd:0.1.0")
+implementation("com.mohamedrejeb:compose-dnd:0.1.0")
 ```
 
 ## Usage

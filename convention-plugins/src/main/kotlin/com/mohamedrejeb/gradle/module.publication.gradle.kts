@@ -19,7 +19,7 @@ publishing {
         // Provide artifacts information required by Maven Central
         pom {
             name.set("Compose Drag and Drop")
-            description.set("A library that provides drag and drop support for Jetpack Compose and Compose Multiplatform")
+            description.set("A library that allows you to easily add drag and drop functionality to your Jetpack Compose or Compose Multiplatform projects.")
             url.set("https://github.com/MohamedRejeb/compose-dnd")
 
             licenses {
