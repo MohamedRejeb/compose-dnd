@@ -97,7 +97,8 @@ private fun ListToListWithReorderContent(
 
     val reorderState = rememberReorderState<String>()
 
-    val lazyListState = rememberLazyListState()
+    val lazyListStateOne = rememberLazyListState()
+    val lazyListStateTwo = rememberLazyListState()
 
     ReorderContainer(
         state = reorderState,
@@ -110,7 +111,7 @@ private fun ListToListWithReorderContent(
         ) {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(20.dp),
-                state = lazyListState,
+                state = lazyListStateOne,
                 contentPadding = PaddingValues(10.dp),
                 modifier = Modifier
                     .weight(1f)
@@ -156,7 +157,7 @@ private fun ListToListWithReorderContent(
 
                                 scope.launch {
                                     handleLazyListScroll(
-                                        lazyListState = lazyListState,
+                                        lazyListState = lazyListStateOne,
                                         dropIndex = index,
                                     )
                                 }
@@ -186,7 +187,7 @@ private fun ListToListWithReorderContent(
 
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(20.dp),
-                state = lazyListState,
+                state = lazyListStateTwo,
                 contentPadding = PaddingValues(10.dp),
                 modifier = Modifier
                     .weight(1f)
@@ -232,7 +233,7 @@ private fun ListToListWithReorderContent(
 
                                 scope.launch {
                                     handleLazyListScroll(
-                                        lazyListState = lazyListState,
+                                        lazyListState = lazyListStateTwo,
                                         dropIndex = index,
                                     )
                                 }

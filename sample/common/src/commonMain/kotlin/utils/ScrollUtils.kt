@@ -22,7 +22,8 @@ suspend fun handleLazyListScroll(
     val lastVisibleItemIndex =
         lazyListState.firstVisibleItemIndex + lazyListState.layoutInfo.visibleItemsInfo.lastIndex
 
-    val scrollAmount = lazyListState.layoutInfo.visibleItemsInfo.first().size * 2f
+    val firstVisibleItem = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull() ?: return@coroutineScope
+    val scrollAmount = firstVisibleItem.size * 2f
 
     if (dropIndex <= firstVisibleItemIndex + 1)
         launch {

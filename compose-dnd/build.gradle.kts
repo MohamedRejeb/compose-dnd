@@ -17,7 +17,9 @@ kotlin {
         }
     }
 
-    jvm("desktop")
+    jvm("desktop") {
+        jvmToolchain(11)
+    }
 
     js(IR) {
         browser()
