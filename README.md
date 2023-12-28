@@ -116,10 +116,10 @@ The `ReorderableItem` composable is at the same time a `DraggableItem` and a `dr
 If you've found an error in this sample, please file an issue. <br>
 Feel free to help out by sending a pull request :heart:.
 
-[Code of Conduct](https://github.com/MohamedRejeb/Calf/blob/main/CODE_OF_CONDUCT.md)
+[Code of Conduct](https://github.com/MohamedRejeb/compose-dnd/blob/main/CODE_OF_CONDUCT.md)
 
 ## Find this library useful? :heart:
-Support it by joining __[stargazers](https://github.com/MohamedRejeb/Calf/stargazers)__ for this repository. :star: <br>
+Support it by joining __[stargazers](https://github.com/MohamedRejeb/compose-dnd/stargazers)__ for this repository. :star: <br>
 Also, __[follow me](https://github.com/MohamedRejeb)__ on GitHub for more libraries! 🤩
 
 You can always <a href="https://www.buymeacoffee.com/MohamedRejeb"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=MohamedRejeb&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff"></a>
