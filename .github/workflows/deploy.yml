@@ -40,9 +40,7 @@ jobs:
             - name: Gradle publish
               uses: gradle/gradle-build-action@ce999babab2de1c4b649dc15f0ee67e6246c994f
               with:
-                  arguments: |
-                      ${{ matrix.target }}
-                      closeAndReleaseSonatypeStagingRepository
+                  arguments: ${{ matrix.target }}
               env:
                   OSSRH_STAGING_PROFILE_ID: ${{ secrets.OSSRH_STAGING_PROFILE_ID }}
                   OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
