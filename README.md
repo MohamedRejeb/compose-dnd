@@ -9,6 +9,7 @@ Compose DND is a library that allows you to easily add drag and drop functionali
 [![BuildPassing](https://shields.io/badge/build-passing-brightgreen)](https://github.com/MohamedRejeb/compose-dnd/actions)
 [![Maven Central](https://img.shields.io/maven-central/v/com.mohamedrejeb.compose/compose-dnd)](https://search.maven.org/search?q=g:%22com.mohamedrejeb.compose%22%20AND%20a:%compose-dnd%22)
 
+![Compose DND thumbnail](docs/images/thumbnail.png)
 
 ## Installation
 
@@ -30,6 +31,7 @@ To implement drag and drop functionality:
 ```kotlin
 val dragAndDropState = rememberDragAndDropState()
 ```
+<br>
 
 - Add `DragAndDropContainer` composable which will wrap the draggable items.
 
@@ -40,6 +42,7 @@ DragAndDropContainer(
 
 }
 ```
+<br>
 
 - Add `DraggableItem` composable for each draggable item.
 
@@ -52,6 +55,7 @@ DraggableItem(
 
 }
 ```
+<br>
 
 - Add `Modifier.dropTarget` for each drop target.
 
@@ -76,6 +80,7 @@ To implement reorder list functionality:
 ```kotlin
 val reorderState = rememberReorderState()
 ```
+<br>
 
 - Add `ReorderContainer` composable which will wrap the reorderable items.
 
@@ -86,6 +91,7 @@ ReorderContainer(
 
 }
 ```
+<br>
 
 - Add `ReorderableItem` composable for each reorderable item.
 
