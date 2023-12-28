@@ -1,9 +1,3 @@
-import java.io.File
-import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.api.tasks.bundling.Jar
-import org.gradle.kotlin.dsl.configure
-import org.gradle.kotlin.dsl.`maven-publish`
-
 plugins {
     id("com.diffplug.spotless")
 }

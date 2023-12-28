@@ -3,7 +3,11 @@ package com.mohamedrejeb.compose.dnd.reorder
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.foundation.layout.Box
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
@@ -103,7 +107,7 @@ fun <T> ReorderableItem(
                 )
 
                 state.dndState.addOrUpdateDraggableItem(
-                    state = draggableItemState
+                    state = draggableItemState,
                 )
             }
             .pointerInput(key, state) {
@@ -122,7 +126,7 @@ fun <T> ReorderableItem(
                 onDragEnter = onDragEnter,
                 onDragExit = onDragExit,
             )
-            .then(modifier)
+            .then(modifier),
     ) {
         with(reorderableItemScopeImpl) {
             content()

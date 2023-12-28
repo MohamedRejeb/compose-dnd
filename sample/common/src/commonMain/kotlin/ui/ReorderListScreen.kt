@@ -1,6 +1,5 @@
 package ui
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -63,15 +62,12 @@ object ReorderListScreen: Screen {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ReorderScreenContent(
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
-    val reorderState = rememberReorderState<String>(
-        dragAfterLongPress = true
-    )
+    val reorderState = rememberReorderState<String>()
     var items by remember {
         mutableStateOf(
             listOf(
@@ -84,12 +80,6 @@ private fun ReorderScreenContent(
                 "item7",
                 "item8",
                 "item9",
-                "item10",
-                "item11",
-                "item12",
-                "item13",
-                "item14",
-                "item15",
             )
         )
     }
