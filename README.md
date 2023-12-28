@@ -9,9 +9,6 @@ Compose DND is a library that allows you to easily add drag and drop functionali
 [![BuildPassing](https://shields.io/badge/build-passing-brightgreen)](https://github.com/MohamedRejeb/compose-dnd/actions)
 [![Maven Central](https://img.shields.io/maven-central/v/com.mohamedrejeb.compose/compose-dnd)](https://search.maven.org/search?q=g:%22com.mohamedrejeb.compose%22%20AND%20a:%compose-dnd%22)
 
-![Calf thumbnail](docs/images/thumbnail.png)
-
-Calf stands for **C**ompose **A**daptive **L**ook & **F**eel
 
 ## Installation
 
