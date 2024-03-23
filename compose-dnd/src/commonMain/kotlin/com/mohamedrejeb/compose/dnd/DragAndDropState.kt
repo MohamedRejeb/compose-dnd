@@ -64,6 +64,11 @@ fun <T> rememberDragAndDropState(
 class DragAndDropState<T>(
     internal val dragAfterLongPress: Boolean = false,
 ) {
+    /**
+     * If true, drag and drop is enabled
+     */
+    internal var enabled by mutableStateOf(true)
+
     // Drop Target
 
     /**

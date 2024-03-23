@@ -19,6 +19,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -38,12 +39,14 @@ import kotlinx.coroutines.launch
  *
  * @param state The state of the drag and drop
  * @param modifier [Modifier]
+ * @param enabled whether the drag and drop is enabled
  * @param content content of the container
  */
 @Composable
 fun <T> DragAndDropContainer(
     state: DragAndDropState<T>,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -52,12 +55,18 @@ fun <T> DragAndDropContainer(
         mutableStateOf(Offset.Zero)
     }
 
+    LaunchedEffect(enabled) {
+        state.enabled = enabled
+    }
+
     Box(
         modifier = modifier
             .onGloballyPositioned {
                 positionInRoot.value = it.positionInRoot()
             }
-            .pointerInput(state, state.pointerId) {
+            .pointerInput(enabled, state, state.pointerId) {
+                if (!enabled) return@pointerInput
+
                 awaitEachGesture {
                     if (state.pointerId == null) {
                         awaitPointerEvent()

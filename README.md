@@ -3,7 +3,7 @@
 Compose DND is a library that allows you to easily add drag and drop functionality to your Jetpack Compose or Compose Multiplatform projects.
 
 
-[![Kotlin](https://img.shields.io/badge/kotlin-1.9.21-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/kotlin-1.9.22-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![MohamedRejeb](https://raw.githubusercontent.com/MohamedRejeb/MohamedRejeb/main/badges/mohamedrejeb.svg)](https://github.com/MohamedRejeb)
 [![Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
 [![BuildPassing](https://shields.io/badge/build-passing-brightgreen)](https://github.com/MohamedRejeb/compose-dnd/actions)
@@ -111,6 +111,58 @@ ReorderableItem(
 The `ReorderableItem` composable is at the same time a `DraggableItem` and a `dropTarget`. <br><br>
 
 > For more details, check out the [sample](https://github.com/MohamedRejeb/compose-dnd/tree/main/sample/common/src/commonMain/kotlin)
+
+
+### Enable/Disable Drag and Drop
+
+If you want to enable/disable drag and drop functionality, you can use the `enabled` parameter in the `DragAndDropContainer` and `ReorderContainer` composable.
+
+```kotlin
+DragAndDropContainer(
+    state = dragAndDropState,
+    enabled = false
+) {
+
+}
+```
+
+```kotlin
+ReorderContainer(
+    state = reorderState,
+    enabled = false
+) {
+
+}
+```
+
+> This will disable the drag and drop functionality for all the draggable items.
+
+If you want to disable drag and drop for a specific item, you can use the `enabled` parameter in the `DraggableItem` and `ReorderableItem` composable.
+
+```kotlin
+DraggableItem(
+    state = dragAndDropState,
+    key = task.id,
+    data = task,
+    enabled = false
+) {
+
+}
+```
+
+```kotlin
+ReorderableItem(
+    state = reorderState,
+    key = task.id,
+    data = task,
+    onDrop = { state ->
+        // Handle drop
+    },
+    enabled = false
+) {
+
+}
+```
 
 ## Contribution
 If you've found an error in this sample, please file an issue. <br>

@@ -22,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
@@ -42,6 +41,8 @@ import com.mohamedrejeb.compose.dnd.gesture.detectDragStartGesture
  * @param state The reorder state.
  * @param key The key used to identify the item.
  * @param data The data associated with the item.
+ * @param zIndex The z-index of the item.
+ * @param enabled Whether the reorder is enabled.
  * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press
  * @param dropTargets - list of drop targets ids to which this item can be dropped, if empty, item can be dropped to any drop target
  * @param onDrop The action to perform when an item is dropped onto the target.
@@ -62,6 +63,7 @@ fun <T> ReorderableItem(
     key: Any,
     data: T,
     zIndex: Float = 0f,
+    enabled: Boolean = true,
     dragAfterLongPress: Boolean = state.dndState.dragAfterLongPress,
     dropTargets: List<Any> = emptyList(),
     onDrop: (state: DraggedItemState<T>) -> Unit = {},
@@ -71,8 +73,6 @@ fun <T> ReorderableItem(
     draggableContent: (@Composable () -> Unit)? = null,
     content: @Composable ReorderableItemScope.() -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
-
     LaunchedEffect(key, state, data) {
         state.dndState.draggableItemMap[key]?.data = data
     }
@@ -125,12 +125,12 @@ fun <T> ReorderableItem(
                     state = draggableItemState,
                 )
             }
-            .pointerInput(key, state) {
+            .pointerInput(enabled, key, state, state.dndState.enabled) {
                 detectDragStartGesture(
                     key = key,
                     state = state.dndState,
+                    enabled = enabled && state.dndState.enabled,
                     dragAfterLongPress = dragAfterLongPress,
-                    scope = scope,
                 )
             }
             .dropTarget(
