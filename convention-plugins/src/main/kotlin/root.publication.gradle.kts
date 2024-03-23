@@ -4,7 +4,7 @@ plugins {
 
 allprojects {
     group = "com.mohamedrejeb.dnd"
-    version = "0.1.0"
+    version = "0.2.0"
 }
 
 nexusPublishing {
