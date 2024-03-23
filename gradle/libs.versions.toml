@@ -1,14 +1,14 @@
 [versions]
-kotlin = "1.9.21"
-compose = "1.5.11"
+kotlin = "1.9.22"
+compose = "1.6.0"
 compose-compiler = "1.5.4"
-agp = "8.1.2"
+agp = "8.2.2"
 android-minSdk = "24"
 android-compileSdk = "34"
 android-targetSdk = "34"
 androidx-activityCompose = "1.8.2"
 androidx-core-ktx = "1.12.0"
-voyager = "1.0.0"
+voyager = "1.1.0-alpha03"
 spotless = "6.23.3"
 nexus-publish = "2.0.0-rc-1"
 
