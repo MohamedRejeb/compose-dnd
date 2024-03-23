@@ -18,7 +18,7 @@ Compose DND is a library that allows you to easily add drag and drop functionali
 Add the following dependency to your module `build.gradle.kts` file:
 
 ```kotlin
-implementation("com.mohamedrejeb.dnd:compose-dnd:0.1.0")
+implementation("com.mohamedrejeb.dnd:compose-dnd:0.2.0")
 ```
 
 ## Usage
