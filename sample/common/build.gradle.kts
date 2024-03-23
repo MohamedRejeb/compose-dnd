@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
+
 /*
  * Copyright 2023, Mohamed Ben Rejeb and the Compose Dnd project contributors
  *
@@ -36,6 +38,11 @@ kotlin {
     }
 
     js(IR) {
+        browser()
+    }
+
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
         browser()
     }
 

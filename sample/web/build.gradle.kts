@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.jetbrainsCompose)
@@ -9,7 +11,13 @@ kotlin {
         binaries.executable()
     }
 
-    sourceSets.jsMain.dependencies {
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+        binaries.executable()
+    }
+
+    sourceSets.commonMain.dependencies {
         implementation(projects.sample.common)
 
         implementation(compose.foundation)
