@@ -112,6 +112,50 @@ The `ReorderableItem` composable is at the same time a `DraggableItem` and a `dr
 
 > For more details, check out the [sample](https://github.com/MohamedRejeb/compose-dnd/tree/main/sample/common/src/commonMain/kotlin)
 
+
+### Toggleable Drag and Drop
+
+If you want the ability to toggle drag and drop functionality, you can use the
+`ToggleableDragAndDropContainer` or `ToggleableReorderContainer` composable. Then use the scoped
+item composable `ToggleableDragAndDropContainerScope.DraggableItem` or
+`ToggleableReorderContainerScope.ReorderableItem`.
+
+For `DragAndDropContainer`:
+
+```kotlin
+val dragAndDropState = rememberDragAndDropState()
+var enabled by remember { mutableStateOf(false) }
+
+ToggleableDragAndDropContainer(
+    state = dragAndDropState,
+    enabled = enabled,
+) {
+    DraggableItem(
+        // ...
+    ) {
+        // Draggable item content
+    }
+}
+```
+
+For `ReorderContainer`:
+
+```kotlin
+val reorderState = rememberReorderState()
+var enabled by remember { mutableStateOf(false) }
+
+ToggleableReorderContainer(
+    state = reorderState,
+    enabled = enabled,
+) {
+    ReorderableItem(
+        // ...
+    ) {
+        // Reorderable item content
+    }
+}
+```
+
 ## Contribution
 If you've found an error in this sample, please file an issue. <br>
 Feel free to help out by sending a pull request :heart:.
