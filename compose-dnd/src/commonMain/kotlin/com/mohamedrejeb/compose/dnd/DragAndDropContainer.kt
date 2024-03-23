@@ -68,8 +68,9 @@ fun <T> DragAndDropContainer(
                 if (!enabled) return@pointerInput
 
                 awaitEachGesture {
-                    if (state.pointerId == null)
+                    if (state.pointerId == null) {
                         awaitPointerEvent()
+                    }
 
                     state.pointerId?.let { pointerId ->
                         if (
