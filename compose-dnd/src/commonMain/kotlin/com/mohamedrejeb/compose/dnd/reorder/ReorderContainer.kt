@@ -26,6 +26,7 @@ import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
  *
  * @param state The state of the reorder
  * @param modifier [Modifier]
+ * @param enabled whether the reorder is enabled
  * @param content content of the container
  */
 @OptIn(ExperimentalDndApi::class)
@@ -33,11 +34,13 @@ import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 fun <T> ReorderContainer(
     state: ReorderState<T>,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     content: @Composable () -> Unit
 ) {
     DragAndDropContainer(
         state = state.dndState,
         modifier = modifier,
+        enabled = enabled,
         content = content,
     )
 }

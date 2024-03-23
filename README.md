@@ -3,7 +3,7 @@
 Compose DND is a library that allows you to easily add drag and drop functionality to your Jetpack Compose or Compose Multiplatform projects.
 
 
-[![Kotlin](https://img.shields.io/badge/kotlin-1.9.21-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/kotlin-1.9.22-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![MohamedRejeb](https://raw.githubusercontent.com/MohamedRejeb/MohamedRejeb/main/badges/mohamedrejeb.svg)](https://github.com/MohamedRejeb)
 [![Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
 [![BuildPassing](https://shields.io/badge/build-passing-brightgreen)](https://github.com/MohamedRejeb/compose-dnd/actions)
@@ -113,46 +113,54 @@ The `ReorderableItem` composable is at the same time a `DraggableItem` and a `dr
 > For more details, check out the [sample](https://github.com/MohamedRejeb/compose-dnd/tree/main/sample/common/src/commonMain/kotlin)
 
 
-### Toggleable Drag and Drop
+### Enable/Disable Drag and Drop
 
-If you want the ability to toggle drag and drop functionality, you can use the
-`ToggleableDragAndDropContainer` or `ToggleableReorderContainer` composable. Then use the scoped
-item composable `ToggleableDragAndDropContainerScope.DraggableItem` or
-`ToggleableReorderContainerScope.ReorderableItem`.
-
-For `DragAndDropContainer`:
+If you want to enable/disable drag and drop functionality, you can use the `enabled` parameter in the `DragAndDropContainer` and `ReorderContainer` composable.
 
 ```kotlin
-val dragAndDropState = rememberDragAndDropState()
-var enabled by remember { mutableStateOf(false) }
-
-ToggleableDragAndDropContainer(
+DragAndDropContainer(
     state = dragAndDropState,
-    enabled = enabled,
+    enabled = false
 ) {
-    DraggableItem(
-        // ...
-    ) {
-        // Draggable item content
-    }
+
 }
 ```
 
-For `ReorderContainer`:
+```kotlin
+ReorderContainer(
+    state = reorderState,
+    enabled = false
+) {
+
+}
+```
+
+> This will disable the drag and drop functionality for all the draggable items.
+
+If you want to disable drag and drop for a specific item, you can use the `enabled` parameter in the `DraggableItem` and `ReorderableItem` composable.
 
 ```kotlin
-val reorderState = rememberReorderState()
-var enabled by remember { mutableStateOf(false) }
-
-ToggleableReorderContainer(
-    state = reorderState,
-    enabled = enabled,
+DraggableItem(
+    state = dragAndDropState,
+    key = task.id,
+    data = task,
+    enabled = false
 ) {
-    ReorderableItem(
-        // ...
-    ) {
-        // Reorderable item content
-    }
+
+}
+```
+
+```kotlin
+ReorderableItem(
+    state = reorderState,
+    key = task.id,
+    data = task,
+    onDrop = { state ->
+        // Handle drop
+    },
+    enabled = false
+) {
+
 }
 ```
 

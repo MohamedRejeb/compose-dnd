@@ -24,14 +24,17 @@ import androidx.compose.ui.input.pointer.PointerInputScope
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 import com.mohamedrejeb.compose.dnd.utils.awaitPointerSlopOrCancellation
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 internal suspend fun <T> PointerInputScope.detectDragStartGesture(
     key: Any,
     state: DragAndDropState<T>,
+    enabled: Boolean,
     dragAfterLongPress: Boolean,
-    scope: CoroutineScope,
-) {
+) = coroutineScope {
+    if (!enabled) return@coroutineScope
+
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Main)
         var drag: PointerInputChange?
@@ -52,7 +55,7 @@ internal suspend fun <T> PointerInputScope.detectDragStartGesture(
         if (drag != null) {
             val draggableItemState = state.draggableItemMap[key] ?: return@awaitEachGesture
 
-            scope.launch {
+            launch {
                 state.handleDragStart(drag.position + draggableItemState.positionInRoot)
             }
 

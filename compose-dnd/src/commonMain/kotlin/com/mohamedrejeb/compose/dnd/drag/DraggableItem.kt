@@ -39,6 +39,7 @@ import com.mohamedrejeb.compose.dnd.gesture.detectDragStartGesture
  * @param key - unique key for this item
  * @param data - data that will be passed to drop target on drop
  * @param state - state of the drag and drop
+ * @param enabled - whether the drag and drop is enabled
  * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press
  * @param dropTargets - list of drop targets ids to which this item can be dropped, if empty, item can be dropped to any drop target
  * @param dropAnimationSpec - animation spec for the drop animation
@@ -51,14 +52,13 @@ fun <T> DraggableItem(
     key: Any,
     data: T,
     state: DragAndDropState<T>,
+    enabled: Boolean = true,
     dragAfterLongPress: Boolean = state.dragAfterLongPress,
     dropTargets: List<Any> = emptyList(),
     dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
     draggableContent: (@Composable () -> Unit)? = null,
     content: @Composable DraggableItemScope.() -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
-
     LaunchedEffect(key, state, data) {
         state.draggableItemMap[key]?.data = data
     }
@@ -112,12 +112,12 @@ fun <T> DraggableItem(
                         state = draggableItemState,
                     )
                 }
-                .pointerInput(key, state) {
+                .pointerInput(enabled, key, state, state.enabled) {
                     detectDragStartGesture(
                         key = key,
                         state = state,
+                        enabled = enabled && state.enabled,
                         dragAfterLongPress = dragAfterLongPress,
-                        scope = scope,
                     )
                 },
         ) {
