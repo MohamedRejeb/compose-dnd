@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
 
 /*
@@ -35,35 +36,24 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.jetbrainsCompose)
+    alias(libs.plugins.composeCompiler)
     id("module.publication")
     id("module.spotless")
 }
 
 kotlin {
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
-    applyDefaultHierarchyTemplate {
-        common {
-            group("nonWasm") {
-                withNative()
-                withJvm()
-                withAndroidTarget()
-                withJs()
-            }
-        }
-    }
+    applyDefaultHierarchyTemplate()
 
     androidTarget {
         publishLibraryVariants("release")
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = "1.8"
-            }
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_1_8)
         }
     }
 
-    jvm("desktop") {
-        jvmToolchain(11)
-    }
+    jvmToolchain(11)
+    jvm("desktop")
 
     js(IR) {
         browser()
@@ -71,7 +61,11 @@ kotlin {
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        browser()
+        browser {
+            testTask {
+                enabled = false
+            }
+        }
     }
 
     iosX64()

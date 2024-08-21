@@ -30,7 +30,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -81,7 +81,7 @@ object ListToListWithReorderScreen : Screen {
                             }
                         ) {
                             Icon(
-                                Icons.Rounded.ArrowBack,
+                                Icons.AutoMirrored.Rounded.ArrowBack,
                                 contentDescription = "Back",
                             )
                         }
@@ -148,7 +148,7 @@ private fun ListToListWithReorderContent(
                 state = lazyListStateOne,
                 contentPadding = PaddingValues(10.dp),
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(1.5f)
                     .fillMaxHeight()
                     .border(
                         width = 1.dp,

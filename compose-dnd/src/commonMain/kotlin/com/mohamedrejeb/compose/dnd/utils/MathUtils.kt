@@ -20,6 +20,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.plus
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.pow
 
 internal object MathUtils {
     /**
@@ -111,5 +112,9 @@ internal object MathUtils {
                 point.x <= topLeft.x + size.width &&
                 point.y >= topLeft.y &&
                 point.y <= topLeft.y + size.height
+    }
+
+    fun distance2(p1: Offset, p2: Offset): Float {
+        return (p1.x - p2.x).pow(2) + (p1.y - p2.y).pow(2)
     }
 }
