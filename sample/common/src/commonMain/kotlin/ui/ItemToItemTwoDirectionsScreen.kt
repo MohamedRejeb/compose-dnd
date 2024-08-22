@@ -26,7 +26,7 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -74,7 +74,7 @@ object ItemToItemTwoDirectionsScreen : Screen {
                             }
                         ) {
                             Icon(
-                                Icons.Rounded.ArrowBack,
+                                Icons.AutoMirrored.Rounded.ArrowBack,
                                 contentDescription = "Back",
                             )
                         }
@@ -127,9 +127,14 @@ private fun ItemToItemTwoDirectionsScreenContent(
                     .dropTarget(
                         key = 0,
                         state = dragAndDropState,
-                        onDrop = { state ->
+                        onDragEnter = { state ->
                             if (state.data == 1) {
                                 itemIndex = 0
+                            }
+                        },
+                        onDragExit = { state ->
+                            if (state.data == 1) {
+                                itemIndex = 1
                             }
                         }
                     )
@@ -140,13 +145,15 @@ private fun ItemToItemTwoDirectionsScreenContent(
                         key = 0,
                         data = 0,
                         dropTargets = listOf(1),
+                        modifier = Modifier
+                            .size(200.dp)
                     ) {
                         RedBox(
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
                                 }
-                                .size(200.dp)
+                                .fillMaxSize()
                         )
                     }
                 }
@@ -167,9 +174,14 @@ private fun ItemToItemTwoDirectionsScreenContent(
                     .dropTarget(
                         key = 1,
                         state = dragAndDropState,
-                        onDrop = { state ->
+                        onDragEnter = { state ->
                             if (state.data == 0) {
                                 itemIndex = 1
+                            }
+                        },
+                        onDragExit = { state ->
+                            if (state.data == 0) {
+                                itemIndex = 0
                             }
                         }
                     )
@@ -177,16 +189,18 @@ private fun ItemToItemTwoDirectionsScreenContent(
                 if (itemIndex == 1) {
                     DraggableItem(
                         state = dragAndDropState,
-                        key = 1,
+                        key = 0,
                         data = 1,
                         dropTargets = listOf(0),
+                        modifier = Modifier
+                            .size(100.dp)
                     ) {
                         RedBox(
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
                                 }
-                                .size(200.dp)
+                                .fillMaxSize()
                         )
                     }
                 }
