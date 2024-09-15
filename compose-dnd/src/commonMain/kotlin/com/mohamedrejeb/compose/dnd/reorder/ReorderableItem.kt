@@ -24,6 +24,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -52,6 +53,7 @@ import com.mohamedrejeb.compose.dnd.gesture.detectDragStartGesture
  * @param onDragExit The action to perform when an item is dragged out of the target.
  * Accepts the dragged item state as a parameter.
  * @param dropAnimationSpec - animation spec for the drop animation
+ * @param sizeDropAnimationSpec - animation spec for the size drop animation
  * @param draggableContent The content of the draggable item, if null, the content of the item will be used.
  * @param content The content of the item.
  */
@@ -70,6 +72,7 @@ fun <T> ReorderableItem(
     onDragEnter: (state: DraggedItemState<T>) -> Unit = {},
     onDragExit: (state: DraggedItemState<T>) -> Unit = {},
     dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
+    sizeDropAnimationSpec: AnimationSpec<Size> = SpringSpec(),
     draggableContent: (@Composable () -> Unit)? = null,
     content: @Composable ReorderableItemScope.() -> Unit,
 ) {
@@ -83,6 +86,10 @@ fun <T> ReorderableItem(
 
     LaunchedEffect(key, state, dropAnimationSpec) {
         state.dndState.draggableItemMap[key]?.dropAnimationSpec = dropAnimationSpec
+    }
+
+    LaunchedEffect(key, state, sizeDropAnimationSpec) {
+        state.dndState.draggableItemMap[key]?.sizeDropAnimationSpec = sizeDropAnimationSpec
     }
 
     DisposableEffect(key, state) {
@@ -114,6 +121,7 @@ fun <T> ReorderableItem(
                     size = it.size.toSize(),
                     dropTargets = dropTargets,
                     dropAnimationSpec = dropAnimationSpec,
+                    sizeDropAnimationSpec = sizeDropAnimationSpec,
                     content = draggableContent ?: {
                         with(reorderableItemScopeShadowImpl) {
                             content()

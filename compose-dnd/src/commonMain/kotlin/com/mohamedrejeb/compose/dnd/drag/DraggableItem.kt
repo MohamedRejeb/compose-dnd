@@ -24,6 +24,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -41,7 +42,8 @@ import com.mohamedrejeb.compose.dnd.gesture.detectDragStartGesture
  * @param enabled - whether the drag and drop is enabled
  * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press
  * @param dropTargets - list of drop targets ids to which this item can be dropped, if empty, item can be dropped to any drop target
- * @param dropAnimationSpec - animation spec for the drop animation
+ * @param dropAnimationSpec - animation spec for the position drop animation
+ * @param sizeDropAnimationSpec - animation spec for the size drop animation
  * @param draggableContent The content of the draggable item, if null, the content of the item will be used.
  * @param content - content that will be shown when item is not dragged
  */
@@ -55,6 +57,7 @@ fun <T> DraggableItem(
     dragAfterLongPress: Boolean = state.dragAfterLongPress,
     dropTargets: List<Any> = emptyList(),
     dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
+    sizeDropAnimationSpec: AnimationSpec<Size> = SpringSpec(),
     draggableContent: (@Composable () -> Unit)? = null,
     content: @Composable DraggableItemScope.() -> Unit,
 ) {
@@ -68,6 +71,10 @@ fun <T> DraggableItem(
 
     LaunchedEffect(key, state, dropAnimationSpec) {
         state.draggableItemMap[key]?.dropAnimationSpec = dropAnimationSpec
+    }
+
+    LaunchedEffect(key, state, sizeDropAnimationSpec) {
+        state.draggableItemMap[key]?.sizeDropAnimationSpec = sizeDropAnimationSpec
     }
 
     DisposableEffect(key, state) {
@@ -100,6 +107,7 @@ fun <T> DraggableItem(
                         size = it.size.toSize(),
                         dropTargets = dropTargets,
                         dropAnimationSpec = dropAnimationSpec,
+                        sizeDropAnimationSpec = sizeDropAnimationSpec,
                         content = draggableContent ?: {
                             with(draggableItemScopeShadowImpl) {
                                 content()

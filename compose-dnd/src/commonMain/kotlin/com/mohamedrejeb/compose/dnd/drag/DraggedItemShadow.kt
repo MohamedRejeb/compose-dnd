@@ -26,7 +26,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.DpSize
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 
 @Composable
@@ -42,7 +41,7 @@ internal fun <T> DraggedItemShadow(
         modifier = Modifier
             .size(
                 with(density) {
-                    state.currentDraggableItem?.size?.toDpSize() ?: DpSize.Zero
+                    state.dragSizeAnimatable.value.toDpSize()
                 }
             )
             .onGloballyPositioned {
