@@ -42,6 +42,7 @@ import com.mohamedrejeb.compose.dnd.gesture.detectDragStartGesture
  * @param enabled - whether the drag and drop is enabled
  * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press
  * @param dropTargets - list of drop targets ids to which this item can be dropped, if empty, item can be dropped to any drop target
+ * @param dropStrategy - strategy to determine the drop target
  * @param dropAnimationSpec - animation spec for the position drop animation
  * @param sizeDropAnimationSpec - animation spec for the size drop animation
  * @param draggableContent The content of the draggable item, if null, the content of the item will be used.
@@ -56,6 +57,7 @@ fun <T> DraggableItem(
     enabled: Boolean = true,
     dragAfterLongPress: Boolean = state.dragAfterLongPress,
     dropTargets: List<Any> = emptyList(),
+    dropStrategy: DropStrategy = DropStrategy.SurfacePercentage,
     dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
     sizeDropAnimationSpec: AnimationSpec<Size> = SpringSpec(),
     draggableContent: (@Composable () -> Unit)? = null,
@@ -67,6 +69,10 @@ fun <T> DraggableItem(
 
     LaunchedEffect(key, state, dropTargets) {
         state.draggableItemMap[key]?.dropTargets = dropTargets
+    }
+
+    LaunchedEffect(key, state, dropStrategy) {
+        state.draggableItemMap[key]?.dropStrategy = dropStrategy
     }
 
     LaunchedEffect(key, state, dropAnimationSpec) {
@@ -106,6 +112,7 @@ fun <T> DraggableItem(
                         positionInRoot = it.positionInRoot(),
                         size = it.size.toSize(),
                         dropTargets = dropTargets,
+                        dropStrategy = dropStrategy,
                         dropAnimationSpec = dropAnimationSpec,
                         sizeDropAnimationSpec = sizeDropAnimationSpec,
                         content = draggableContent ?: {

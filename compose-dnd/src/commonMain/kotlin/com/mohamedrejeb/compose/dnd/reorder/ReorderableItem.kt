@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.toSize
 import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 import com.mohamedrejeb.compose.dnd.drag.DraggableItemState
 import com.mohamedrejeb.compose.dnd.drag.DraggedItemState
+import com.mohamedrejeb.compose.dnd.drag.DropStrategy
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.gesture.detectDragStartGesture
 
@@ -46,6 +47,7 @@ import com.mohamedrejeb.compose.dnd.gesture.detectDragStartGesture
  * @param enabled Whether the reorder is enabled.
  * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press
  * @param dropTargets - list of drop targets ids to which this item can be dropped, if empty, item can be dropped to any drop target
+ * @param dropStrategy - strategy to determine the drop target
  * @param onDrop The action to perform when an item is dropped onto the target.
  * Accepts the dragged item state as a parameter.
  * @param onDragEnter The action to perform when an item is dragged over the target.
@@ -68,6 +70,7 @@ fun <T> ReorderableItem(
     enabled: Boolean = true,
     dragAfterLongPress: Boolean = state.dndState.dragAfterLongPress,
     dropTargets: List<Any> = emptyList(),
+    dropStrategy: DropStrategy = DropStrategy.SurfacePercentage,
     onDrop: (state: DraggedItemState<T>) -> Unit = {},
     onDragEnter: (state: DraggedItemState<T>) -> Unit = {},
     onDragExit: (state: DraggedItemState<T>) -> Unit = {},
@@ -82,6 +85,10 @@ fun <T> ReorderableItem(
 
     LaunchedEffect(key, state, dropTargets) {
         state.dndState.draggableItemMap[key]?.dropTargets = dropTargets
+    }
+
+    LaunchedEffect(key, state, dropStrategy) {
+        state.dndState.draggableItemMap[key]?.dropStrategy = dropStrategy
     }
 
     LaunchedEffect(key, state, dropAnimationSpec) {
@@ -120,6 +127,7 @@ fun <T> ReorderableItem(
                     positionInRoot = it.positionInRoot(),
                     size = it.size.toSize(),
                     dropTargets = dropTargets,
+                    dropStrategy = dropStrategy,
                     dropAnimationSpec = dropAnimationSpec,
                     sizeDropAnimationSpec = sizeDropAnimationSpec,
                     content = draggableContent ?: {

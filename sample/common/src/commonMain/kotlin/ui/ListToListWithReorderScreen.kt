@@ -51,6 +51,7 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
+import com.mohamedrejeb.compose.dnd.drag.DropStrategy
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.reorder.ReorderContainer
 import com.mohamedrejeb.compose.dnd.reorder.ReorderableItem
@@ -177,6 +178,7 @@ private fun ListToListWithReorderContent(
                         key = item,
                         data = item,
                         zIndex = 1f,
+                        dropStrategy = DropStrategy.CenterDistance,
                         onDragEnter = { state ->
                             listOne = listOne.toMutableList().apply {
                                 val index = indexOf(item)
@@ -254,12 +256,13 @@ private fun ListToListWithReorderContent(
                         key = item,
                         data = item,
                         zIndex = 1f,
+                        dropStrategy = DropStrategy.CenterDistance,
                         onDragEnter = { state ->
                             listTwo = listTwo.toMutableList().apply {
                                 val index = indexOf(item)
                                 if (index == -1) return@ReorderableItem
                                 if (!remove(state.data)) {
-                                        // If the item is not in listTwo, it means it's coming from the listOne
+                                    // If the item is not in listTwo, it means it's coming from the listOne
                                     listOne = listOne.toMutableList().apply {
                                         remove(state.data)
                                     }

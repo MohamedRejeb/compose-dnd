@@ -26,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.PointerId
 import com.mohamedrejeb.compose.dnd.drag.DraggableItem
 import com.mohamedrejeb.compose.dnd.drag.DraggableItemState
@@ -188,7 +189,7 @@ class DragAndDropState<T>(
 
         dragStartPositionInRoot = draggableItemState.positionInRoot
         dragStartOffset = offset
-        currentDraggableItem = draggableItemState
+        currentDraggableItem = draggableItemState.copy()
         draggedItem = DraggedItemState(
             key = draggableItemState.key,
             data = draggableItemState.data,
@@ -211,25 +212,28 @@ class DragAndDropState<T>(
 
         val dragAmount = offset - dragStartOffset
         val newTopLeft = dragStartPositionInRoot + dragAmount
-        val hoveredDropTarget = dropTargetMap.values
-            .filter {
-                MathUtils.isRectangleIntersected(
-                    topLeft1 = newTopLeft,
-                    size1 = currentDraggableItem.size,
-                    topLeft2 = it.topLeft,
-                    size2 = it.size,
-                ) &&
-                (dropTargetIds.isEmpty() || it.key in dropTargetIds)
-            }
-            .maxByOrNull {
-                val maxOverlappingArea = currentDraggableItem.size.width * currentDraggableItem.size.height
-                MathUtils.overlappingArea(
-                    topLeft1 = newTopLeft,
-                    size1 = currentDraggableItem.size,
-                    topLeft2 = it.topLeft,
-                    size2 = it.size,
-                ) + it.zIndex * maxOverlappingArea
-            }
+        val hoveredDropTargets =
+            dropTargetMap.values
+                .filter {
+                    MathUtils.isRectangleIntersected(
+                        topLeft1 = newTopLeft,
+                        size1 = currentDraggableItem.size,
+                        topLeft2 = it.topLeft,
+                        size2 = it.size,
+                    ) &&
+                        (dropTargetIds.isEmpty() || it.key in dropTargetIds)
+                }
+                .groupBy { it.zIndex }
+                .maxByOrNull { it.key }
+                ?.value
+                .orEmpty()
+
+        val hoveredDropTarget =
+            currentDraggableItem.dropStrategy.getHoveredDropTarget(
+                draggedItemTopLeft = newTopLeft,
+                draggedItemSize = currentDraggableItem.size,
+                dropTargets = hoveredDropTargets,
+            )
 
         val newDraggedItemState = draggedItem?.copy(
             dragAmount = dragAmount,
@@ -264,13 +268,14 @@ class DragAndDropState<T>(
                 val dropTopLeft = dropTarget?.getDropTopLeft(currentDraggableItem.size) ?: currentDraggableItem.positionInRoot
 
                 val sizeDiff =
-                    if (draggedItem == null)
+                    if (draggedItem == null) {
                         Size.Zero
-                    else
+                    } else {
                         Size(
                             width = draggedItem.size.width - currentDraggableItem.size.width,
                             height = draggedItem.size.height - currentDraggableItem.size.height,
                         )
+                    }
 
                 val animateToPosition = dropTopLeft - dragPosition.value - Offset(
                     x = sizeDiff.width / 2,
