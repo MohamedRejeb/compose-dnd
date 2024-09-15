@@ -125,7 +125,7 @@ class DragAndDropState<T>(
         val oldState = draggableItemMap[key]
 
         if (oldState != null) {
-            updateDraggableItem(key, state)
+            updateDraggableItem(oldState, state)
         } else {
             draggableItemMap[key] = state
         }
@@ -138,20 +138,18 @@ class DragAndDropState<T>(
     /**
      * Update [DraggableItemState]
      *
-     * @param key - key of [DraggableItemState] that is dragged
-     * @param state - new state
+     * @param oldState - old state
+     * @param newState - new state
      */
     private fun updateDraggableItem(
-        key: Any,
-        state: DraggableItemState<T>
+        oldState: DraggableItemState<T>,
+        newState: DraggableItemState<T>
     ) {
-        val oldState = draggableItemMap[key] ?: return
-
-        oldState.size = state.size
-        oldState.positionInRoot = state.positionInRoot
-        oldState.dropTargets = state.dropTargets
-        oldState.data = state.data
-        oldState.key = state.key
+        oldState.size = newState.size
+        oldState.positionInRoot = newState.positionInRoot
+        oldState.dropTargets = newState.dropTargets
+        oldState.data = newState.data
+        oldState.key = newState.key
     }
 
     private var dragStartPositionInRoot: Offset = Offset.Zero
@@ -159,6 +157,7 @@ class DragAndDropState<T>(
 
     internal val dragPosition: MutableState<Offset> = mutableStateOf(Offset.Zero)
     internal val dragPositionAnimatable: Animatable<Offset, AnimationVector2D> = Animatable(Offset.Zero, Offset.VectorConverter)
+    internal val dragSizeAnimatable: Animatable<Size, AnimationVector2D> = Animatable(Size.Zero, Size.VectorConverter)
 
     /**
      * Handle drag start method is called when drag starts
@@ -179,6 +178,10 @@ class DragAndDropState<T>(
 
         launch {
             dragPositionAnimatable.snapTo(Offset.Zero)
+        }
+
+        launch {
+            dragSizeAnimatable.snapTo(draggableItemState.size)
         }
 
         dragPosition.value = draggableItemState.positionInRoot
@@ -255,16 +258,40 @@ class DragAndDropState<T>(
         val dropTarget = dropTargetMap.values.find { it.key == hoveredDropTargetKey }
 
         if (dropTarget == null || dropTarget.dropAnimationEnabled) {
-            launch {
+            val draggedItem = draggableItemMap[currentDraggableItem.key]
+
+            val positionAnimation = launch {
                 val dropTopLeft = dropTarget?.getDropTopLeft(currentDraggableItem.size) ?: currentDraggableItem.positionInRoot
 
-                val animateToPosition = dropTopLeft - dragPosition.value
+                val sizeDiff =
+                    if (draggedItem == null)
+                        Size.Zero
+                    else
+                        Size(
+                            width = draggedItem.size.width - currentDraggableItem.size.width,
+                            height = draggedItem.size.height - currentDraggableItem.size.height,
+                        )
+
+                val animateToPosition = dropTopLeft - dragPosition.value - Offset(
+                    x = sizeDiff.width / 2,
+                    y = sizeDiff.height / 2,
+                )
 
                 dragPositionAnimatable.animateTo(
                     targetValue = animateToPosition,
                     animationSpec = currentDraggableItem.dropAnimationSpec,
                 )
-            }.join()
+            }
+
+            val sizeAnimation = launch {
+                dragSizeAnimatable.animateTo(
+                    targetValue = draggedItem?.size ?: return@launch,
+                    animationSpec = currentDraggableItem.sizeDropAnimationSpec,
+                )
+            }
+
+            positionAnimation.join()
+            sizeAnimation.join()
         }
 
         draggedItem?.let {
