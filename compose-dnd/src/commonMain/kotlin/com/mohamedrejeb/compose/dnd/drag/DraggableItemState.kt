@@ -25,6 +25,7 @@ internal class DraggableItemState<T>(
     var key: Any,
     var data: T,
     var dropTargets: List<Any> = emptyList(),
+    var dropStrategy: DropStrategy,
 
     var dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
     var sizeDropAnimationSpec: AnimationSpec<Size> = SpringSpec(),
@@ -33,4 +34,18 @@ internal class DraggableItemState<T>(
     var size: Size,
 
     val content: @Composable () -> Unit,
-)
+) {
+    fun copy(): DraggableItemState<T> {
+        return DraggableItemState(
+            key = key,
+            data = data,
+            dropTargets = dropTargets,
+            dropStrategy = dropStrategy,
+            dropAnimationSpec = dropAnimationSpec,
+            sizeDropAnimationSpec = sizeDropAnimationSpec,
+            positionInRoot = positionInRoot,
+            size = size,
+            content = content
+        )
+    }
+}

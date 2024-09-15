@@ -20,22 +20,28 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import com.mohamedrejeb.compose.dnd.drag.DraggedItemState
 
-internal class DropTargetState<T>(
+class DropTargetState<T> internal constructor(
     val key: Any,
     val zIndex: Float,
 
-    var size: Size,
-    var topLeft: Offset,
+    size: Size,
+    topLeft: Offset,
 
-    var dropAlignment: Alignment,
-    var dropOffset: Offset,
-    var dropAnimationEnabled: Boolean,
+    internal var dropAlignment: Alignment,
+    internal var dropOffset: Offset,
+    internal var dropAnimationEnabled: Boolean,
 
-    val onDrop: (state: DraggedItemState<T>) -> Unit,
-    val onDragEnter: (state: DraggedItemState<T>) -> Unit,
-    val onDragExit: (state: DraggedItemState<T>) -> Unit,
+    internal val onDrop: (state: DraggedItemState<T>) -> Unit,
+    internal val onDragEnter: (state: DraggedItemState<T>) -> Unit,
+    internal val onDragExit: (state: DraggedItemState<T>) -> Unit,
 ) {
-    fun getDropTopLeft(droppedItemSize: Size): Offset =
+    var size: Size = size
+        internal set
+
+    var topLeft: Offset = topLeft
+        internal set
+
+    internal fun getDropTopLeft(droppedItemSize: Size): Offset =
         topLeft + dropOffset + when (dropAlignment) {
             Alignment.TopStart ->
                 Offset.Zero
