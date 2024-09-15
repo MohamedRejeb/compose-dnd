@@ -268,13 +268,14 @@ class DragAndDropState<T>(
                 val dropTopLeft = dropTarget?.getDropTopLeft(currentDraggableItem.size) ?: currentDraggableItem.positionInRoot
 
                 val sizeDiff =
-                    if (draggedItem == null)
+                    if (draggedItem == null) {
                         Size.Zero
-                    else
+                    } else {
                         Size(
                             width = draggedItem.size.width - currentDraggableItem.size.width,
                             height = draggedItem.size.height - currentDraggableItem.size.height,
                         )
+                    }
 
                 val animateToPosition = dropTopLeft - dragPosition.value - Offset(
                     x = sizeDiff.width / 2,
