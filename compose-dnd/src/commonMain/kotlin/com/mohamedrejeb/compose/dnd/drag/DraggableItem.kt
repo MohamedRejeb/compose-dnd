@@ -17,20 +17,13 @@ package com.mohamedrejeb.compose.dnd.drag
 
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.SpringSpec
-import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.unit.toSize
 import com.mohamedrejeb.compose.dnd.DragAndDropState
-import com.mohamedrejeb.compose.dnd.gesture.detectDragStartGesture
 
 /**
  * Wrapper Composable for draggable item.
@@ -63,32 +56,6 @@ fun <T> DraggableItem(
     draggableContent: (@Composable () -> Unit)? = null,
     content: @Composable DraggableItemScope.() -> Unit,
 ) {
-    LaunchedEffect(key, state, data) {
-        state.draggableItemMap[key]?.data = data
-    }
-
-    LaunchedEffect(key, state, dropTargets) {
-        state.draggableItemMap[key]?.dropTargets = dropTargets
-    }
-
-    LaunchedEffect(key, state, dropStrategy) {
-        state.draggableItemMap[key]?.dropStrategy = dropStrategy
-    }
-
-    LaunchedEffect(key, state, dropAnimationSpec) {
-        state.draggableItemMap[key]?.dropAnimationSpec = dropAnimationSpec
-    }
-
-    LaunchedEffect(key, state, sizeDropAnimationSpec) {
-        state.draggableItemMap[key]?.sizeDropAnimationSpec = sizeDropAnimationSpec
-    }
-
-    DisposableEffect(key, state) {
-        onDispose {
-            state.removeDraggableItem(key)
-        }
-    }
-
     val draggableItemScopeImpl = remember(key, state) {
         DraggableItemScopeImpl(
             key = key,
@@ -102,39 +69,24 @@ fun <T> DraggableItem(
         )
     }
 
-    with(draggableItemScopeImpl) {
-        Box(
-            modifier = modifier
-                .onGloballyPositioned {
-                    val draggableItemState = DraggableItemState(
-                        key = key,
-                        data = data,
-                        positionInRoot = it.positionInRoot(),
-                        size = it.size.toSize(),
-                        dropTargets = dropTargets,
-                        dropStrategy = dropStrategy,
-                        dropAnimationSpec = dropAnimationSpec,
-                        sizeDropAnimationSpec = sizeDropAnimationSpec,
-                        content = draggableContent ?: {
-                            with(draggableItemScopeShadowImpl) {
-                                content()
-                            }
-                        },
-                    )
-
-                    state.addOrUpdateDraggableItem(
-                        state = draggableItemState,
-                    )
-                }
-                .pointerInput(enabled, key, state, state.enabled) {
-                    detectDragStartGesture(
-                        key = key,
-                        state = state,
-                        enabled = enabled && state.enabled,
-                        dragAfterLongPress = dragAfterLongPress,
-                    )
-                },
-        ) {
+    CoreDraggableItem(
+        modifier = modifier,
+        key = key,
+        data = data,
+        state = state,
+        enabled = enabled,
+        dragAfterLongPress = dragAfterLongPress,
+        dropTargets = dropTargets,
+        dropStrategy = dropStrategy,
+        dropAnimationSpec = dropAnimationSpec,
+        sizeDropAnimationSpec = sizeDropAnimationSpec,
+        draggableContent = draggableContent ?: {
+            with(draggableItemScopeShadowImpl) {
+                content()
+            }
+        },
+    ) {
+        with(draggableItemScopeImpl) {
             content()
         }
     }

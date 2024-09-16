@@ -17,24 +17,16 @@ package com.mohamedrejeb.compose.dnd.reorder
 
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.SpringSpec
-import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.unit.toSize
 import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
-import com.mohamedrejeb.compose.dnd.drag.DraggableItemState
+import com.mohamedrejeb.compose.dnd.drag.CoreDraggableItem
 import com.mohamedrejeb.compose.dnd.drag.DraggedItemState
 import com.mohamedrejeb.compose.dnd.drag.DropStrategy
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
-import com.mohamedrejeb.compose.dnd.gesture.detectDragStartGesture
 
 /**
  * Mark this composable as a reorderable item.
@@ -79,32 +71,6 @@ fun <T> ReorderableItem(
     draggableContent: (@Composable () -> Unit)? = null,
     content: @Composable ReorderableItemScope.() -> Unit,
 ) {
-    LaunchedEffect(key, state, data) {
-        state.dndState.draggableItemMap[key]?.data = data
-    }
-
-    LaunchedEffect(key, state, dropTargets) {
-        state.dndState.draggableItemMap[key]?.dropTargets = dropTargets
-    }
-
-    LaunchedEffect(key, state, dropStrategy) {
-        state.dndState.draggableItemMap[key]?.dropStrategy = dropStrategy
-    }
-
-    LaunchedEffect(key, state, dropAnimationSpec) {
-        state.dndState.draggableItemMap[key]?.dropAnimationSpec = dropAnimationSpec
-    }
-
-    LaunchedEffect(key, state, sizeDropAnimationSpec) {
-        state.dndState.draggableItemMap[key]?.sizeDropAnimationSpec = sizeDropAnimationSpec
-    }
-
-    DisposableEffect(key, state) {
-        onDispose {
-            state.dndState.removeDraggableItem(key)
-        }
-    }
-
     val reorderableItemScopeImpl = remember(key, state) {
         ReorderableItemScopeImpl(
             key = key,
@@ -118,37 +84,8 @@ fun <T> ReorderableItem(
         )
     }
 
-    Box(
-        modifier = Modifier
-            .onGloballyPositioned {
-                val draggableItemState = DraggableItemState(
-                    key = key,
-                    data = data,
-                    positionInRoot = it.positionInRoot(),
-                    size = it.size.toSize(),
-                    dropTargets = dropTargets,
-                    dropStrategy = dropStrategy,
-                    dropAnimationSpec = dropAnimationSpec,
-                    sizeDropAnimationSpec = sizeDropAnimationSpec,
-                    content = draggableContent ?: {
-                        with(reorderableItemScopeShadowImpl) {
-                            content()
-                        }
-                    },
-                )
-
-                state.dndState.addOrUpdateDraggableItem(
-                    state = draggableItemState,
-                )
-            }
-            .pointerInput(enabled, key, state, state.dndState.enabled) {
-                detectDragStartGesture(
-                    key = key,
-                    state = state.dndState,
-                    enabled = enabled && state.dndState.enabled,
-                    dragAfterLongPress = dragAfterLongPress,
-                )
-            }
+    CoreDraggableItem(
+        modifier = modifier
             .dropTarget(
                 key = key,
                 state = state.dndState,
@@ -156,8 +93,21 @@ fun <T> ReorderableItem(
                 onDrop = onDrop,
                 onDragEnter = onDragEnter,
                 onDragExit = onDragExit,
-            )
-            .then(modifier),
+            ),
+        key = key,
+        data = data,
+        state = state.dndState,
+        enabled = enabled,
+        dragAfterLongPress = dragAfterLongPress,
+        dropTargets = dropTargets,
+        dropStrategy = dropStrategy,
+        dropAnimationSpec = dropAnimationSpec,
+        sizeDropAnimationSpec = sizeDropAnimationSpec,
+        draggableContent = draggableContent ?: {
+            with(reorderableItemScopeShadowImpl) {
+                content()
+            }
+        },
     ) {
         with(reorderableItemScopeImpl) {
             content()
