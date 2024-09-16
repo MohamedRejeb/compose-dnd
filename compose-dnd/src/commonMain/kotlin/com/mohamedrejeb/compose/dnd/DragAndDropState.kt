@@ -87,6 +87,10 @@ class DragAndDropState<T>(
      * Add or update [DropTargetState] in [dropTargetMap]
      */
     internal fun addDropTarget(dropTargetState: DropTargetState<T>) {
+        if (dropTargetMap[dropTargetState.key] == dropTargetState) {
+            return
+        }
+
         dropTargetMap[dropTargetState.key] = dropTargetState
     }
 
@@ -119,38 +123,14 @@ class DragAndDropState<T>(
      *
      * @param state - new state
      */
-    internal fun addOrUpdateDraggableItem(
+    internal fun addDraggableItem(
         state: DraggableItemState<T>
     ) {
-        val key = state.key
-        val oldState = draggableItemMap[key]
-
-        if (oldState != null) {
-            updateDraggableItem(oldState, state)
-        } else {
-            draggableItemMap[key] = state
-        }
+        draggableItemMap[state.key] = state
     }
 
     internal fun removeDraggableItem(key: Any) {
         draggableItemMap.remove(key)
-    }
-
-    /**
-     * Update [DraggableItemState]
-     *
-     * @param oldState - old state
-     * @param newState - new state
-     */
-    private fun updateDraggableItem(
-        oldState: DraggableItemState<T>,
-        newState: DraggableItemState<T>
-    ) {
-        oldState.size = newState.size
-        oldState.positionInRoot = newState.positionInRoot
-        oldState.dropTargets = newState.dropTargets
-        oldState.data = newState.data
-        oldState.key = newState.key
     }
 
     private var dragStartPositionInRoot: Offset = Offset.Zero

@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -104,7 +103,7 @@ internal fun <T> CoreDraggableItem(
     }
 
     DisposableEffect(key, state, draggableItemState) {
-        state.addOrUpdateDraggableItem(draggableItemState)
+        state.addDraggableItem(draggableItemState)
 
         onDispose {
             state.removeDraggableItem(key)

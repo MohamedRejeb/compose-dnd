@@ -18,11 +18,13 @@ package com.mohamedrejeb.compose.dnd.drop
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.node.LayoutAwareModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.platform.InspectorInfo
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.toSize
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 import com.mohamedrejeb.compose.dnd.drag.DraggedItemState
@@ -75,67 +77,82 @@ private data class DropTargetNodeElement<T>(
     val onDragEnter: (state: DraggedItemState<T>) -> Unit,
     val onDragExit: (state: DraggedItemState<T>) -> Unit,
 ) : ModifierNodeElement<DropTargetNode<T>>() {
-    override fun create(): DropTargetNode<T> = DropTargetNode(
-        key = key,
-        state = state,
-        zIndex = zIndex,
-        dropAlignment = dropAlignment,
-        dropOffset = dropOffset,
-        dropAnimationEnabled = dropAnimationEnabled,
-        onDrop = onDrop,
-        onDragEnter = onDragEnter,
-        onDragExit = onDragExit,
-    )
+    override fun create(): DropTargetNode<T> =
+        DropTargetNode(
+            dropTargetState = DropTargetState(
+                key = key,
+                zIndex = zIndex,
+                size = Size.Zero,
+                topLeft = Offset.Zero,
+                dropAlignment = dropAlignment,
+                dropOffset = dropOffset,
+                dropAnimationEnabled = dropAnimationEnabled,
+                onDrop = onDrop,
+                onDragEnter = onDragEnter,
+                onDragExit = onDragExit,
+            ),
+            state = state,
+        )
 
     override fun update(node: DropTargetNode<T>) {
-        node.key = key
-        node.state = state
-        node.zIndex = zIndex
-        node.dropAlignment = dropAlignment
-        node.dropOffset = dropOffset
-        node.dropAnimationEnabled = dropAnimationEnabled
-        node.onDrop = onDrop
-        node.onDragEnter = onDragEnter
-        node.onDragExit = onDragExit
+        node.apply {
+            this.state = state
+
+            val isKeyChanged = dropTargetState.key != key
+
+            dropTargetState.key = key
+            dropTargetState.zIndex = zIndex
+            dropTargetState.dropAlignment = dropAlignment
+            dropTargetState.dropOffset = dropOffset
+            dropTargetState.dropAnimationEnabled = dropAnimationEnabled
+            dropTargetState.onDrop = onDrop
+            dropTargetState.onDragEnter = onDragEnter
+            dropTargetState.onDragExit = onDragExit
+
+            if (isKeyChanged) {
+                onDetach()
+                onAttach()
+            }
+        }
     }
 
     override fun InspectorInfo.inspectableProperties() {
         name = "DropTarget"
         properties["key"] = key
+        properties["state"] = state
         properties["zIndex"] = zIndex
         properties["dropAlignment"] = dropAlignment
         properties["dropOffset"] = dropOffset
         properties["dropAnimationEnabled"] = dropAnimationEnabled
+        properties["onDrop"] = onDrop
+        properties["onDragEnter"] = onDragEnter
+        properties["onDragExit"] = onDragExit
     }
 }
 
 private data class DropTargetNode<T>(
-    var key: Any,
+    val dropTargetState: DropTargetState<T>,
     var state: DragAndDropState<T>,
-    var zIndex: Float,
-    var dropAlignment: Alignment,
-    var dropOffset: Offset,
-    var dropAnimationEnabled: Boolean,
-    var onDrop: (state: DraggedItemState<T>) -> Unit,
-    var onDragEnter: (state: DraggedItemState<T>) -> Unit,
-    var onDragExit: (state: DraggedItemState<T>) -> Unit,
 ) : Modifier.Node(), LayoutAwareModifierNode {
+
+    private val key get() = dropTargetState.key
+
+    override fun onAttach() {
+        state.addDropTarget(dropTargetState)
+    }
+
     override fun onPlaced(coordinates: LayoutCoordinates) {
+        state.addDropTarget(dropTargetState)
+
         val size = coordinates.size.toSize()
         val topLeft = coordinates.positionInRoot()
-        val dropTargetState = DropTargetState(
-            key = key,
-            zIndex = zIndex,
-            size = size,
-            topLeft = topLeft,
-            dropAlignment = dropAlignment,
-            dropOffset = dropOffset,
-            dropAnimationEnabled = dropAnimationEnabled,
-            onDrop = onDrop,
-            onDragEnter = onDragEnter,
-            onDragExit = onDragExit,
-        )
-        state.addDropTarget(dropTargetState)
+
+        dropTargetState.size = size
+        dropTargetState.topLeft = topLeft
+    }
+
+    override fun onRemeasured(size: IntSize) {
+        dropTargetState.size = size.toSize()
     }
 
     override fun onReset() {
