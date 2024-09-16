@@ -87,6 +87,10 @@ class DragAndDropState<T>(
      * Add or update [DropTargetState] in [dropTargetMap]
      */
     internal fun addDropTarget(dropTargetState: DropTargetState<T>) {
+        if (dropTargetMap[dropTargetState.key] == dropTargetState) {
+            return
+        }
+
         dropTargetMap[dropTargetState.key] = dropTargetState
     }
 

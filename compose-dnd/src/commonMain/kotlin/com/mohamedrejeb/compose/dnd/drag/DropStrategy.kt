@@ -74,11 +74,6 @@ interface DropStrategy {
         ): DropTargetState<T>? =
             dropTargets
                 .minByOrNull {
-                    println("it.key: ${it.key}")
-                    println("draggedItemTopLeft: $draggedItemTopLeft")
-                    println("draggedItemSize: $draggedItemSize")
-                    println("it.topLeft: ${it.topLeft}")
-                    println("it.size: ${it.size}")
                     val p1 = Offset(
                         x = draggedItemTopLeft.x + draggedItemSize.width / 2f,
                         y = draggedItemTopLeft.y + draggedItemSize.height / 2f,
@@ -88,12 +83,7 @@ interface DropStrategy {
                         y = it.topLeft.y + it.size.height / 2f,
                     )
 
-                    println("p1: $p1")
-                    println("p2: $p2")
-
-                    MathUtils.distance2(p1 = p1, p2 = p2).also {
-                        println("distance2: $it")
-                    }
+                    MathUtils.distance2(p1 = p1, p2 = p2)
                 }
     }
 }
