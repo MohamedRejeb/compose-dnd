@@ -23,7 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import com.mohamedrejeb.compose.dnd.DragAndDropState
@@ -44,7 +44,7 @@ internal fun <T> DraggedItemShadow(
                     state.dragSizeAnimatable.value.toDpSize()
                 }
             )
-            .onGloballyPositioned {
+            .onPlaced {
                 draggedItemPositionInRoot.value = it.positionInRoot()
             }
             .graphicsLayer {
