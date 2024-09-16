@@ -27,7 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInRoot
 import com.mohamedrejeb.compose.dnd.drag.DraggedItemShadow
 import com.mohamedrejeb.compose.dnd.utils.fastForEach
@@ -61,7 +61,7 @@ fun <T> DragAndDropContainer(
 
     Box(
         modifier = modifier
-            .onGloballyPositioned {
+            .onPlaced {
                 positionInRoot.value = it.positionInRoot()
             }
             .pointerInput(enabled, state, state.pointerId) {
