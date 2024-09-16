@@ -33,7 +33,7 @@ internal class DraggableItemState<T>(
     var positionInRoot: Offset,
     var size: Size,
 
-    val content: @Composable () -> Unit,
+    var content: @Composable () -> Unit,
 ) {
     fun copy(): DraggableItemState<T> {
         return DraggableItemState(
