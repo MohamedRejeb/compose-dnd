@@ -118,7 +118,7 @@ internal fun <T> CoreDraggableItem(
             .onSizeChanged {
                 draggableItemState.size = it.toSize()
             }
-            .pointerInput(enabled, key, state, state.enabled) {
+            .pointerInput(key, enabled, state, state.enabled, dragAfterLongPress) {
                 detectDragStartGesture(
                     key = key,
                     state = state,
