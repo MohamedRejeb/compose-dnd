@@ -35,7 +35,7 @@ internal suspend fun <T> PointerInputScope.detectDragStartGesture(
     if (!enabled) return@coroutineScope
 
     awaitEachGesture {
-        val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Main)
+        val down = awaitFirstDown(requireUnconsumed = true, pass = PointerEventPass.Main)
         var drag: PointerInputChange?
         if (dragAfterLongPress) {
             drag = awaitLongPressOrCancellation(down.id)
