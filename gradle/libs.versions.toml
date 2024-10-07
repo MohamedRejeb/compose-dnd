@@ -1,11 +1,11 @@
 [versions]
-kotlin = "2.0.10"
+kotlin = "2.0.20"
 compose = "1.6.11"
 agp = "8.2.2"
 android-minSdk = "24"
 android-compileSdk = "34"
 android-targetSdk = "34"
-androidx-activityCompose = "1.9.1"
+androidx-activityCompose = "1.9.2"
 androidx-core-ktx = "1.13.1"
 voyager = "1.1.0-beta02"
 spotless = "6.25.0"
