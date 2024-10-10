@@ -16,7 +16,6 @@
 package com.mohamedrejeb.compose.dnd.drag
 
 import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.SpringSpec
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
