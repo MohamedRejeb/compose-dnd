@@ -55,12 +55,13 @@ internal fun <T> CoreDraggableItem(
     key: Any,
     data: T,
     state: DragAndDropState<T>,
-    enabled: Boolean = true,
-    dragAfterLongPress: Boolean = state.dragAfterLongPress,
-    dropTargets: List<Any> = emptyList(),
-    dropStrategy: DropStrategy = DropStrategy.SurfacePercentage,
-    dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
-    sizeDropAnimationSpec: AnimationSpec<Size> = SpringSpec(),
+    enabled: Boolean,
+    dragAfterLongPress: Boolean,
+    requireFirstDownUnconsumed: Boolean,
+    dropTargets: List<Any>,
+    dropStrategy: DropStrategy,
+    dropAnimationSpec: AnimationSpec<Offset>,
+    sizeDropAnimationSpec: AnimationSpec<Size>,
     draggableContent: @Composable () -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -118,12 +119,20 @@ internal fun <T> CoreDraggableItem(
             .onSizeChanged {
                 draggableItemState.size = it.toSize()
             }
-            .pointerInput(key, enabled, state, state.enabled, dragAfterLongPress) {
+            .pointerInput(
+                key,
+                enabled,
+                state,
+                state.enabled,
+                dragAfterLongPress,
+                requireFirstDownUnconsumed,
+            ) {
                 detectDragStartGesture(
                     key = key,
                     state = state,
                     enabled = enabled && state.enabled,
                     dragAfterLongPress = dragAfterLongPress,
+                    requireFirstDownUnconsumed = requireFirstDownUnconsumed,
                 )
             },
     ) {

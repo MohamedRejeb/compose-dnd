@@ -38,6 +38,7 @@ import com.mohamedrejeb.compose.dnd.drop.dropTarget
  * @param zIndex The z-index of the item.
  * @param enabled Whether the reorder is enabled.
  * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press
+ * @param requireFirstDownUnconsumed if true, the first down event must be unconsumed to start the drag
  * @param dropTargets - list of drop targets ids to which this item can be dropped, if empty, item can be dropped to any drop target
  * @param dropStrategy - strategy to determine the drop target
  * @param onDrop The action to perform when an item is dropped onto the target.
@@ -61,6 +62,7 @@ fun <T> ReorderableItem(
     zIndex: Float = 0f,
     enabled: Boolean = true,
     dragAfterLongPress: Boolean = state.dndState.dragAfterLongPress,
+    requireFirstDownUnconsumed: Boolean = state.dndState.requireFirstDownUnconsumed,
     dropTargets: List<Any> = emptyList(),
     dropStrategy: DropStrategy = DropStrategy.SurfacePercentage,
     onDrop: (state: DraggedItemState<T>) -> Unit = {},
@@ -99,6 +101,7 @@ fun <T> ReorderableItem(
         state = state.dndState,
         enabled = enabled,
         dragAfterLongPress = dragAfterLongPress,
+        requireFirstDownUnconsumed = requireFirstDownUnconsumed,
         dropTargets = dropTargets,
         dropStrategy = dropStrategy,
         dropAnimationSpec = dropAnimationSpec,

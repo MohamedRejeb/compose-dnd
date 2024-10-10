@@ -42,11 +42,13 @@ fun <T> rememberReorderState(
  * State of the reorder
  *
  * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press
+ * @param requireFirstDownUnconsumed if true, the first down event must be unconsumed to start the drag
  * This parameter is applied to all [ReorderableItem]s. If you want to change it for a specific item, use [ReorderableItem] parameter.
  */
 @Stable
 class ReorderState<T>(
     dragAfterLongPress: Boolean = false,
+    requireFirstDownUnconsumed: Boolean = false,
 ) {
     /**
      * State of the drag and drop
@@ -54,6 +56,7 @@ class ReorderState<T>(
     @ExperimentalDndApi
     val dndState = DragAndDropState<T>(
         dragAfterLongPress = dragAfterLongPress,
+        requireFirstDownUnconsumed = requireFirstDownUnconsumed,
     )
 
     @OptIn(ExperimentalDndApi::class)

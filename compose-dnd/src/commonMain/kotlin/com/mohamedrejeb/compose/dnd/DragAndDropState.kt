@@ -40,6 +40,7 @@ import kotlinx.coroutines.launch
  * Remember [DragAndDropState]
  * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press
  * This parameter is applied to all [DraggableItem]s. If you want to change it for a specific item, use [DraggableItem] parameter.
+ * @param requireFirstDownUnconsumed if true, the first down event should be unconsumed
  * @param T type of the data that is dragged
  * @return [DragAndDropState]
  * @see DragAndDropState
@@ -47,10 +48,12 @@ import kotlinx.coroutines.launch
 @Composable
 fun <T> rememberDragAndDropState(
     dragAfterLongPress: Boolean = false,
+    requireFirstDownUnconsumed: Boolean = false,
 ): DragAndDropState<T> {
     return remember {
         DragAndDropState(
             dragAfterLongPress = dragAfterLongPress,
+            requireFirstDownUnconsumed = requireFirstDownUnconsumed,
         )
     }
 }
@@ -59,11 +62,13 @@ fun <T> rememberDragAndDropState(
  * State of the drag and drop
  * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press
  * This parameter is applied to all [DraggableItem]s. If you want to change it for a specific item, use [DraggableItem] parameter.
+ * @param requireFirstDownUnconsumed if true, the first down event should be unconsumed
  * @param T type of the data that is dragged
  */
 @Stable
 class DragAndDropState<T>(
     internal val dragAfterLongPress: Boolean = false,
+    internal val requireFirstDownUnconsumed: Boolean = false,
 ) {
     /**
      * If true, drag and drop is enabled
