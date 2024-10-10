@@ -31,11 +31,12 @@ internal suspend fun <T> PointerInputScope.detectDragStartGesture(
     state: DragAndDropState<T>,
     enabled: Boolean,
     dragAfterLongPress: Boolean,
+    requireFirstDownUnconsumed: Boolean,
 ) = coroutineScope {
     if (!enabled) return@coroutineScope
 
     awaitEachGesture {
-        val down = awaitFirstDown(requireUnconsumed = true, pass = PointerEventPass.Main)
+        val down = awaitFirstDown(requireUnconsumed = requireFirstDownUnconsumed, pass = PointerEventPass.Main)
         var drag: PointerInputChange?
         if (dragAfterLongPress) {
             drag = awaitLongPressOrCancellation(down.id)

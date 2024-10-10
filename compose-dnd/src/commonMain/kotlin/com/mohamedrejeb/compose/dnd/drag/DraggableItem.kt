@@ -34,6 +34,7 @@ import com.mohamedrejeb.compose.dnd.DragAndDropState
  * @param state - state of the drag and drop
  * @param enabled - whether the drag and drop is enabled
  * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press
+ * @param requireFirstDownUnconsumed if true, the first down event must be unconsumed to start the drag
  * @param dropTargets - list of drop targets ids to which this item can be dropped, if empty, item can be dropped to any drop target
  * @param dropStrategy - strategy to determine the drop target
  * @param dropAnimationSpec - animation spec for the position drop animation
@@ -49,6 +50,7 @@ fun <T> DraggableItem(
     state: DragAndDropState<T>,
     enabled: Boolean = true,
     dragAfterLongPress: Boolean = state.dragAfterLongPress,
+    requireFirstDownUnconsumed: Boolean = state.requireFirstDownUnconsumed,
     dropTargets: List<Any> = emptyList(),
     dropStrategy: DropStrategy = DropStrategy.SurfacePercentage,
     dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
@@ -76,6 +78,7 @@ fun <T> DraggableItem(
         state = state,
         enabled = enabled,
         dragAfterLongPress = dragAfterLongPress,
+        requireFirstDownUnconsumed = requireFirstDownUnconsumed,
         dropTargets = dropTargets,
         dropStrategy = dropStrategy,
         dropAnimationSpec = dropAnimationSpec,
