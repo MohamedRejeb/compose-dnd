@@ -152,15 +152,10 @@ class DragAndDropState<T>(
      * @param offset - offset of the drag start position
      */
     internal suspend fun handleDragStart(
+        key: Any,
         offset: Offset,
     ) = coroutineScope {
-        val draggableItemState = draggableItemMap.values.find {
-            MathUtils.isPointInRectangle(
-                point = offset,
-                topLeft = it.positionInRoot,
-                size = it.size,
-            )
-        } ?: return@coroutineScope
+        val draggableItemState = draggableItemMap[key] ?: return@coroutineScope
 
         launch {
             dragPositionAnimatable.snapTo(Offset.Zero)

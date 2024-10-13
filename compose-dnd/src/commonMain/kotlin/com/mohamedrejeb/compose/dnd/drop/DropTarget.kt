@@ -21,12 +21,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
 import androidx.compose.ui.node.LayoutAwareModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.node.currentValueOf
 import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.toSize
 import com.mohamedrejeb.compose.dnd.DragAndDropState
+import com.mohamedrejeb.compose.dnd.LocalDragAndDropInfo
 import com.mohamedrejeb.compose.dnd.drag.DraggedItemState
 
 /**
@@ -54,17 +57,18 @@ fun <T> Modifier.dropTarget(
     onDrop: (state: DraggedItemState<T>) -> Unit = {},
     onDragEnter: (state: DraggedItemState<T>) -> Unit = {},
     onDragExit: (state: DraggedItemState<T>) -> Unit = {},
-): Modifier = this then DropTargetNodeElement(
-    key = key,
-    state = state,
-    zIndex = zIndex,
-    dropAlignment = dropAlignment,
-    dropOffset = dropOffset,
-    dropAnimationEnabled = dropAnimationEnabled,
-    onDrop = onDrop,
-    onDragEnter = onDragEnter,
-    onDragExit = onDragExit,
-)
+): Modifier =
+    this then DropTargetNodeElement(
+        key = key,
+        state = state,
+        zIndex = zIndex,
+        dropAlignment = dropAlignment,
+        dropOffset = dropOffset,
+        dropAnimationEnabled = dropAnimationEnabled,
+        onDrop = onDrop,
+        onDragEnter = onDragEnter,
+        onDragExit = onDragExit,
+    )
 
 private data class DropTargetNodeElement<T>(
     val key: Any,
@@ -133,15 +137,25 @@ private data class DropTargetNodeElement<T>(
 private data class DropTargetNode<T>(
     val dropTargetState: DropTargetState<T>,
     var state: DragAndDropState<T>,
-) : Modifier.Node(), LayoutAwareModifierNode {
+) : Modifier.Node(), LayoutAwareModifierNode, CompositionLocalConsumerModifierNode {
 
     private val key get() = dropTargetState.key
 
+    private var isShadow = false
+
     override fun onAttach() {
+        isShadow = currentValueOf(LocalDragAndDropInfo).isShadow
+
+        if (isShadow)
+            return
+
         state.addDropTarget(dropTargetState)
     }
 
     override fun onPlaced(coordinates: LayoutCoordinates) {
+        if (isShadow)
+            return
+
         state.addDropTarget(dropTargetState)
 
         val size = coordinates.size.toSize()
@@ -152,14 +166,23 @@ private data class DropTargetNode<T>(
     }
 
     override fun onRemeasured(size: IntSize) {
+        if (isShadow)
+            return
+
         dropTargetState.size = size.toSize()
     }
 
     override fun onReset() {
+        if (isShadow)
+            return
+
         state.removeDropTarget(key)
     }
 
     override fun onDetach() {
+        if (isShadow)
+            return
+
         state.removeDropTarget(key)
     }
 }

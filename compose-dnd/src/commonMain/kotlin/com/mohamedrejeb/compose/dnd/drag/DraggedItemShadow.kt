@@ -18,6 +18,7 @@ package com.mohamedrejeb.compose.dnd.drag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -26,7 +27,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
+import com.mohamedrejeb.compose.dnd.DragAndDropInfoImpl
 import com.mohamedrejeb.compose.dnd.DragAndDropState
+import com.mohamedrejeb.compose.dnd.LocalDragAndDropInfo
 
 @Composable
 internal fun <T> DraggedItemShadow(
@@ -54,6 +57,10 @@ internal fun <T> DraggedItemShadow(
                 translationY = dragPositionY - draggedItemPositionInRoot.value.y
             },
     ) {
-        state.currentDraggableItem?.content?.invoke()
+        CompositionLocalProvider(
+            LocalDragAndDropInfo provides DragAndDropInfoImpl(isShadow = true)
+        ) {
+            state.currentDraggableItem?.content?.invoke()
+        }
     }
 }
