@@ -146,15 +146,17 @@ private data class DropTargetNode<T>(
     override fun onAttach() {
         isShadow = currentValueOf(LocalDragAndDropInfo).isShadow
 
-        if (isShadow)
+        if (isShadow) {
             return
+        }
 
         state.addDropTarget(dropTargetState)
     }
 
     override fun onPlaced(coordinates: LayoutCoordinates) {
-        if (isShadow)
+        if (isShadow) {
             return
+        }
 
         state.addDropTarget(dropTargetState)
 
@@ -166,22 +168,25 @@ private data class DropTargetNode<T>(
     }
 
     override fun onRemeasured(size: IntSize) {
-        if (isShadow)
+        if (isShadow) {
             return
+        }
 
         dropTargetState.size = size.toSize()
     }
 
     override fun onReset() {
-        if (isShadow)
+        if (isShadow) {
             return
+        }
 
         state.removeDropTarget(key)
     }
 
     override fun onDetach() {
-        if (isShadow)
+        if (isShadow) {
             return
+        }
 
         state.removeDropTarget(key)
     }
