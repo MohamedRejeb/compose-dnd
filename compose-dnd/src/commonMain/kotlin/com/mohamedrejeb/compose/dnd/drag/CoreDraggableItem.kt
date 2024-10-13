@@ -30,6 +30,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.unit.toSize
 import com.mohamedrejeb.compose.dnd.DragAndDropState
+import com.mohamedrejeb.compose.dnd.LocalDragAndDropInfo
 import com.mohamedrejeb.compose.dnd.gesture.detectDragStartGesture
 
 /**
@@ -64,6 +65,18 @@ internal fun <T> CoreDraggableItem(
     draggableContent: @Composable () -> Unit,
     content: @Composable () -> Unit,
 ) {
+    val dndInfo = LocalDragAndDropInfo.current
+
+    if (dndInfo.isShadow) {
+        Box(
+            modifier = modifier
+        ) {
+            content()
+        }
+
+        return
+    }
+
     val draggableItemState = remember(key) {
         DraggableItemState(
             key = key,
@@ -123,12 +136,14 @@ internal fun <T> CoreDraggableItem(
                 enabled,
                 state,
                 state.enabled,
+                draggableItemState,
                 dragAfterLongPress,
                 requireFirstDownUnconsumed,
             ) {
                 detectDragStartGesture(
                     key = key,
                     state = state,
+                    draggableItemState = draggableItemState,
                     enabled = enabled && state.enabled,
                     dragAfterLongPress = dragAfterLongPress,
                     requireFirstDownUnconsumed = requireFirstDownUnconsumed,
