@@ -52,8 +52,11 @@ kotlin {
         }
     }
 
-    jvmToolchain(11)
-    jvm("desktop")
+    jvm("desktop") {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
+        }
+    }
 
     js(IR) {
         browser()
@@ -94,9 +97,5 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
-    }
-
-    kotlin {
-        jvmToolchain(8)
     }
 }
