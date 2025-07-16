@@ -4,7 +4,7 @@ plugins {
 
 allprojects {
     group = "com.mohamedrejeb.dnd"
-    version = System.getenv("VERSION") ?: "0.3.0"
+    version = System.getenv("VERSION") ?: "0.4.0"
 }
 
 nexusPublishing {
