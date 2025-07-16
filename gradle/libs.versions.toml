@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.0.20"
+kotlin = "2.1.21"
 compose = "1.6.11"
 agp = "8.2.2"
 android-minSdk = "24"
