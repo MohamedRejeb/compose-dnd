@@ -9,7 +9,7 @@ androidx-activityCompose = "1.9.2"
 androidx-core-ktx = "1.13.1"
 voyager = "1.1.0-beta02"
 spotless = "6.25.0"
-nexus-publish = "2.0.0-rc-1"
+nexus-publish = "2.0.0"
 
 [libraries]
 spotless-gradle = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
