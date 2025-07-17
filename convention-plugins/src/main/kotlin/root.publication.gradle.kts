@@ -10,9 +10,6 @@ allprojects {
 }
 
 nexusPublishing {
-    repositories {
-        sonatype()
-    }
     // Configure maven central repository
     repositories {
         // see https://central.sonatype.org/publish/publish-portal-ossrh-staging-api/#configuration
