@@ -137,7 +137,9 @@ private data class DropTargetNodeElement<T>(
 private data class DropTargetNode<T>(
     val dropTargetState: DropTargetState<T>,
     var state: DragAndDropState<T>,
-) : Modifier.Node(), LayoutAwareModifierNode, CompositionLocalConsumerModifierNode {
+) : Modifier.Node(),
+    LayoutAwareModifierNode,
+    CompositionLocalConsumerModifierNode {
 
     private val key get() = dropTargetState.key
 

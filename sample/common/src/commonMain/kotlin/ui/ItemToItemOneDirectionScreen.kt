@@ -133,8 +133,7 @@ private fun ItemToItemOneDirectionScreenContent(
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
-                                }
-                                .size(200.dp)
+                                }.size(200.dp)
                         )
                     }
                 }
@@ -151,8 +150,7 @@ private fun ItemToItemOneDirectionScreenContent(
                             if (dragAndDropState.hoveredDropTargetKey == "targetKey") primary else onSurface
                         },
                         shape = RoundedCornerShape(24.dp),
-                    )
-                    .dropTarget(
+                    ).dropTarget(
                         key = "targetKey",
                         state = dragAndDropState,
                         onDrop = {

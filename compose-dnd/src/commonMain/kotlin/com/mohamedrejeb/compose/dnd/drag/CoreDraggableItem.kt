@@ -127,11 +127,9 @@ internal fun <T> CoreDraggableItem(
         modifier = modifier
             .onPlaced {
                 draggableItemState.positionInRoot = it.positionInRoot()
-            }
-            .onSizeChanged {
+            }.onSizeChanged {
                 draggableItemState.size = it.toSize()
-            }
-            .pointerInput(
+            }.pointerInput(
                 key,
                 enabled,
                 state,

@@ -47,8 +47,7 @@ fun RedBox(
                 } else {
                     Modifier
                 }
-            )
-            .clip(RoundedCornerShape(24.dp))
+            ).clip(RoundedCornerShape(24.dp))
             .background(MaterialTheme.colorScheme.tertiary)
     ) {
         Icon(

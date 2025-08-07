@@ -155,8 +155,7 @@ private fun ListToListWithReorderContent(
                         width = 1.dp,
                         color = MaterialTheme.colorScheme.onSurface,
                         shape = RoundedCornerShape(24.dp),
-                    )
-                    .dropTarget(
+                    ).dropTarget(
                         key = "listOne",
                         state = reorderState.dndState,
                         dropAnimationEnabled = false,
@@ -214,8 +213,7 @@ private fun ListToListWithReorderContent(
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
-                                }
-                                .fillMaxWidth()
+                                }.fillMaxWidth()
                                 .height(60.dp)
                         )
                     }
@@ -233,8 +231,7 @@ private fun ListToListWithReorderContent(
                         width = 1.dp,
                         color = MaterialTheme.colorScheme.onSurface,
                         shape = RoundedCornerShape(24.dp),
-                    )
-                    .dropTarget(
+                    ).dropTarget(
                         key = "listTwo",
                         state = reorderState.dndState,
                         dropAnimationEnabled = false,
@@ -292,8 +289,7 @@ private fun ListToListWithReorderContent(
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
-                                }
-                                .fillMaxWidth()
+                                }.fillMaxWidth()
                                 .height(60.dp)
                         )
                     }

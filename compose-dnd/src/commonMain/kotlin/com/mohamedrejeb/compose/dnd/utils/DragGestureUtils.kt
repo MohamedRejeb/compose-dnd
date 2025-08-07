@@ -96,7 +96,8 @@ internal suspend inline fun AwaitPointerEventScope.awaitPointerSlopOrCancellatio
             val inDirection = if (triggerOnMainAxisSlop) {
                 abs(totalMainPositionChange)
             } else {
-                pointerDirectionConfig.offsetFromChanges(
+                pointerDirectionConfig
+                    .offsetFromChanges(
                     totalMainPositionChange,
                     totalCrossPositionChange
                 ).getDistance()
@@ -174,9 +175,7 @@ private val mouseToTouchSlopRatio = mouseSlop / defaultTouchSlop
 //  functions public (see the comment at the top of the file).
 //  After it will be a public API, we should get rid of `touchSlop / 144` and return absolute
 //  value 0.125.dp.toPx(). It is not possible right now, because we can't access density.
-internal fun ViewConfiguration.pointerSlop(pointerType: PointerType): Float {
-    return when (pointerType) {
+internal fun ViewConfiguration.pointerSlop(pointerType: PointerType): Float = when (pointerType) {
         PointerType.Mouse -> touchSlop * mouseToTouchSlopRatio
         else -> touchSlop
     }
-}
