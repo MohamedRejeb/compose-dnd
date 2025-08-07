@@ -1,14 +1,14 @@
 [versions]
-kotlin = "2.1.21"
-compose = "1.8.0"
-agp = "8.2.2"
+kotlin = "2.2.0"
+compose = "1.8.2"
+agp = "8.11.1"
 android-minSdk = "24"
-android-compileSdk = "34"
-android-targetSdk = "34"
-androidx-activityCompose = "1.9.2"
-androidx-core-ktx = "1.13.1"
-voyager = "1.1.0-beta02"
-spotless = "6.25.0"
+android-compileSdk = "36"
+android-targetSdk = "36"
+androidx-activityCompose = "1.10.1"
+androidx-core-ktx = "1.16.0"
+voyager = "1.1.0-beta03"
+spotless = "7.2.1"
 nexus-publish = "2.0.0"
 
 [libraries]
