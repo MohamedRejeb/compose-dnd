@@ -123,8 +123,7 @@ private fun ItemToItemTwoDirectionsScreenContent(
                             if (dragAndDropState.hoveredDropTargetKey == 0) primary else onSurface
                         },
                         shape = RoundedCornerShape(24.dp),
-                    )
-                    .dropTarget(
+                    ).dropTarget(
                         key = 0,
                         state = dragAndDropState,
                         onDragEnter = { state ->
@@ -152,8 +151,7 @@ private fun ItemToItemTwoDirectionsScreenContent(
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
-                                }
-                                .fillMaxSize()
+                                }.fillMaxSize()
                         )
                     }
                 }
@@ -170,8 +168,7 @@ private fun ItemToItemTwoDirectionsScreenContent(
                             if (dragAndDropState.hoveredDropTargetKey == 1) primary else onSurface
                         },
                         shape = RoundedCornerShape(24.dp),
-                    )
-                    .dropTarget(
+                    ).dropTarget(
                         key = 1,
                         state = dragAndDropState,
                         onDragEnter = { state ->
@@ -199,8 +196,7 @@ private fun ItemToItemTwoDirectionsScreenContent(
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
-                                }
-                                .fillMaxSize()
+                                }.fillMaxSize()
                         )
                     }
                 }

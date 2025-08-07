@@ -46,11 +46,9 @@ internal fun <T> DraggedItemShadow(
                 with(density) {
                     state.dragSizeAnimatable.value.toDpSize()
                 }
-            )
-            .onPlaced {
+            ).onPlaced {
                 draggedItemPositionInRoot.value = it.positionInRoot()
-            }
-            .graphicsLayer {
+            }.graphicsLayer {
                 val dragPositionX = state.dragPositionAnimatable.value.x + state.dragPosition.value.x
                 val dragPositionY = state.dragPositionAnimatable.value.y + state.dragPosition.value.y
                 translationX = dragPositionX - draggedItemPositionInRoot.value.x

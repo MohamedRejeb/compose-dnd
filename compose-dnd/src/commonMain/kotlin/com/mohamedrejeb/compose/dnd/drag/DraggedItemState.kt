@@ -35,13 +35,11 @@ class DraggedItemState<T> internal constructor(
         key: Any = this.key,
         data: T = this.data,
         dragAmount: Offset = this.dragAmount,
-    ): DraggedItemState<T> {
-        return DraggedItemState(
+    ): DraggedItemState<T> = DraggedItemState(
             key = key,
             data = data,
             dragAmount = dragAmount,
         )
-    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

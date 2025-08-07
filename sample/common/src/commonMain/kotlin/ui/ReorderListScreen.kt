@@ -161,8 +161,7 @@ private fun ReorderScreenContent(
                         modifier = Modifier
                             .graphicsLayer {
                                 alpha = if (isDragging) 0f else 1f
-                            }
-                            .fillMaxWidth()
+                            }.fillMaxWidth()
                             .height(60.dp)
                     )
                 }

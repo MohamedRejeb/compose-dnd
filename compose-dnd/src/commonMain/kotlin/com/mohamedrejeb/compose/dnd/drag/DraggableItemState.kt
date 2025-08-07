@@ -35,8 +35,7 @@ internal class DraggableItemState<T>(
 
     var content: @Composable () -> Unit,
 ) {
-    fun copy(): DraggableItemState<T> {
-        return DraggableItemState(
+    fun copy(): DraggableItemState<T> = DraggableItemState(
             key = key,
             data = data,
             dropTargets = dropTargets,
@@ -47,5 +46,4 @@ internal class DraggableItemState<T>(
             size = size,
             content = content
         )
-    }
 }

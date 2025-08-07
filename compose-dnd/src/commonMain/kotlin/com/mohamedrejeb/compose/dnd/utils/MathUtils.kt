@@ -107,14 +107,10 @@ internal object MathUtils {
         point: Offset,
         topLeft: Offset,
         size: Size,
-    ): Boolean {
-        return point.x >= topLeft.x &&
+    ): Boolean = point.x >= topLeft.x &&
                 point.x <= topLeft.x + size.width &&
                 point.y >= topLeft.y &&
                 point.y <= topLeft.y + size.height
-    }
 
-    fun distance2(p1: Offset, p2: Offset): Float {
-        return (p1.x - p2.x).pow(2) + (p1.y - p2.y).pow(2)
-    }
+    fun distance2(p1: Offset, p2: Offset): Float = (p1.x - p2.x).pow(2) + (p1.y - p2.y).pow(2)
 }

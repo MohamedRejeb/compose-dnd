@@ -49,14 +49,12 @@ import kotlinx.coroutines.launch
 fun <T> rememberDragAndDropState(
     dragAfterLongPress: Boolean = false,
     requireFirstDownUnconsumed: Boolean = false,
-): DragAndDropState<T> {
-    return remember {
+): DragAndDropState<T> = remember {
         DragAndDropState(
             dragAfterLongPress = dragAfterLongPress,
             requireFirstDownUnconsumed = requireFirstDownUnconsumed,
         )
     }
-}
 
 /**
  * State of the drag and drop
@@ -131,6 +129,10 @@ class DragAndDropState<T>(
     internal fun addDraggableItem(
         state: DraggableItemState<T>
     ) {
+        if (draggableItemMap[state.key] == state) {
+            return
+        }
+
         draggableItemMap[state.key] = state
     }
 
@@ -202,8 +204,7 @@ class DragAndDropState<T>(
                         size2 = it.size,
                     ) &&
                         (dropTargetIds.isEmpty() || it.key in dropTargetIds)
-                }
-                .groupBy { it.zIndex }
+                }.groupBy { it.zIndex }
                 .maxByOrNull { it.key }
                 ?.value
                 .orEmpty()
@@ -220,7 +221,10 @@ class DragAndDropState<T>(
         )
 
         if (hoveredDropTarget?.key != hoveredDropTargetKey && newDraggedItemState != null) {
-            dropTargetMap.values.find { it.key == hoveredDropTargetKey }?.onDragExit?.invoke(newDraggedItemState)
+            dropTargetMap.values
+                .find { it.key == hoveredDropTargetKey }
+                ?.onDragExit
+                ?.invoke(newDraggedItemState)
             hoveredDropTarget?.onDragEnter?.invoke(newDraggedItemState)
         }
 

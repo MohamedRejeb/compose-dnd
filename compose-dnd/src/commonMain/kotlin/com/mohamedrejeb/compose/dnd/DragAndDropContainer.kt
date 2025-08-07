@@ -63,8 +63,7 @@ fun <T> DragAndDropContainer(
         modifier = modifier
             .onPlaced {
                 positionInRoot.value = it.positionInRoot()
-            }
-            .pointerInput(enabled, state, state.pointerId) {
+            }.pointerInput(enabled, state, state.pointerId) {
                 if (!enabled) return@pointerInput
 
                 awaitEachGesture {

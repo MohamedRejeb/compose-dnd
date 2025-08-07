@@ -148,8 +148,7 @@ private fun ListToListWithoutReorderContent(
                             if (dragAndDropState.hoveredDropTargetKey == "listOne") primary else onSurface
                         },
                         shape = RoundedCornerShape(24.dp),
-                    )
-                    .dropTarget(
+                    ).dropTarget(
                         key = "listOne",
                         state = dragAndDropState,
                         dropAnimationEnabled = false,
@@ -185,8 +184,7 @@ private fun ListToListWithoutReorderContent(
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
-                                }
-                                .fillMaxWidth()
+                                }.fillMaxWidth()
                                 .height(60.dp)
                         )
                     }
@@ -206,8 +204,7 @@ private fun ListToListWithoutReorderContent(
                             if (dragAndDropState.hoveredDropTargetKey == "listTwo") primary else onSurface
                         },
                         shape = RoundedCornerShape(24.dp),
-                    )
-                    .dropTarget(
+                    ).dropTarget(
                         key = "listTwo",
                         state = dragAndDropState,
                         dropAnimationEnabled = false,
@@ -243,8 +240,7 @@ private fun ListToListWithoutReorderContent(
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
-                                }
-                                .fillMaxWidth()
+                                }.fillMaxWidth()
                                 .height(60.dp)
                         )
                     }
