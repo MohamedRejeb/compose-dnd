@@ -1,5 +1,3 @@
-import gradle.kotlin.dsl.accessors._cf23dfd706c1bf9cda1f64fe1da16a33.nexusPublishing
-
 plugins {
     id("io.github.gradle-nexus.publish-plugin")
 }
@@ -11,11 +9,11 @@ allprojects {
 
 nexusPublishing {
     // Configure maven central repository
+    // https://github.com/gradle-nexus/publish-plugin#publishing-to-maven-central-via-sonatype-ossrh
     repositories {
-        // see https://central.sonatype.org/publish/publish-portal-ossrh-staging-api/#configuration
         sonatype {
-            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
-            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
             stagingProfileId.set(System.getenv("OSSRH_STAGING_PROFILE_ID"))
             username.set(System.getenv("OSSRH_USERNAME"))
             password.set(System.getenv("OSSRH_PASSWORD"))
