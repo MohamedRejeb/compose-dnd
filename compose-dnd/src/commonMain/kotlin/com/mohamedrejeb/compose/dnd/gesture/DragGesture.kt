@@ -18,6 +18,7 @@ package com.mohamedrejeb.compose.dnd.gesture
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
+import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerInputScope
@@ -31,6 +32,7 @@ internal suspend fun <T> PointerInputScope.detectDragStartGesture(
     key: Any,
     state: DragAndDropState<T>,
     draggableItemState: DraggableItemState<T>,
+    graphicsLayer: GraphicsLayer?,
     enabled: Boolean,
     dragAfterLongPress: Boolean,
     requireFirstDownUnconsumed: Boolean,
@@ -58,6 +60,7 @@ internal suspend fun <T> PointerInputScope.detectDragStartGesture(
             val draggableItemState = state.draggableItemMap.getOrPut(key) { draggableItemState }
 
             launch {
+                draggableItemState.bitmap = graphicsLayer?.toImageBitmap()
                 state.handleDragStart(
                     key = key,
                     offset = drag.position + draggableItemState.positionInRoot

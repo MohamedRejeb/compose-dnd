@@ -20,6 +20,7 @@ import androidx.compose.animation.core.SpringSpec
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ImageBitmap
 
 internal class DraggableItemState<T>(
     var key: Any,
@@ -34,6 +35,7 @@ internal class DraggableItemState<T>(
     var size: Size,
 
     var content: @Composable () -> Unit,
+    var bitmap: ImageBitmap? = null,
 ) {
     fun copy(): DraggableItemState<T> = DraggableItemState(
             key = key,
@@ -44,6 +46,7 @@ internal class DraggableItemState<T>(
             sizeDropAnimationSpec = sizeDropAnimationSpec,
             positionInRoot = positionInRoot,
             size = size,
-            content = content
+            content = content,
+            bitmap = bitmap,
         )
 }

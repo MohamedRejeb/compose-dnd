@@ -48,6 +48,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.drag.DraggableItem
+import com.mohamedrejeb.compose.dnd.drag.draggable
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import components.RedBox
@@ -184,21 +185,28 @@ private fun ItemToItemTwoDirectionsScreenContent(
                     )
             ) {
                 if (itemIndex == 1) {
-                    DraggableItem(
-                        state = dragAndDropState,
-                        key = 0,
-                        data = 1,
-                        dropTargets = listOf(0),
-                        modifier = Modifier
-                            .size(100.dp)
-                    ) {
+//                    DraggableItem(
+//                        state = dragAndDropState,
+//                        key = 0,
+//                        data = 1,
+//                        dropTargets = listOf(0),
+//                        modifier = Modifier
+//                            .size(100.dp)
+//                    ) {
                         RedBox(
                             modifier = Modifier
                                 .graphicsLayer {
-                                    alpha = if (isDragging) 0f else 1f
-                                }.fillMaxSize()
+//                                    alpha = if (isDragging) 0f else 1f
+                                }
+                                .size(100.dp)
+                                .draggable(
+                                    state = dragAndDropState,
+                                    key = 0,
+                                    data = 1,
+                                    dropTargets = listOf(0),
+                                )
                         )
-                    }
+//                    }
                 }
             }
         }

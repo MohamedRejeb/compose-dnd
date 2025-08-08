@@ -142,6 +142,7 @@ internal fun <T> CoreDraggableItem(
                     key = key,
                     state = state,
                     draggableItemState = draggableItemState,
+                    graphicsLayer = null,
                     enabled = enabled && state.enabled,
                     dragAfterLongPress = dragAfterLongPress,
                     requireFirstDownUnconsumed = requireFirstDownUnconsumed,

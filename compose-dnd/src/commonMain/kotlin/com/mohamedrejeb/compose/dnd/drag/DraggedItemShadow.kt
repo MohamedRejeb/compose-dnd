@@ -15,6 +15,7 @@
  */
 package com.mohamedrejeb.compose.dnd.drag
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -40,7 +41,22 @@ internal fun <T> DraggedItemShadow(
         mutableStateOf(Offset.Zero)
     }
 
-    Box(
+    state.currentDraggableItem?.bitmap?.let {
+        Image(
+            bitmap = it,
+            contentDescription = null,
+            modifier = Modifier
+                .onPlaced {
+                    draggedItemPositionInRoot.value = it.positionInRoot()
+                }
+                .graphicsLayer {
+                    val dragPositionX = state.dragPositionAnimatable.value.x + state.dragPosition.value.x
+                    val dragPositionY = state.dragPositionAnimatable.value.y + state.dragPosition.value.y
+                    translationX = dragPositionX - draggedItemPositionInRoot.value.x
+                    translationY = dragPositionY - draggedItemPositionInRoot.value.y
+                }
+        )
+    } ?: Box(
         modifier = Modifier
             .size(
                 with(density) {
