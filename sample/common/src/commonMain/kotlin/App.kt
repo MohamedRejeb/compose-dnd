@@ -20,6 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import navigation.AxisLockedDragRoute
+import navigation.ConditionalDropRoute
+import navigation.DragHandleReorderRoute
 import navigation.DropStrategiesPlaygroundRoute
 import navigation.HomeRoute
 import navigation.ItemToItemOneDirectionRoute
@@ -28,6 +31,9 @@ import navigation.ListToListWithReorderRoute
 import navigation.ListToListWithoutReorderRoute
 import navigation.ReorderListRoute
 import theme.AppTheme
+import ui.AxisLockedDragScreen
+import ui.ConditionalDropScreen
+import ui.DragHandleReorderScreen
 import ui.DropStrategiesPlaygroundScreen
 import ui.HomeScreen
 import ui.ItemToItemOneDirectionScreen
@@ -69,6 +75,15 @@ fun App() {
                         onNavigateToDropStrategiesPlayground = {
                             navController.navigate(DropStrategiesPlaygroundRoute)
                         },
+                        onNavigateToDragHandleReorder = {
+                            navController.navigate(DragHandleReorderRoute)
+                        },
+                        onNavigateToAxisLockedDrag = {
+                            navController.navigate(AxisLockedDragRoute)
+                        },
+                        onNavigateToConditionalDrop = {
+                            navController.navigate(ConditionalDropRoute)
+                        },
                     )
                 }
                 composable<ItemToItemOneDirectionRoute> {
@@ -98,6 +113,21 @@ fun App() {
                 }
                 composable<DropStrategiesPlaygroundRoute> {
                     DropStrategiesPlaygroundScreen(
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable<DragHandleReorderRoute> {
+                    DragHandleReorderScreen(
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable<AxisLockedDragRoute> {
+                    AxisLockedDragScreen(
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable<ConditionalDropRoute> {
+                    ConditionalDropScreen(
                         onBack = { navController.popBackStack() },
                     )
                 }
