@@ -23,7 +23,3 @@ kotlin {
         implementation(compose.foundation)
     }
 }
-
-compose.experimental {
-    web.application {}
-}
