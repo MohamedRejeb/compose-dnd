@@ -26,21 +26,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 
-object HomeScreen : Screen {
-
-    @Composable
-    override fun Content() {
-        HomeScreenContent()
-    }
-}
 @Composable
-private fun HomeScreenContent() {
-    val navigator = LocalNavigator.currentOrThrow
-
+fun HomeScreen(
+    onNavigateToItemToItemOneDirection: () -> Unit,
+    onNavigateToItemToItemTwoDirections: () -> Unit,
+    onNavigateToReorderList: () -> Unit,
+    onNavigateToListToListWithoutReorder: () -> Unit,
+    onNavigateToListToListWithReorder: () -> Unit,
+    onNavigateToDropStrategiesPlayground: () -> Unit,
+) {
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
@@ -52,37 +47,32 @@ private fun HomeScreenContent() {
         ) {
             HomeListItem(
                 text = "From item to item (one direction)",
-                onClick = {
-                    navigator.push(ItemToItemOneDirectionScreen)
-                }
+                onClick = onNavigateToItemToItemOneDirection,
             )
 
             HomeListItem(
                 text = "From item to item (two directions)",
-                onClick = {
-                    navigator.push(ItemToItemTwoDirectionsScreen)
-                }
+                onClick = onNavigateToItemToItemTwoDirections,
             )
 
             HomeListItem(
                 text = "Reorderable List",
-                onClick = {
-                    navigator.push(ReorderListScreen)
-                }
+                onClick = onNavigateToReorderList,
             )
 
             HomeListItem(
                 text = "From list to list (without reorder)",
-                onClick = {
-                    navigator.push(ListToListWithoutReorderScreen)
-                }
+                onClick = onNavigateToListToListWithoutReorder,
             )
 
             HomeListItem(
                 text = "From list to list (with reorder)",
-                onClick = {
-                    navigator.push(ListToListWithReorderScreen)
-                }
+                onClick = onNavigateToListToListWithReorder,
+            )
+
+            HomeListItem(
+                text = "Drop Strategies Playground",
+                onClick = onNavigateToDropStrategiesPlayground,
             )
         }
     }

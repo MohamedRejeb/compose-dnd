@@ -23,6 +23,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinSerialization)
     id("module.spotless")
 }
 
@@ -69,7 +70,7 @@ kotlin {
         implementation(compose.material3)
         implementation(compose.materialIconsExtended)
 
-        implementation(libs.voyager.navigator)
+        implementation(libs.jetbrains.navigation.compose)
     }
 }
 

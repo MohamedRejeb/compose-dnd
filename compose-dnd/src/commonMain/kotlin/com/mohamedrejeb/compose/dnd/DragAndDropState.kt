@@ -49,7 +49,7 @@ import kotlinx.coroutines.launch
 fun <T> rememberDragAndDropState(
     dragAfterLongPress: Boolean = false,
     requireFirstDownUnconsumed: Boolean = false,
-): DragAndDropState<T> = remember {
+): DragAndDropState<T> = remember(dragAfterLongPress, requireFirstDownUnconsumed) {
         DragAndDropState(
             dragAfterLongPress = dragAfterLongPress,
             requireFirstDownUnconsumed = requireFirstDownUnconsumed,

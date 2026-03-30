@@ -47,9 +47,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 import com.mohamedrejeb.compose.dnd.drag.DropStrategy
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
@@ -60,44 +57,39 @@ import components.RedBox
 import kotlinx.coroutines.launch
 import utils.handleLazyListScroll
 
-object ListToListWithReorderScreen : Screen {
-
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    override fun Content() {
-        val navigator = LocalNavigator.currentOrThrow
-
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "From list to list (with reorder)",
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ListToListWithReorderScreen(
+    onBack: () -> Unit,
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "From list to list (with reorder)",
+                    )
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = onBack
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = "Back",
                         )
-                    },
-                    navigationIcon = {
-                        IconButton(
-                            onClick = {
-                                navigator.pop()
-                            }
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = "Back",
-                            )
-                        }
-                    },
-                )
-            },
-        ) { paddingValues ->
-            ListToListWithReorderContent(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .safeDrawingPadding()
-                    .padding(paddingValues)
-                    .padding(20.dp)
+                    }
+                },
             )
-        }
+        },
+    ) { paddingValues ->
+        ListToListWithReorderContent(
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding()
+                .padding(paddingValues)
+                .padding(20.dp)
+        )
     }
 }
 
