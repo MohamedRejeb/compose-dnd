@@ -37,6 +37,7 @@ import com.mohamedrejeb.compose.dnd.DragAndDropState
  * @param requireFirstDownUnconsumed if true, the first down event must be unconsumed to start the drag
  * @param dropTargets - list of drop targets ids to which this item can be dropped, if empty, item can be dropped to any drop target
  * @param dropStrategy - strategy to determine the drop target
+ * @param dragAxis - axis constraint for drag movement
  * @param dropAnimationSpec - animation spec for the position drop animation
  * @param sizeDropAnimationSpec - animation spec for the size drop animation
  * @param draggableContent The content of the draggable item, if null, the content of the item will be used.
@@ -53,6 +54,7 @@ fun <T> DraggableItem(
     requireFirstDownUnconsumed: Boolean = state.requireFirstDownUnconsumed,
     dropTargets: List<Any> = emptyList(),
     dropStrategy: DropStrategy = DropStrategy.SurfacePercentage,
+    dragAxis: DragAxis = DragAxis.Free,
     dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
     sizeDropAnimationSpec: AnimationSpec<Size> = SpringSpec(),
     draggableContent: (@Composable () -> Unit)? = null,
@@ -81,6 +83,7 @@ fun <T> DraggableItem(
         requireFirstDownUnconsumed = requireFirstDownUnconsumed,
         dropTargets = dropTargets,
         dropStrategy = dropStrategy,
+        dragAxis = dragAxis,
         dropAnimationSpec = dropAnimationSpec,
         sizeDropAnimationSpec = sizeDropAnimationSpec,
         draggableContent = draggableContent ?: {

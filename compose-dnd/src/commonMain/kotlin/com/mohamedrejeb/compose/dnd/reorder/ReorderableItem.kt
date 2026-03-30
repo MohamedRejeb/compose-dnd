@@ -24,6 +24,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 import com.mohamedrejeb.compose.dnd.drag.CoreDraggableItem
+import com.mohamedrejeb.compose.dnd.drag.DragAxis
 import com.mohamedrejeb.compose.dnd.drag.DraggedItemState
 import com.mohamedrejeb.compose.dnd.drag.DropStrategy
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
@@ -41,6 +42,7 @@ import com.mohamedrejeb.compose.dnd.drop.dropTarget
  * @param requireFirstDownUnconsumed if true, the first down event must be unconsumed to start the drag
  * @param dropTargets - list of drop targets ids to which this item can be dropped, if empty, item can be dropped to any drop target
  * @param dropStrategy - strategy to determine the drop target
+ * @param dragAxis - axis constraint for drag movement
  * @param onDrop The action to perform when an item is dropped onto the target.
  * Accepts the dragged item state as a parameter.
  * @param onDragEnter The action to perform when an item is dragged over the target.
@@ -65,6 +67,7 @@ fun <T> ReorderableItem(
     requireFirstDownUnconsumed: Boolean = state.dndState.requireFirstDownUnconsumed,
     dropTargets: List<Any> = emptyList(),
     dropStrategy: DropStrategy = DropStrategy.SurfacePercentage,
+    dragAxis: DragAxis = DragAxis.Free,
     onDrop: (state: DraggedItemState<T>) -> Unit = {},
     onDragEnter: (state: DraggedItemState<T>) -> Unit = {},
     onDragExit: (state: DraggedItemState<T>) -> Unit = {},
@@ -104,6 +107,7 @@ fun <T> ReorderableItem(
         requireFirstDownUnconsumed = requireFirstDownUnconsumed,
         dropTargets = dropTargets,
         dropStrategy = dropStrategy,
+        dragAxis = dragAxis,
         dropAnimationSpec = dropAnimationSpec,
         sizeDropAnimationSpec = sizeDropAnimationSpec,
         draggableContent = draggableContent ?: {
