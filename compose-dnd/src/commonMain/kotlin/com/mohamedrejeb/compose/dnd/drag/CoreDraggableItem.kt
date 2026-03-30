@@ -44,6 +44,7 @@ import com.mohamedrejeb.compose.dnd.gesture.detectDragStartGesture
  * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press
  * @param dropTargets - list of drop targets ids to which this item can be dropped, if empty, item can be dropped to any drop target
  * @param dropStrategy - strategy to determine the drop target
+ * @param dragAxis - axis constraint for drag movement
  * @param dropAnimationSpec - animation spec for the position drop animation
  * @param sizeDropAnimationSpec - animation spec for the size drop animation
  * @param draggableContent The content of the draggable item
@@ -60,6 +61,7 @@ internal fun <T> CoreDraggableItem(
     requireFirstDownUnconsumed: Boolean,
     dropTargets: List<Any>,
     dropStrategy: DropStrategy,
+    dragAxis: DragAxis,
     dropAnimationSpec: AnimationSpec<Offset>,
     sizeDropAnimationSpec: AnimationSpec<Size>,
     draggableContent: @Composable () -> Unit,
@@ -85,6 +87,7 @@ internal fun <T> CoreDraggableItem(
             size = Size.Zero,
             dropTargets = dropTargets,
             dropStrategy = dropStrategy,
+            dragAxis = dragAxis,
             dropAnimationSpec = dropAnimationSpec,
             sizeDropAnimationSpec = sizeDropAnimationSpec,
             content = draggableContent,
@@ -101,6 +104,10 @@ internal fun <T> CoreDraggableItem(
 
     LaunchedEffect(draggableItemState, dropStrategy) {
         draggableItemState.dropStrategy = dropStrategy
+    }
+
+    LaunchedEffect(draggableItemState, dragAxis) {
+        draggableItemState.dragAxis = dragAxis
     }
 
     LaunchedEffect(draggableItemState, dropAnimationSpec) {

@@ -30,9 +30,11 @@ import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 @Composable
 fun <T> rememberReorderState(
     dragAfterLongPress: Boolean = false,
-): ReorderState<T> = remember {
+    requireFirstDownUnconsumed: Boolean = false,
+): ReorderState<T> = remember(dragAfterLongPress, requireFirstDownUnconsumed) {
         ReorderState(
             dragAfterLongPress = dragAfterLongPress,
+            requireFirstDownUnconsumed = requireFirstDownUnconsumed,
         )
     }
 

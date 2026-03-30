@@ -26,6 +26,7 @@ internal class DraggableItemState<T>(
     var data: T,
     var dropTargets: List<Any> = emptyList(),
     var dropStrategy: DropStrategy,
+    var dragAxis: DragAxis = DragAxis.Free,
 
     var dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
     var sizeDropAnimationSpec: AnimationSpec<Size> = SpringSpec(),
@@ -40,6 +41,7 @@ internal class DraggableItemState<T>(
             data = data,
             dropTargets = dropTargets,
             dropStrategy = dropStrategy,
+            dragAxis = dragAxis,
             dropAnimationSpec = dropAnimationSpec,
             sizeDropAnimationSpec = sizeDropAnimationSpec,
             positionInRoot = positionInRoot,

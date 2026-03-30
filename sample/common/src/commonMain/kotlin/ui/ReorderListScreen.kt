@@ -41,9 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import com.mohamedrejeb.compose.dnd.reorder.ReorderContainer
 import com.mohamedrejeb.compose.dnd.reorder.ReorderableItem
 import com.mohamedrejeb.compose.dnd.reorder.rememberReorderState
@@ -51,44 +48,39 @@ import components.RedBox
 import kotlinx.coroutines.launch
 import utils.handleLazyListScroll
 
-object ReorderListScreen : Screen {
-
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    override fun Content() {
-        val navigator = LocalNavigator.currentOrThrow
-
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "Reorder list",
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ReorderListScreen(
+    onBack: () -> Unit,
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Reorder list",
+                    )
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = onBack
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = "Back",
                         )
-                    },
-                    navigationIcon = {
-                        IconButton(
-                            onClick = {
-                                navigator.pop()
-                            }
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = "Back",
-                            )
-                        }
-                    },
-                )
-            },
-        ) { paddingValues ->
-            ReorderScreenContent(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .safeDrawingPadding()
-                    .padding(paddingValues)
-                    .padding(20.dp)
+                    }
+                },
             )
-        }
+        },
+    ) { paddingValues ->
+        ReorderScreenContent(
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding()
+                .padding(paddingValues)
+                .padding(20.dp)
+        )
     }
 }
 

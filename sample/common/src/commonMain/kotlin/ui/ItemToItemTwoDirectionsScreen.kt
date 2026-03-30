@@ -19,6 +19,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,27 +40,39 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.drag.DraggableItem
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
+import components.DndSettingsDrawer
+import components.DndSettingsPanel
 import components.RedBox
+import kotlinx.coroutines.launch
 
-object ItemToItemTwoDirectionsScreen : Screen {
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ItemToItemTwoDirectionsScreen(
+    onBack: () -> Unit,
+) {
+    var dragAfterLongPress by remember { mutableStateOf(false) }
+    var requireFirstDownUnconsumed by remember { mutableStateOf(false) }
+    val drawerState =
+        androidx.compose.material3.rememberDrawerState(initialValue = androidx.compose.material3.DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    override fun Content() {
-        val navigator = LocalNavigator.currentOrThrow
-
+    DndSettingsDrawer(
+        drawerState = drawerState,
+        dragAfterLongPress = dragAfterLongPress,
+        onDragAfterLongPressChange = { dragAfterLongPress = it },
+        requireFirstDownUnconsumed = requireFirstDownUnconsumed,
+        onRequireFirstDownUnconsumedChange = { requireFirstDownUnconsumed = it },
+    ) {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -69,9 +83,7 @@ object ItemToItemTwoDirectionsScreen : Screen {
                     },
                     navigationIcon = {
                         IconButton(
-                            onClick = {
-                                navigator.pop()
-                            }
+                            onClick = onBack
                         ) {
                             Icon(
                                 Icons.AutoMirrored.Rounded.ArrowBack,
@@ -83,6 +95,8 @@ object ItemToItemTwoDirectionsScreen : Screen {
             },
         ) { paddingValues ->
             ItemToItemTwoDirectionsScreenContent(
+                dragAfterLongPress = dragAfterLongPress,
+                requireFirstDownUnconsumed = requireFirstDownUnconsumed,
                 modifier = Modifier
                     .fillMaxSize()
                     .safeDrawingPadding()
@@ -95,109 +109,151 @@ object ItemToItemTwoDirectionsScreen : Screen {
 
 @Composable
 private fun ItemToItemTwoDirectionsScreenContent(
+    dragAfterLongPress: Boolean,
+    requireFirstDownUnconsumed: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val dragAndDropState = rememberDragAndDropState<Int>()
+    var dragAfterLongPress by remember { mutableStateOf(false) }
+    var requireFirstDownUnconsumed by remember { mutableStateOf(false) }
+
+    val dragAndDropState = rememberDragAndDropState<Int>(
+        dragAfterLongPress = dragAfterLongPress,
+        requireFirstDownUnconsumed = requireFirstDownUnconsumed,
+    )
 
     var itemIndex by remember {
         mutableStateOf(0)
     }
 
-    DragAndDropContainer(
-        state = dragAndDropState,
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
         modifier = modifier
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+        DndSettingsPanel(
+            dragAfterLongPress = dragAfterLongPress,
+            onDragAfterLongPressChange = { dragAfterLongPress = it },
+            requireFirstDownUnconsumed = requireFirstDownUnconsumed,
+            onRequireFirstDownUnconsumedChange = { requireFirstDownUnconsumed = it },
+        )
+
+        DragAndDropContainer(
+            state = dragAndDropState,
             modifier = Modifier
+                .weight(1f)
                 .fillMaxSize()
         ) {
-            Box(
-                contentAlignment = Alignment.Center,
+            Column(
+                verticalArrangement = Arrangement.spacedBy(20.dp),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .border(
-                        width = 1.dp,
-                        color = with(MaterialTheme.colorScheme) {
-                            if (dragAndDropState.hoveredDropTargetKey == 0) primary else onSurface
-                        },
-                        shape = RoundedCornerShape(24.dp),
-                    ).dropTarget(
-                        key = 0,
-                        state = dragAndDropState,
-                        onDragEnter = { state ->
-                            if (state.data == 1) {
-                                itemIndex = 0
-                            }
-                        },
-                        onDragExit = { state ->
-                            if (state.data == 1) {
-                                itemIndex = 1
-                            }
-                        }
-                    )
+                    .fillMaxSize()
             ) {
-                if (itemIndex == 0) {
-                    DraggableItem(
-                        state = dragAndDropState,
-                        key = 0,
-                        data = 0,
-                        dropTargets = listOf(1),
-                        modifier = Modifier
-                            .size(200.dp)
-                    ) {
-                        RedBox(
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .border(
+                            width = 1.dp,
+                            color = with(MaterialTheme.colorScheme) {
+                                if (dragAndDropState.hoveredDropTargetKey == 0) primary else onSurface
+                            },
+                            shape = RoundedCornerShape(24.dp),
+                        ).dropTarget(
+                            key = 0,
+                            state = dragAndDropState,
+                            onDragEnter = { state ->
+                                if (state.data == 1) {
+                                    itemIndex = 0
+                                }
+                            },
+                            onDragExit = { state ->
+                                if (state.data == 1) {
+                                    itemIndex = 1
+                                }
+                            }
+                        )
+                ) {
+                    val isHovered = dragAndDropState.hoveredDropTargetKey == 0
+                    if (isHovered) {
+                        Text(
+                            text = "Hovering",
+                            color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier
-                                .graphicsLayer {
-                                    alpha = if (isDragging) 0f else 1f
-                                }.fillMaxSize()
+                                .align(Alignment.TopCenter)
+                                .padding(top = 12.dp)
                         )
                     }
-                }
-            }
-
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .border(
-                        width = 1.dp,
-                        color = with(MaterialTheme.colorScheme) {
-                            if (dragAndDropState.hoveredDropTargetKey == 1) primary else onSurface
-                        },
-                        shape = RoundedCornerShape(24.dp),
-                    ).dropTarget(
-                        key = 1,
-                        state = dragAndDropState,
-                        onDragEnter = { state ->
-                            if (state.data == 0) {
-                                itemIndex = 1
-                            }
-                        },
-                        onDragExit = { state ->
-                            if (state.data == 0) {
-                                itemIndex = 0
-                            }
-                        }
-                    )
-            ) {
-                if (itemIndex == 1) {
-                    DraggableItem(
-                        state = dragAndDropState,
-                        key = 0,
-                        data = 1,
-                        dropTargets = listOf(0),
-                        modifier = Modifier
-                            .size(100.dp)
-                    ) {
-                        RedBox(
+                    if (itemIndex == 0) {
+                        DraggableItem(
+                            state = dragAndDropState,
+                            key = 0,
+                            data = 0,
+                            dropTargets = listOf(1),
                             modifier = Modifier
-                                .graphicsLayer {
-                                    alpha = if (isDragging) 0f else 1f
-                                }.fillMaxSize()
+                                .size(200.dp)
+                        ) {
+                            RedBox(
+                                modifier = Modifier
+                                    .graphicsLayer {
+                                        alpha = if (isDragging) 0f else 1f
+                                    }.fillMaxSize()
+                            )
+                        }
+                    }
+                }
+
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .border(
+                            width = 1.dp,
+                            color = with(MaterialTheme.colorScheme) {
+                                if (dragAndDropState.hoveredDropTargetKey == 1) primary else onSurface
+                            },
+                            shape = RoundedCornerShape(24.dp),
+                        ).dropTarget(
+                            key = 1,
+                            state = dragAndDropState,
+                            onDragEnter = { state ->
+                                if (state.data == 0) {
+                                    itemIndex = 1
+                                }
+                            },
+                            onDragExit = { state ->
+                                if (state.data == 0) {
+                                    itemIndex = 0
+                                }
+                            }
                         )
+                ) {
+                    val isHovered = dragAndDropState.hoveredDropTargetKey == 1
+                    if (isHovered) {
+                        Text(
+                            text = "Hovering",
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .padding(top = 12.dp)
+                        )
+                    }
+                    if (itemIndex == 1) {
+                        DraggableItem(
+                            state = dragAndDropState,
+                            key = 0,
+                            data = 1,
+                            dropTargets = listOf(0),
+                            modifier = Modifier
+                                .size(100.dp)
+                        ) {
+                            RedBox(
+                                modifier = Modifier
+                                    .graphicsLayer {
+                                        alpha = if (isDragging) 0f else 1f
+                                    }.fillMaxSize()
+                            )
+                        }
                     }
                 }
             }

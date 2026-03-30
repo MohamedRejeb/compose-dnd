@@ -31,6 +31,7 @@ import androidx.compose.ui.input.pointer.PointerId
 import com.mohamedrejeb.compose.dnd.drag.DraggableItem
 import com.mohamedrejeb.compose.dnd.drag.DraggableItemState
 import com.mohamedrejeb.compose.dnd.drag.DraggedItemState
+import com.mohamedrejeb.compose.dnd.drag.applyConstraint
 import com.mohamedrejeb.compose.dnd.drop.DropTargetState
 import com.mohamedrejeb.compose.dnd.utils.MathUtils
 import kotlinx.coroutines.coroutineScope
@@ -49,7 +50,7 @@ import kotlinx.coroutines.launch
 fun <T> rememberDragAndDropState(
     dragAfterLongPress: Boolean = false,
     requireFirstDownUnconsumed: Boolean = false,
-): DragAndDropState<T> = remember {
+): DragAndDropState<T> = remember(dragAfterLongPress, requireFirstDownUnconsumed) {
         DragAndDropState(
             dragAfterLongPress = dragAfterLongPress,
             requireFirstDownUnconsumed = requireFirstDownUnconsumed,
@@ -192,7 +193,8 @@ class DragAndDropState<T>(
         val currentDraggableItem = currentDraggableItem ?: return@coroutineScope
         val dropTargetIds = currentDraggableItem.dropTargets
 
-        val dragAmount = offset - dragStartOffset
+        val rawDragAmount = offset - dragStartOffset
+        val dragAmount = currentDraggableItem.dragAxis.applyConstraint(rawDragAmount)
         val newTopLeft = dragStartPositionInRoot + dragAmount
         val hoveredDropTargets =
             dropTargetMap.values
