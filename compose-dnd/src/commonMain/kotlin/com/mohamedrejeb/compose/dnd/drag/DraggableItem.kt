@@ -91,6 +91,8 @@ fun <T> DraggableItem(
                 content()
             }
         },
+        hasDragHandle = draggableItemScopeImpl.hasDragHandle,
+        onDraggableItemStateCreated = { draggableItemScopeImpl.draggableItemState = it },
     ) {
         with(draggableItemScopeImpl) {
             content()

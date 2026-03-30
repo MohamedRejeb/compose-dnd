@@ -15,8 +15,14 @@
  */
 package com.mohamedrejeb.compose.dnd.reorder
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import com.mohamedrejeb.compose.dnd.DragAndDropState
+import com.mohamedrejeb.compose.dnd.drag.DragHandleModifier
 import com.mohamedrejeb.compose.dnd.drag.DraggableItemScope
+import com.mohamedrejeb.compose.dnd.drag.DraggableItemState
 
 interface ReorderableItemScope : DraggableItemScope
 
@@ -26,6 +32,25 @@ internal class ReorderableItemScopeImpl<T>(
 ) : ReorderableItemScope {
     override val isDragging: Boolean
         get() = state.draggedItem?.key == key
+
+    internal var hasDragHandle by mutableStateOf(false)
+    internal var draggableItemState: DraggableItemState<T>? = null
+
+    override fun Modifier.dragHandle(
+        enabled: Boolean,
+        dragAfterLongPress: Boolean,
+        requireFirstDownUnconsumed: Boolean,
+    ): Modifier {
+        hasDragHandle = true
+        draggableItemState?.hasDragHandle = true
+        return DragHandleModifier(
+            key = key,
+            state = state,
+            enabled = enabled,
+            dragAfterLongPress = dragAfterLongPress,
+            requireFirstDownUnconsumed = requireFirstDownUnconsumed,
+        ).let { this then it }
+    }
 }
 
 internal class ReorderableItemScopeShadowImpl(
@@ -33,4 +58,10 @@ internal class ReorderableItemScopeShadowImpl(
 ) : ReorderableItemScope {
     override val isDragging: Boolean
         get() = false
+
+    override fun Modifier.dragHandle(
+        enabled: Boolean,
+        dragAfterLongPress: Boolean,
+        requireFirstDownUnconsumed: Boolean,
+    ): Modifier = this
 }

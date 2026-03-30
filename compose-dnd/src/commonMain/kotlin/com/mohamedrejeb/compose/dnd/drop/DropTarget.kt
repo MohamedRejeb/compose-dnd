@@ -54,6 +54,7 @@ fun <T> Modifier.dropTarget(
     dropAlignment: Alignment = Alignment.Center,
     dropOffset: Offset = Offset.Zero,
     dropAnimationEnabled: Boolean = true,
+    canDrop: Boolean = true,
     onDrop: (state: DraggedItemState<T>) -> Unit = {},
     onDragEnter: (state: DraggedItemState<T>) -> Unit = {},
     onDragExit: (state: DraggedItemState<T>) -> Unit = {},
@@ -65,6 +66,7 @@ fun <T> Modifier.dropTarget(
         dropAlignment = dropAlignment,
         dropOffset = dropOffset,
         dropAnimationEnabled = dropAnimationEnabled,
+        canDrop = canDrop,
         onDrop = onDrop,
         onDragEnter = onDragEnter,
         onDragExit = onDragExit,
@@ -77,6 +79,7 @@ private data class DropTargetNodeElement<T>(
     val dropAlignment: Alignment,
     val dropOffset: Offset,
     val dropAnimationEnabled: Boolean,
+    val canDrop: Boolean,
     val onDrop: (state: DraggedItemState<T>) -> Unit,
     val onDragEnter: (state: DraggedItemState<T>) -> Unit,
     val onDragExit: (state: DraggedItemState<T>) -> Unit,
@@ -91,6 +94,7 @@ private data class DropTargetNodeElement<T>(
                 dropAlignment = dropAlignment,
                 dropOffset = dropOffset,
                 dropAnimationEnabled = dropAnimationEnabled,
+                canDrop = canDrop,
                 onDrop = onDrop,
                 onDragEnter = onDragEnter,
                 onDragExit = onDragExit,
@@ -109,6 +113,7 @@ private data class DropTargetNodeElement<T>(
             dropTargetState.dropAlignment = dropAlignment
             dropTargetState.dropOffset = dropOffset
             dropTargetState.dropAnimationEnabled = dropAnimationEnabled
+            dropTargetState.canDrop = canDrop
             dropTargetState.onDrop = onDrop
             dropTargetState.onDragEnter = onDragEnter
             dropTargetState.onDragExit = onDragExit
@@ -128,6 +133,7 @@ private data class DropTargetNodeElement<T>(
         properties["dropAlignment"] = dropAlignment
         properties["dropOffset"] = dropOffset
         properties["dropAnimationEnabled"] = dropAnimationEnabled
+        properties["canDrop"] = canDrop
         properties["onDrop"] = onDrop
         properties["onDragEnter"] = onDragEnter
         properties["onDragExit"] = onDragExit
