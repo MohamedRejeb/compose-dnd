@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -35,6 +37,9 @@ fun HomeScreen(
     onNavigateToListToListWithoutReorder: () -> Unit,
     onNavigateToListToListWithReorder: () -> Unit,
     onNavigateToDropStrategiesPlayground: () -> Unit,
+    onNavigateToDragHandleReorder: () -> Unit,
+    onNavigateToAxisLockedDrag: () -> Unit,
+    onNavigateToConditionalDrop: () -> Unit,
 ) {
     Scaffold(
         modifier = Modifier
@@ -44,6 +49,7 @@ fun HomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
         ) {
             HomeListItem(
                 text = "From item to item (one direction)",
@@ -73,6 +79,21 @@ fun HomeScreen(
             HomeListItem(
                 text = "Drop Strategies Playground",
                 onClick = onNavigateToDropStrategiesPlayground,
+            )
+
+            HomeListItem(
+                text = "Reorder with Drag Handle",
+                onClick = onNavigateToDragHandleReorder,
+            )
+
+            HomeListItem(
+                text = "Axis-Locked Drag",
+                onClick = onNavigateToAxisLockedDrag,
+            )
+
+            HomeListItem(
+                text = "Conditional Drop (canDrop)",
+                onClick = onNavigateToConditionalDrop,
             )
         }
     }

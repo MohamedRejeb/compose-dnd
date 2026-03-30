@@ -37,3 +37,12 @@ data object ListToListWithReorderRoute
 
 @Serializable
 data object DropStrategiesPlaygroundRoute
+
+@Serializable
+data object DragHandleReorderRoute
+
+@Serializable
+data object AxisLockedDragRoute
+
+@Serializable
+data object ConditionalDropRoute
