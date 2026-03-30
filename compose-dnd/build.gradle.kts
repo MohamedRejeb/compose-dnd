@@ -67,6 +67,12 @@ kotlin {
     sourceSets.commonTest.dependencies {
         implementation(kotlin("test"))
     }
+
+    @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+    sourceSets.named("desktopTest").dependencies {
+        implementation(compose.uiTest)
+        implementation(compose.desktop.currentOs)
+    }
 }
 
 android {
