@@ -65,6 +65,8 @@ internal fun <T> CoreDraggableItem(
     dropAnimationSpec: AnimationSpec<Offset>,
     sizeDropAnimationSpec: AnimationSpec<Size>,
     draggableContent: @Composable () -> Unit,
+    hasDragHandle: Boolean = false,
+    onDraggableItemStateCreated: ((DraggableItemState<T>) -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     val dndInfo = LocalDragAndDropInfo.current
@@ -93,6 +95,8 @@ internal fun <T> CoreDraggableItem(
             content = draggableContent,
         )
     }
+
+    onDraggableItemStateCreated?.invoke(draggableItemState)
 
     LaunchedEffect(draggableItemState, data) {
         draggableItemState.data = data

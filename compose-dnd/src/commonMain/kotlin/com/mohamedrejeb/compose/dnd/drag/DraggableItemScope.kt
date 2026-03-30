@@ -15,6 +15,10 @@
  */
 package com.mohamedrejeb.compose.dnd.drag
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 
 /**
@@ -26,6 +30,21 @@ import com.mohamedrejeb.compose.dnd.DragAndDropState
 interface DraggableItemScope {
     val key: Any
     val isDragging: Boolean
+
+    /**
+     * Mark this composable as the drag handle for the item.
+     * When a drag handle is used, only the handle region initiates drag — the rest of the item
+     * remains interactive (clickable, scrollable, etc.).
+     *
+     * @param enabled Whether the drag handle is active.
+     * @param dragAfterLongPress If true, drag starts after long press on the handle.
+     * @param requireFirstDownUnconsumed If true, the first down event must be unconsumed.
+     */
+    fun Modifier.dragHandle(
+        enabled: Boolean = true,
+        dragAfterLongPress: Boolean = false,
+        requireFirstDownUnconsumed: Boolean = false,
+    ): Modifier
 }
 
 internal class DraggableItemScopeImpl<T>(
@@ -34,6 +53,25 @@ internal class DraggableItemScopeImpl<T>(
 ) : DraggableItemScope {
     override val isDragging: Boolean
         get() = state.draggedItem?.key == key
+
+    internal var hasDragHandle by mutableStateOf(false)
+    internal var draggableItemState: DraggableItemState<T>? = null
+
+    override fun Modifier.dragHandle(
+        enabled: Boolean,
+        dragAfterLongPress: Boolean,
+        requireFirstDownUnconsumed: Boolean,
+    ): Modifier {
+        hasDragHandle = true
+        draggableItemState?.hasDragHandle = true
+        return DragHandleModifier(
+            key = key,
+            state = state,
+            enabled = enabled,
+            dragAfterLongPress = dragAfterLongPress,
+            requireFirstDownUnconsumed = requireFirstDownUnconsumed,
+        ).let { this then it }
+    }
 }
 
 internal class DraggableItemScopeShadowImpl(
@@ -41,4 +79,10 @@ internal class DraggableItemScopeShadowImpl(
 ) : DraggableItemScope {
     override val isDragging: Boolean
         get() = false
+
+    override fun Modifier.dragHandle(
+        enabled: Boolean,
+        dragAfterLongPress: Boolean,
+        requireFirstDownUnconsumed: Boolean,
+    ): Modifier = this
 }

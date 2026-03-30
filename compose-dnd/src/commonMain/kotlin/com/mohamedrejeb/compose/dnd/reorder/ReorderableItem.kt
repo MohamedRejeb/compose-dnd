@@ -115,6 +115,8 @@ fun <T> ReorderableItem(
                 content()
             }
         },
+        hasDragHandle = reorderableItemScopeImpl.hasDragHandle,
+        onDraggableItemStateCreated = { reorderableItemScopeImpl.draggableItemState = it },
     ) {
         with(reorderableItemScopeImpl) {
             content()

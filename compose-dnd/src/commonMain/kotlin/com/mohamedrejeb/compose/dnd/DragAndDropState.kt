@@ -50,12 +50,12 @@ import kotlinx.coroutines.launch
 fun <T> rememberDragAndDropState(
     dragAfterLongPress: Boolean = false,
     requireFirstDownUnconsumed: Boolean = false,
-): DragAndDropState<T> = remember(dragAfterLongPress, requireFirstDownUnconsumed) {
-        DragAndDropState(
-            dragAfterLongPress = dragAfterLongPress,
-            requireFirstDownUnconsumed = requireFirstDownUnconsumed,
-        )
-    }
+): DragAndDropState<T> {
+    val state = remember { DragAndDropState<T>() }
+    state.dragAfterLongPress = dragAfterLongPress
+    state.requireFirstDownUnconsumed = requireFirstDownUnconsumed
+    return state
+}
 
 /**
  * State of the drag and drop
@@ -66,9 +66,12 @@ fun <T> rememberDragAndDropState(
  */
 @Stable
 class DragAndDropState<T>(
-    internal val dragAfterLongPress: Boolean = false,
-    internal val requireFirstDownUnconsumed: Boolean = false,
+    dragAfterLongPress: Boolean = false,
+    requireFirstDownUnconsumed: Boolean = false,
 ) {
+    internal var dragAfterLongPress by mutableStateOf(dragAfterLongPress)
+    internal var requireFirstDownUnconsumed by mutableStateOf(requireFirstDownUnconsumed)
+
     /**
      * If true, drag and drop is enabled
      */
@@ -205,7 +208,8 @@ class DragAndDropState<T>(
                         topLeft2 = it.topLeft,
                         size2 = it.size,
                     ) &&
-                        (dropTargetIds.isEmpty() || it.key in dropTargetIds)
+                        (dropTargetIds.isEmpty() || it.key in dropTargetIds) &&
+                        it.canDrop
                 }.groupBy { it.zIndex }
                 .maxByOrNull { it.key }
                 ?.value

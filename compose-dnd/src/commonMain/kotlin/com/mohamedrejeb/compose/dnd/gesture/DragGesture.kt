@@ -18,15 +18,23 @@ package com.mohamedrejeb.compose.dnd.gesture
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerInputScope
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 import com.mohamedrejeb.compose.dnd.drag.DraggableItemState
 import com.mohamedrejeb.compose.dnd.utils.awaitPointerSlopOrCancellation
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
+/**
+ * @param gestureSourcePositionInRoot The root position of the composable that hosts this gesture.
+ * When called from the item itself, this is null and `draggableItemState.positionInRoot` is used.
+ * When called from a drag handle, this should be the handle's root position so the drag offset
+ * is computed correctly.
+ */
 internal suspend fun <T> PointerInputScope.detectDragStartGesture(
     key: Any,
     state: DragAndDropState<T>,
@@ -34,8 +42,16 @@ internal suspend fun <T> PointerInputScope.detectDragStartGesture(
     enabled: Boolean,
     dragAfterLongPress: Boolean,
     requireFirstDownUnconsumed: Boolean,
+    isHandle: Boolean = false,
+    gestureSourcePositionInRoot: (() -> Offset)? = null,
 ) = coroutineScope {
     if (!enabled) return@coroutineScope
+
+    // If a drag handle is used, only the handle's gesture detector should be active.
+    // The outer (item-level) gesture detector suspends indefinitely.
+    if (!isHandle && draggableItemState.hasDragHandle) {
+        awaitCancellation()
+    }
 
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = requireFirstDownUnconsumed, pass = PointerEventPass.Main)
@@ -56,11 +72,13 @@ internal suspend fun <T> PointerInputScope.detectDragStartGesture(
 
         if (drag != null) {
             val draggableItemState = state.draggableItemMap.getOrPut(key) { draggableItemState }
+            val sourcePositionInRoot = gestureSourcePositionInRoot?.invoke()
+                ?: draggableItemState.positionInRoot
 
             launch {
                 state.handleDragStart(
                     key = key,
-                    offset = drag.position + draggableItemState.positionInRoot
+                    offset = drag.position + sourcePositionInRoot
                 )
             }
 
