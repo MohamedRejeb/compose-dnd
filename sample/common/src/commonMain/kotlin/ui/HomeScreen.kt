@@ -40,6 +40,7 @@ fun HomeScreen(
     onNavigateToDragHandleReorder: () -> Unit,
     onNavigateToAxisLockedDrag: () -> Unit,
     onNavigateToConditionalDrop: () -> Unit,
+    onNavigateToAutoScrollDemo: () -> Unit,
 ) {
     Scaffold(
         modifier = Modifier
@@ -94,6 +95,11 @@ fun HomeScreen(
             HomeListItem(
                 text = "Conditional Drop (canDrop)",
                 onClick = onNavigateToConditionalDrop,
+            )
+
+            HomeListItem(
+                text = "Auto-Scroll Demo (Row, Grid, Scroll)",
+                onClick = onNavigateToAutoScrollDemo,
             )
         }
     }

@@ -42,7 +42,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,11 +49,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 import com.mohamedrejeb.compose.dnd.reorder.ReorderContainer
 import com.mohamedrejeb.compose.dnd.reorder.ReorderableItem
 import com.mohamedrejeb.compose.dnd.reorder.rememberReorderState
-import kotlinx.coroutines.launch
-import utils.handleLazyListScroll
+import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,11 +91,11 @@ fun DragHandleReorderScreen(
     }
 }
 
+@OptIn(ExperimentalDndApi::class)
 @Composable
 private fun DragHandleReorderContent(
     modifier: Modifier = Modifier,
 ) {
-    val scope = rememberCoroutineScope()
     val reorderState = rememberReorderState<String>()
     var items by remember {
         mutableStateOf(
@@ -124,6 +123,10 @@ private fun DragHandleReorderContent(
             state = lazyListState,
             modifier = Modifier
                 .fillMaxSize()
+                .dragAutoScroll(
+                    state = reorderState.dndState,
+                    lazyListState = lazyListState,
+                )
         ) {
             items(items, key = { it }) { item ->
                 ReorderableItem(
@@ -137,13 +140,6 @@ private fun DragHandleReorderContent(
                             if (index == -1) return@ReorderableItem
                             remove(state.data)
                             add(index, state.data)
-
-                            scope.launch {
-                                handleLazyListScroll(
-                                    lazyListState = lazyListState,
-                                    dropIndex = index,
-                                )
-                            }
                         }
                     },
                     draggableContent = {

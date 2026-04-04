@@ -42,7 +42,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -53,9 +52,8 @@ import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.reorder.ReorderContainer
 import com.mohamedrejeb.compose.dnd.reorder.ReorderableItem
 import com.mohamedrejeb.compose.dnd.reorder.rememberReorderState
+import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
 import components.RedBox
-import kotlinx.coroutines.launch
-import utils.handleLazyListScroll
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -120,8 +118,6 @@ private fun ListToListWithReorderContent(
         )
     }
 
-    val scope = rememberCoroutineScope()
-
     val reorderState = rememberReorderState<String>()
 
     val lazyListStateOne = rememberLazyListState()
@@ -143,6 +139,10 @@ private fun ListToListWithReorderContent(
                 modifier = Modifier
                     .weight(1.5f)
                     .fillMaxHeight()
+                    .dragAutoScroll(
+                        state = reorderState.dndState,
+                        lazyListState = lazyListStateOne,
+                    )
                     .border(
                         width = 1.dp,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -182,13 +182,6 @@ private fun ListToListWithReorderContent(
                                 }
 
                                 add(index, state.data)
-
-                                scope.launch {
-                                    handleLazyListScroll(
-                                        lazyListState = lazyListStateOne,
-                                        dropIndex = index,
-                                    )
-                                }
                             }
                         },
                         draggableContent = {
@@ -219,6 +212,10 @@ private fun ListToListWithReorderContent(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
+                    .dragAutoScroll(
+                        state = reorderState.dndState,
+                        lazyListState = lazyListStateTwo,
+                    )
                     .border(
                         width = 1.dp,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -258,13 +255,6 @@ private fun ListToListWithReorderContent(
                                 }
 
                                 add(index, state.data)
-
-                                scope.launch {
-                                    handleLazyListScroll(
-                                        lazyListState = lazyListStateTwo,
-                                        dropIndex = index,
-                                    )
-                                }
                             }
                         },
                         draggableContent = {

@@ -46,3 +46,6 @@ data object AxisLockedDragRoute
 
 @Serializable
 data object ConditionalDropRoute
+
+@Serializable
+data object AutoScrollDemoRoute

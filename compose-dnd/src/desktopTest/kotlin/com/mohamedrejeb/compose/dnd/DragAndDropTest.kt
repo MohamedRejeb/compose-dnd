@@ -165,7 +165,7 @@ class DragAndDropTest {
 
     @Test
     fun hoveredDropTargetKey_updatesOnDragOver() = runComposeUiTest {
-        var hoveredKey: Any = ""
+        var hoveredKey: Any? = null
 
         setContent {
             val state = rememberDragAndDropState<Int>()
