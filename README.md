@@ -1,182 +1,175 @@
-# Compose Drag And Drop
+# Compose DND
 
-Compose DND is a library that allows you to easily add drag and drop functionality to your Jetpack Compose or Compose Multiplatform projects.
+A library that allows you to easily add drag and drop functionality to your Jetpack Compose or Compose Multiplatform projects.
 
-
-[![Kotlin](https://img.shields.io/badge/kotlin-1.9.22-blue.svg?logo=kotlin)](http://kotlinlang.org)
-[![MohamedRejeb](https://raw.githubusercontent.com/MohamedRejeb/MohamedRejeb/main/badges/mohamedrejeb.svg)](https://github.com/MohamedRejeb)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.3.20-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![Compose](https://img.shields.io/badge/compose-1.10.3-blue.svg?logo=jetpackcompose)](https://www.jetbrains.com/lp/compose-multiplatform)
 [![Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
 [![BuildPassing](https://shields.io/badge/build-passing-brightgreen)](https://github.com/MohamedRejeb/compose-dnd/actions)
-[![Maven Central](https://img.shields.io/maven-central/v/com.mohamedrejeb.dnd/compose-dnd)](https://search.maven.org/search?q=g:%22com.mohamedrejeb.dnd%22%20AND%20a:%compose-dnd%22)
+[![Maven Central](https://img.shields.io/maven-central/v/com.mohamedrejeb.dnd/compose-dnd)](https://search.maven.org/search?q=g:%22com.mohamedrejeb.dnd%22%20AND%20a:%22compose-dnd%22)
 
 ![Compose DND thumbnail](docs/images/thumbnail.png)
 
+## Features
+
+- **Drag and Drop** -- Drag items from one location and drop them onto designated targets
+- **Reorder Lists** -- Reorder items within a list using drag and drop gestures
+- **Auto Scroll** -- Automatically scroll containers when dragging items near edges
+- **Drop Strategies** -- Choose from multiple built-in strategies to determine which drop target receives the dragged item
+- **Drag Handle** -- Restrict the drag gesture to a specific handle area within the item
+- **Axis Lock** -- Constrain dragging to the horizontal or vertical axis
+- **Conditional Drop** -- Control which drop targets accept which dragged items
+- **Drop Animation** -- Smooth spring-based animations when items are dropped
+- **Custom Drag Shadow** -- Provide a custom composable to display while an item is being dragged
+
+## Platform Support
+
+| Platform   | Supported |
+|------------|-----------|
+| Android    | Yes       |
+| iOS        | Yes       |
+| Desktop    | Yes       |
+| Web (JS)   | Yes       |
+| Web (WASM) | Yes       |
+
 ## Installation
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.mohamedrejeb.dnd/compose-dnd)](https://search.maven.org/search?q=g:%22com.mohamedrejeb.dnd%22%20AND%20a:%compose-dnd%22)
+[![Maven Central](https://img.shields.io/maven-central/v/com.mohamedrejeb.dnd/compose-dnd)](https://search.maven.org/search?q=g:%22com.mohamedrejeb.dnd%22%20AND%20a:%22compose-dnd%22)
+
+### Version Compatibility
+
+| Kotlin version | Compose version | Compose DND version |
+|----------------|-----------------|---------------------|
+| 2.3.20         | 1.10.3          | 0.5.0               |
 
 Add the following dependency to your module `build.gradle.kts` file:
 
 ```kotlin
-implementation("com.mohamedrejeb.dnd:compose-dnd:0.3.0")
+implementation("com.mohamedrejeb.dnd:compose-dnd:0.5.0")
+```
+
+For Kotlin Multiplatform projects, add the dependency to your `commonMain` source set:
+
+```kotlin
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation("com.mohamedrejeb.dnd:compose-dnd:0.5.0")
+        }
+    }
+}
 ```
 
 ## Usage
 
 ### Drag and Drop
 
-To implement drag and drop functionality:
-- Create a `DragAndDropState` with `rememberDragAndDropState`.
+Create a `DragAndDropState` and wrap your content with `DragAndDropContainer`:
 
 ```kotlin
-val dragAndDropState = rememberDragAndDropState()
-```
-<br>
+val dragAndDropState = rememberDragAndDropState<String>()
 
-- Add `DragAndDropContainer` composable which will wrap the draggable items.
-
-```kotlin
 DragAndDropContainer(
     state = dragAndDropState,
 ) {
-
-}
-```
-<br>
-
-- Add `DraggableItem` composable for each draggable item.
-
-```kotlin
-DraggableItem(
-    state = dragAndDropState,
-    key = task.id, // Unique key for each draggable item
-    data = task, // Data to be passed to the drop target
-) {
-
-}
-```
-<br>
-
-- Add `Modifier.dropTarget` for each drop target.
-
-```kotlin
-Modifier.dropTarget(
-    state = dragAndDropState,
-    key = task.id, // Unique key for each drop target
-    onDrop = { state -> // Data passed from the draggable item
-        // Handle drop
+    DraggableItem(
+        state = dragAndDropState,
+        key = "item-1",
+        data = "Hello",
+    ) {
+        Text("Drag me")
     }
-)
-```
 
-> For more details, check out the [sample](https://github.com/MohamedRejeb/compose-dnd/tree/main/sample/common/src/commonMain/kotlin)
+    Box(
+        modifier = Modifier
+            .dropTarget(
+                key = "target-1",
+                state = dragAndDropState,
+                onDrop = { state ->
+                    println("Dropped: ${state.data}")
+                },
+            )
+    ) {
+        Text("Drop here")
+    }
+}
+```
 
 ### Reorder List
 
-To implement reorder list functionality:
-
-- Create a `ReorderState` with `rememberReorderState`.
+Create a `ReorderState` and use `ReorderableItem` which is both draggable and a drop target:
 
 ```kotlin
-val reorderState = rememberReorderState()
-```
-<br>
+val reorderState = rememberReorderState<String>()
 
-- Add `ReorderContainer` composable which will wrap the reorderable items.
-
-```kotlin
 ReorderContainer(
     state = reorderState,
 ) {
-
-}
-```
-<br>
-
-- Add `ReorderableItem` composable for each reorderable item.
-
-```kotlin
-ReorderableItem(
-    state = reorderState,
-    key = task.id, // Unique key for each reorderable item
-    data = task, // Data to be passed to the drop target
-    onDrop = { state -> // Data passed from the draggable item
-        // Handle drop
+    LazyColumn {
+        items(items, key = { it }) { item ->
+            ReorderableItem(
+                state = reorderState,
+                key = item,
+                data = item,
+                onDrop = {},
+                onDragEnter = { state ->
+                    items = items.toMutableList().apply {
+                        val index = indexOf(item)
+                        if (index == -1) return@ReorderableItem
+                        remove(state.data)
+                        add(index, state.data)
+                    }
+                },
+            ) {
+                Text(item)
+            }
+        }
     }
-) {
-
 }
 ```
-
-The `ReorderableItem` composable is at the same time a `DraggableItem` and a `dropTarget`. <br><br>
-
-> For more details, check out the [sample](https://github.com/MohamedRejeb/compose-dnd/tree/main/sample/common/src/commonMain/kotlin)
-
 
 ### Enable/Disable Drag and Drop
 
-If you want to enable/disable drag and drop functionality, you can use the `enabled` parameter in the `DragAndDropContainer` and `ReorderContainer` composable.
+Toggle drag and drop at the container level:
 
 ```kotlin
 DragAndDropContainer(
     state = dragAndDropState,
-    enabled = false
-) {
-
-}
+    enabled = false,
+) { }
 ```
 
-```kotlin
-ReorderContainer(
-    state = reorderState,
-    enabled = false
-) {
-
-}
-```
-
-> This will disable the drag and drop functionality for all the draggable items.
-
-If you want to disable drag and drop for a specific item, you can use the `enabled` parameter in the `DraggableItem` and `ReorderableItem` composable.
+Or for a specific item:
 
 ```kotlin
 DraggableItem(
     state = dragAndDropState,
-    key = task.id,
-    data = task,
-    enabled = false
-) {
-
-}
+    key = "item-1",
+    data = "Hello",
+    enabled = false,
+) { }
 ```
 
-```kotlin
-ReorderableItem(
-    state = reorderState,
-    key = task.id,
-    data = task,
-    onDrop = { state ->
-        // Handle drop
-    },
-    enabled = false
-) {
-
-}
-```
+> For more details and advanced features (auto scroll, drop strategies, drag handles, axis lock), check out the [documentation](https://mohamedrejeb.github.io/compose-dnd/) and the [sample project](https://github.com/MohamedRejeb/compose-dnd/tree/main/sample/common/src/commonMain/kotlin).
 
 ## Contribution
-If you've found an error in this sample, please file an issue. <br>
-Feel free to help out by sending a pull request :heart:.
+
+If you've found an error in this library, please file an [issue](https://github.com/MohamedRejeb/compose-dnd/issues).
+
+Feel free to help out by sending a pull request.
 
 [Code of Conduct](https://github.com/MohamedRejeb/compose-dnd/blob/main/CODE_OF_CONDUCT.md)
 
-## Find this library useful? :heart:
-Support it by joining __[stargazers](https://github.com/MohamedRejeb/compose-dnd/stargazers)__ for this repository. :star: <br>
-Also, __[follow me](https://github.com/MohamedRejeb)__ on GitHub for more libraries! 🤩
+## Find this library useful?
+
+Support it by joining [stargazers](https://github.com/MohamedRejeb/compose-dnd/stargazers) for this repository.
+
+Also, [follow me](https://github.com/MohamedRejeb) on GitHub for more libraries!
 
 You can always <a href="https://www.buymeacoffee.com/MohamedRejeb"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=MohamedRejeb&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff"></a>
 
-# License
+## License
+
 ```
 Copyright 2023 Mohamed Rejeb
 
