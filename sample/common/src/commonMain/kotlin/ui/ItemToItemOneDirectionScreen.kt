@@ -122,8 +122,7 @@ private fun ItemToItemOneDirectionScreenContent(
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
-                                }
-                                .size(200.dp),
+                                }.size(200.dp),
                         )
                     }
                 }
