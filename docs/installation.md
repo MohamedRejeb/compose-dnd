@@ -48,15 +48,3 @@ Then reference it in your `build.gradle.kts`:
 implementation(libs.compose.dnd)
 ```
 
-## Platform Notes
-
-Compose DND supports all Compose Multiplatform targets:
-
-- **Android** -- No additional setup required.
-- **iOS** -- No additional setup required.
-- **Desktop (JVM)** -- No additional setup required.
-- **Web (JS)** -- No additional setup required.
-- **Web (WASM)** -- No additional setup required.
-
-!!! note
-    Make sure your project uses a compatible version of Kotlin and Compose Multiplatform as listed in the version compatibility table above.
