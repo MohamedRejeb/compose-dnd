@@ -17,12 +17,15 @@ package components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -35,8 +38,8 @@ fun DndSettingsPanel(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = modifier.width(260.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = modifier.width(280.dp).padding(16.dp),
     ) {
         Text(
             text = "DnD Settings",
@@ -48,14 +51,14 @@ fun DndSettingsPanel(
             title = "Long-press start",
             checked = dragAfterLongPress,
             onCheckedChange = onDragAfterLongPressChange,
-            description = "Start dragging after long press instead of immediately"
+            description = "Start dragging after long press instead of immediately",
         )
 
         SettingRow(
             title = "Require first down unconsumed",
             checked = requireFirstDownUnconsumed,
             onCheckedChange = onRequireFirstDownUnconsumedChange,
-            description = "Only start when first down wasn't consumed"
+            description = "Only start when first down wasn't consumed",
         )
     }
 }
@@ -67,18 +70,27 @@ private fun SettingRow(
     onCheckedChange: (Boolean) -> Unit,
     description: String? = null,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        description?.let {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            modifier = Modifier.weight(1f).padding(end = 12.dp),
+        ) {
             Text(
-                text = it,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
             )
+            description?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         Switch(
             checked = checked,

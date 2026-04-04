@@ -15,7 +15,6 @@
  */
 package ui
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -24,20 +23,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,40 +42,22 @@ import com.mohamedrejeb.compose.dnd.reorder.ReorderContainer
 import com.mohamedrejeb.compose.dnd.reorder.ReorderableItem
 import com.mohamedrejeb.compose.dnd.reorder.rememberReorderState
 import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
-import components.RedBox
+import components.DemoScreenScaffold
+import components.DndItemCard
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ListToListWithReorderScreen(
     onBack: () -> Unit,
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "From list to list (with reorder)",
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
-                },
-            )
-        },
+    DemoScreenScaffold(
+        title = "List to List (Reorder)",
+        onBack = onBack,
     ) { paddingValues ->
         ListToListWithReorderContent(
             modifier = Modifier
                 .fillMaxSize()
-                .safeDrawingPadding()
                 .padding(paddingValues)
-                .padding(20.dp)
+                .padding(16.dp),
         )
     }
 }
@@ -98,23 +69,13 @@ private fun ListToListWithReorderContent(
 ) {
     var listOne by remember {
         mutableStateOf(
-            listOf(
-                "item1",
-                "item2",
-                "item3",
-                "item4",
-            )
+            listOf("item1", "item2", "item3", "item4")
         )
     }
 
     var listTwo by remember {
         mutableStateOf(
-            listOf(
-                "item5",
-                "item6",
-                "item7",
-                "item8",
-            )
+            listOf("item5", "item6", "item7", "item8")
         )
     }
 
@@ -128,14 +89,13 @@ private fun ListToListWithReorderContent(
         modifier = modifier,
     ) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-            modifier = Modifier
-                .fillMaxSize()
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxSize(),
         ) {
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 state = lazyListStateOne,
-                contentPadding = PaddingValues(10.dp),
+                contentPadding = PaddingValues(8.dp),
                 modifier = Modifier
                     .weight(1.5f)
                     .fillMaxHeight()
@@ -143,11 +103,7 @@ private fun ListToListWithReorderContent(
                         state = reorderState.dndState,
                         lazyListState = lazyListStateOne,
                     )
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        shape = RoundedCornerShape(24.dp),
-                    ).dropTarget(
+                    .dropTarget(
                         key = "listOne",
                         state = reorderState.dndState,
                         dropAnimationEnabled = false,
@@ -156,12 +112,11 @@ private fun ListToListWithReorderContent(
                                 val isRemoved = remove(state.data)
                                 if (!isRemoved) return@dropTarget
                             }
-
                             listOne = listOne.toMutableList().apply {
                                 add(state.data)
                             }
                         },
-                    )
+                    ),
             ) {
                 items(listOne, key = { it }) { item ->
                     ReorderableItem(
@@ -175,40 +130,41 @@ private fun ListToListWithReorderContent(
                                 val index = indexOf(item)
                                 if (index == -1) return@ReorderableItem
                                 if (!remove(state.data)) {
-                                        // If the item is not in listOne, it means it's coming from the listTwo
                                     listTwo = listTwo.toMutableList().apply {
                                         remove(state.data)
                                     }
                                 }
-
                                 add(index, state.data)
                             }
                         },
                         draggableContent = {
-                            RedBox(
+                            DndItemCard(
+                                label = item,
                                 isDragShadow = true,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(60.dp)
+                                    .height(60.dp),
                             )
                         },
-                        modifier = Modifier
+                        modifier = Modifier,
                     ) {
-                        RedBox(
+                        DndItemCard(
+                            label = item,
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
-                                }.fillMaxWidth()
-                                .height(60.dp)
+                                }
+                                .fillMaxWidth()
+                                .height(60.dp),
                         )
                     }
                 }
             }
 
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 state = lazyListStateTwo,
-                contentPadding = PaddingValues(10.dp),
+                contentPadding = PaddingValues(8.dp),
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
@@ -216,11 +172,7 @@ private fun ListToListWithReorderContent(
                         state = reorderState.dndState,
                         lazyListState = lazyListStateTwo,
                     )
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        shape = RoundedCornerShape(24.dp),
-                    ).dropTarget(
+                    .dropTarget(
                         key = "listTwo",
                         state = reorderState.dndState,
                         dropAnimationEnabled = false,
@@ -229,12 +181,11 @@ private fun ListToListWithReorderContent(
                                 val isRemoved = remove(state.data)
                                 if (!isRemoved) return@dropTarget
                             }
-
                             listTwo = listTwo.toMutableList().apply {
                                 add(state.data)
                             }
                         },
-                    )
+                    ),
             ) {
                 items(listTwo, key = { it }) { item ->
                     ReorderableItem(
@@ -248,31 +199,36 @@ private fun ListToListWithReorderContent(
                                 val index = indexOf(item)
                                 if (index == -1) return@ReorderableItem
                                 if (!remove(state.data)) {
-                                    // If the item is not in listTwo, it means it's coming from the listOne
                                     listOne = listOne.toMutableList().apply {
                                         remove(state.data)
                                     }
                                 }
-
                                 add(index, state.data)
                             }
                         },
                         draggableContent = {
-                            RedBox(
+                            DndItemCard(
+                                label = item,
                                 isDragShadow = true,
+                                color = MaterialTheme.colorScheme.tertiaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(60.dp)
+                                    .height(60.dp),
                             )
                         },
-                        modifier = Modifier
+                        modifier = Modifier,
                     ) {
-                        RedBox(
+                        DndItemCard(
+                            label = item,
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
-                                }.fillMaxWidth()
-                                .height(60.dp)
+                                }
+                                .fillMaxWidth()
+                                .height(60.dp),
                         )
                     }
                 }

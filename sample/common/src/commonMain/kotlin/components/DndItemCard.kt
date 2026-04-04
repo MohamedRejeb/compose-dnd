@@ -1,5 +1,5 @@
 /*
- * Copyright 2023, Mohamed Ben Rejeb and the Compose Dnd project contributors
+ * Copyright 2025, Mohamed Ben Rejeb and the Compose Dnd project contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,26 +17,36 @@ package components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun RedBox(
-    isDragShadow: Boolean = false,
+fun DndItemCard(
+    label: String,
     modifier: Modifier = Modifier,
+    isDragShadow: Boolean = false,
+    color: Color = MaterialTheme.colorScheme.primaryContainer,
+    contentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
 ) {
     val shape = MaterialTheme.shapes.medium
 
     Box(
-        contentAlignment = Alignment.Center,
+        contentAlignment = Alignment.CenterStart,
         modifier = modifier
             .then(
                 if (isDragShadow) {
@@ -49,12 +59,24 @@ fun RedBox(
                 }
             )
             .clip(shape)
-            .background(MaterialTheme.colorScheme.primaryContainer),
+            .background(color),
     ) {
-        Icon(
-            Icons.Rounded.DragIndicator,
-            contentDescription = "Drag indicator",
-            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 16.dp),
+        ) {
+            Icon(
+                Icons.Rounded.DragIndicator,
+                contentDescription = "Drag indicator",
+                tint = contentColor.copy(alpha = 0.7f),
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = label,
+                color = contentColor,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
     }
 }

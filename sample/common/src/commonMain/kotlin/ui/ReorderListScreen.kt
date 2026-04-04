@@ -15,82 +15,43 @@
  */
 package ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.DragIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 import com.mohamedrejeb.compose.dnd.reorder.ReorderContainer
 import com.mohamedrejeb.compose.dnd.reorder.ReorderableItem
 import com.mohamedrejeb.compose.dnd.reorder.rememberReorderState
 import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
+import components.DemoScreenScaffold
+import components.DndItemCard
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReorderListScreen(
     onBack: () -> Unit,
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Reorder list",
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
-                },
-            )
-        },
+    DemoScreenScaffold(
+        title = "Reorder List",
+        onBack = onBack,
     ) { paddingValues ->
         ReorderScreenContent(
             modifier = Modifier
                 .fillMaxSize()
-                .safeDrawingPadding()
                 .padding(paddingValues)
-                .padding(20.dp)
+                .padding(16.dp),
         )
     }
 }
@@ -114,14 +75,14 @@ private fun ReorderScreenContent(
         modifier = modifier,
     ) {
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             state = lazyListState,
             modifier = Modifier
                 .fillMaxSize()
                 .dragAutoScroll(
                     state = reorderState.dndState,
                     lazyListState = lazyListState,
-                )
+                ),
         ) {
             items(items, key = { it }) { item ->
                 val number = item.removePrefix("item")
@@ -139,18 +100,18 @@ private fun ReorderScreenContent(
                         }
                     },
                     draggableContent = {
-                        NumberedItem(
-                            number = number,
+                        DndItemCard(
+                            label = "#$number",
                             isDragShadow = true,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(60.dp),
                         )
                     },
-                    modifier = Modifier
+                    modifier = Modifier,
                 ) {
-                    NumberedItem(
-                        number = number,
+                    DndItemCard(
+                        label = "#$number",
                         modifier = Modifier
                             .graphicsLayer {
                                 alpha = if (isDragging) 0f else 1f
@@ -160,48 +121,6 @@ private fun ReorderScreenContent(
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun NumberedItem(
-    number: String,
-    isDragShadow: Boolean = false,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        contentAlignment = Alignment.CenterStart,
-        modifier = modifier
-            .then(
-                if (isDragShadow) {
-                    Modifier.shadow(
-                        elevation = 20.dp,
-                        shape = RoundedCornerShape(24.dp),
-                    )
-                } else {
-                    Modifier
-                }
-            )
-            .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.tertiary)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 16.dp),
-        ) {
-            Icon(
-                Icons.Rounded.DragIndicator,
-                contentDescription = "Drag indicator",
-                tint = MaterialTheme.colorScheme.onTertiary,
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = "#$number",
-                color = MaterialTheme.colorScheme.onTertiary,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-            )
         }
     }
 }
