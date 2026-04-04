@@ -126,8 +126,7 @@ private fun ItemToItemOneDirectionScreenContent(
                                 draggableContent = {
                                     RedBox(modifier = Modifier.size(200.dp))
                                 },
-                            )
-                            .size(200.dp),
+                            ).size(200.dp),
                     )
                 }
             }
