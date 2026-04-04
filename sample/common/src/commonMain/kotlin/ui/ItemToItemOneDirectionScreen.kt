@@ -36,7 +36,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
-import com.mohamedrejeb.compose.dnd.drag.DraggableItem
+import com.mohamedrejeb.compose.dnd.drag.draggableItem
+import com.mohamedrejeb.compose.dnd.drag.isDragging
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import components.DemoScreenScaffold
@@ -113,18 +114,21 @@ private fun ItemToItemOneDirectionScreenContent(
                     .weight(1f),
             ) {
                 if (!isDropped) {
-                    DraggableItem(
-                        state = dragAndDropState,
-                        key = 1,
-                        data = 1,
-                    ) {
-                        RedBox(
-                            modifier = Modifier
-                                .graphicsLayer {
-                                    alpha = if (isDragging) 0f else 1f
-                                }.size(200.dp),
-                        )
-                    }
+                    val isDragging = dragAndDropState.isDragging(1)
+
+                    RedBox(
+                        modifier = Modifier
+                            .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+                            .draggableItem(
+                                state = dragAndDropState,
+                                key = 1,
+                                data = 1,
+                                draggableContent = {
+                                    RedBox(modifier = Modifier.size(200.dp))
+                                },
+                            )
+                            .size(200.dp),
+                    )
                 }
             }
 
