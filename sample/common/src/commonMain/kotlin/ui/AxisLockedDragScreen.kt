@@ -115,8 +115,7 @@ private fun HorizontalSlotDemo() {
                                 else -> MaterialTheme.colorScheme.outlineVariant
                             },
                             shape = shape,
-                        )
-                        .dropTarget(
+                        ).dropTarget(
                             key = slotKey,
                             state = state,
                             onDrop = { itemSlot = index },
@@ -196,8 +195,7 @@ private fun VerticalSlotDemo() {
                                 else -> MaterialTheme.colorScheme.outlineVariant
                             },
                             shape = shape,
-                        )
-                        .dropTarget(
+                        ).dropTarget(
                             key = slotKey,
                             state = state,
                             onDrop = { itemSlot = index },
@@ -291,8 +289,7 @@ private fun FreeMovementDemo() {
                                         else -> MaterialTheme.colorScheme.outlineVariant
                                     },
                                     shape = shape,
-                                )
-                                .dropTarget(
+                                ).dropTarget(
                                     key = slotKey,
                                     state = state,
                                     canDrop = !hasItemA && !hasItemB,

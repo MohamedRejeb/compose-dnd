@@ -222,8 +222,7 @@ private fun DropZone(
                 width = if (isHovered) 2.dp else 1.dp,
                 color = borderColor,
                 shape = shape,
-            )
-            .clip(shape)
+            ).clip(shape)
             .background(
                 if (isHovered && !isFull) {
                     color.copy(alpha = 0.08f)

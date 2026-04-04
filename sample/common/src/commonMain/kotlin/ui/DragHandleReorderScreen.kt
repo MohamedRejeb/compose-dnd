@@ -162,8 +162,7 @@ private fun DragHandleListItem(
                 } else {
                     Modifier
                 }
-            )
-            .clip(shape)
+            ).clip(shape)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(horizontal = 16.dp),
     ) {

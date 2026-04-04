@@ -355,11 +355,9 @@ private fun TargetBox(
                 width = if (isHovered) 3.dp else 1.dp,
                 color = if (isHovered) color else MaterialTheme.colorScheme.outlineVariant,
                 shape = shape,
-            )
-            .background(
+            ).background(
                 if (isHovered) color.copy(alpha = 0.12f) else Color.Transparent
-            )
-            .dropTarget(
+            ).dropTarget(
                 key = key,
                 state = dndState,
             ),
@@ -413,15 +411,13 @@ private fun StrategySelector(
                             MaterialTheme.colorScheme.outlineVariant
                         },
                         shape = chipShape,
-                    )
-                    .background(
+                    ).background(
                         color = if (selected) {
                             MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                         } else {
                             Color.Transparent
                         },
-                    )
-                    .clickable { onSelectedStrategyChange(strategy) }
+                    ).clickable { onSelectedStrategyChange(strategy) }
                     .padding(horizontal = 16.dp, vertical = 10.dp),
             ) {
                 Text(

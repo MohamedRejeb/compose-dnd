@@ -57,8 +57,7 @@ fun DndItemCard(
                 } else {
                     Modifier
                 }
-            )
-            .clip(shape)
+            ).clip(shape)
             .background(color),
     ) {
         Row(

@@ -47,8 +47,7 @@ fun RedBox(
                 } else {
                     Modifier
                 }
-            )
-            .clip(shape)
+            ).clip(shape)
             .background(MaterialTheme.colorScheme.primaryContainer),
     ) {
         Icon(

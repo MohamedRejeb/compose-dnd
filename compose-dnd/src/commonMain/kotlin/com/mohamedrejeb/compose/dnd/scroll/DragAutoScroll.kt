@@ -406,8 +406,7 @@ private fun resolveScrollAxis(
     itemSize: Size,
     containerTopLeft: Offset,
     containerSize: Size,
-): ScrollAxisBounds {
-    return if (orientation == Orientation.Vertical) {
+): ScrollAxisBounds = if (orientation == Orientation.Vertical) {
         ScrollAxisBounds(
             itemStart = dragPosition.y,
             itemEnd = dragPosition.y + itemSize.height,
@@ -422,7 +421,6 @@ private fun resolveScrollAxis(
             containerEnd = containerTopLeft.x + containerSize.width,
         )
     }
-}
 
 /**
  * Computes the scroll speed based on how close the dragged item is to the container edge.

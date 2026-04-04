@@ -141,8 +141,7 @@ private fun ItemToItemTwoDirectionsScreenContent(
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
-                                }
-                                .fillMaxSize(),
+                                }.fillMaxSize(),
                         )
                     }
                 }
@@ -184,8 +183,7 @@ private fun ItemToItemTwoDirectionsScreenContent(
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
-                                }
-                                .fillMaxSize(),
+                                }.fillMaxSize(),
                         )
                     }
                 }

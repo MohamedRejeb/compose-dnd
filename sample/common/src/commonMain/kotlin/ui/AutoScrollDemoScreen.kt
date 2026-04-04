@@ -335,8 +335,7 @@ private fun AutoScrollItem(
                 } else {
                     Modifier
                 }
-            )
-            .clip(shape)
+            ).clip(shape)
             .background(color),
     ) {
         Text(
@@ -366,8 +365,7 @@ private fun ScrollListItem(
                 } else {
                     Modifier
                 }
-            )
-            .clip(shape)
+            ).clip(shape)
             .background(MaterialTheme.colorScheme.tertiaryContainer)
             .padding(horizontal = 16.dp),
     ) {

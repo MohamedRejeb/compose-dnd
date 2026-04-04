@@ -106,8 +106,7 @@ private fun ListToListWithoutReorderContent(
                             MaterialTheme.colorScheme.outlineVariant
                         },
                         shape = MaterialTheme.shapes.large,
-                    )
-                    .dropTarget(
+                    ).dropTarget(
                         key = "listOne",
                         state = dragAndDropState,
                         dropAnimationEnabled = false,
@@ -144,8 +143,7 @@ private fun ListToListWithoutReorderContent(
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
-                                }
-                                .fillMaxWidth()
+                                }.fillMaxWidth()
                                 .height(60.dp),
                         )
                     }
@@ -167,8 +165,7 @@ private fun ListToListWithoutReorderContent(
                             MaterialTheme.colorScheme.outlineVariant
                         },
                         shape = MaterialTheme.shapes.large,
-                    )
-                    .dropTarget(
+                    ).dropTarget(
                         key = "listTwo",
                         state = dragAndDropState,
                         dropAnimationEnabled = false,
@@ -209,8 +206,7 @@ private fun ListToListWithoutReorderContent(
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
-                                }
-                                .fillMaxWidth()
+                                }.fillMaxWidth()
                                 .height(60.dp),
                         )
                     }
