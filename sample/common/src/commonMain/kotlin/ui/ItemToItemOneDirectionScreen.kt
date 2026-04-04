@@ -15,26 +15,18 @@
  */
 package ui
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,18 +41,21 @@ import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.drag.DraggableItem
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
+import components.DemoScreenScaffold
+import components.DndDropZone
 import components.DndSettingsDrawer
 import components.RedBox
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ItemToItemOneDirectionScreen(
     onBack: () -> Unit,
 ) {
     var dragAfterLongPress by remember { mutableStateOf(false) }
     var requireFirstDownUnconsumed by remember { mutableStateOf(false) }
-    val drawerState = androidx.compose.material3.rememberDrawerState(initialValue = androidx.compose.material3.DrawerValue.Closed)
+    val drawerState = androidx.compose.material3.rememberDrawerState(
+        initialValue = androidx.compose.material3.DrawerValue.Closed,
+    )
     val scope = rememberCoroutineScope()
 
     DndSettingsDrawer(
@@ -70,30 +65,13 @@ fun ItemToItemOneDirectionScreen(
         requireFirstDownUnconsumed = requireFirstDownUnconsumed,
         onRequireFirstDownUnconsumedChange = { requireFirstDownUnconsumed = it },
     ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "Item to Item (one direction)",
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(
-                            onClick = onBack
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = "Back",
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Rounded.Settings, contentDescription = "Settings")
-                        }
-                    }
-                )
+        DemoScreenScaffold(
+            title = "Item to Item (One Way)",
+            onBack = onBack,
+            actions = {
+                IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                    Icon(Icons.Rounded.Settings, contentDescription = "Settings")
+                }
             },
         ) { paddingValues ->
             ItemToItemOneDirectionScreenContent(
@@ -101,9 +79,8 @@ fun ItemToItemOneDirectionScreen(
                 requireFirstDownUnconsumed = requireFirstDownUnconsumed,
                 modifier = Modifier
                     .fillMaxSize()
-                    .safeDrawingPadding()
                     .padding(paddingValues)
-                    .padding(20.dp)
+                    .padding(16.dp),
             )
         }
     }
@@ -124,23 +101,18 @@ private fun ItemToItemOneDirectionScreenContent(
 
     DragAndDropContainer(
         state = dragAndDropState,
-        modifier = modifier
+        modifier = modifier,
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            modifier = Modifier
-                .fillMaxSize()
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxSize(),
         ) {
-            Box(
-                contentAlignment = Alignment.Center,
+            DndDropZone(
+                label = if (!isDropped) "Drag from here" else "Source (empty)",
+                accentColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        shape = RoundedCornerShape(24.dp),
-                    )
+                    .weight(1f),
             ) {
                 if (!isDropped) {
                     DraggableItem(
@@ -152,35 +124,31 @@ private fun ItemToItemOneDirectionScreenContent(
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
-                                }.size(200.dp)
+                                }
+                                .size(200.dp),
                         )
                     }
                 }
             }
 
-            Box(
-                contentAlignment = Alignment.Center,
+            val isHovered = dragAndDropState.hoveredDropTargetKey == "targetKey"
+
+            DndDropZone(
+                label = if (isDropped) "Dropped!" else "Drop here",
+                isHovered = isHovered,
+                accentColor = MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .border(
-                        width = 1.dp,
-                        color = with(MaterialTheme.colorScheme) {
-                            if (dragAndDropState.hoveredDropTargetKey == "targetKey") primary else onSurface
-                        },
-                        shape = RoundedCornerShape(24.dp),
-                    ).dropTarget(
+                    .dropTarget(
                         key = "targetKey",
                         state = dragAndDropState,
-                        onDrop = {
-                            isDropped = true
-                        }
-                    )
+                        onDrop = { isDropped = true },
+                    ),
             ) {
                 if (isDropped) {
                     RedBox(
-                        modifier = Modifier
-                            .size(200.dp)
+                        modifier = Modifier.size(200.dp),
                     )
                 }
             }

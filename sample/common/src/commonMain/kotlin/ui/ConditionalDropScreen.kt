@@ -24,18 +24,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,39 +42,21 @@ import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.drag.DraggableItem
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
+import components.DemoScreenScaffold
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConditionalDropScreen(
     onBack: () -> Unit,
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Conditional Drop (canDrop)",
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
-                },
-            )
-        },
+    DemoScreenScaffold(
+        title = "Conditional Drop",
+        onBack = onBack,
     ) { paddingValues ->
         ConditionalDropContent(
             modifier = Modifier
                 .fillMaxSize()
-                .safeDrawingPadding()
                 .padding(paddingValues)
-                .padding(20.dp)
+                .padding(16.dp),
         )
     }
 }
@@ -107,7 +80,7 @@ private fun ConditionalDropContent(
         Column(
             verticalArrangement = Arrangement.spacedBy(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         ) {
             Text(
                 text = "Drag numbers to matching targets. Each target accepts max 2 items.",
@@ -133,17 +106,17 @@ private fun ConditionalDropContent(
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0.3f else 1f
-                                }
+                                },
                         )
                     }
                 }
             }
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .weight(1f),
             ) {
                 DropZone(
                     label = "Even numbers",
@@ -164,7 +137,7 @@ private fun ConditionalDropContent(
                                     evenTargetCount++
                                 }
                             },
-                        )
+                        ),
                 )
 
                 DropZone(
@@ -186,7 +159,7 @@ private fun ConditionalDropContent(
                                     oddTargetCount++
                                 }
                             },
-                        )
+                        ),
                 )
             }
         }
@@ -204,18 +177,24 @@ private fun NumberChip(
     } else {
         MaterialTheme.colorScheme.tertiary
     }
+    val contentColor = if (isEven) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.onTertiary
+    }
+    val shape = MaterialTheme.shapes.medium
 
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .size(48.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(color)
+            .clip(shape)
+            .background(color),
     ) {
         Text(
             text = number,
             style = MaterialTheme.typography.titleMedium,
-            color = Color.White,
+            color = contentColor,
         )
     }
 }
@@ -229,6 +208,7 @@ private fun DropZone(
     color: Color,
     modifier: Modifier = Modifier,
 ) {
+    val shape = MaterialTheme.shapes.large
     val borderColor = when {
         isFull -> MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
         isHovered -> color
@@ -239,18 +219,18 @@ private fun DropZone(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .border(
-                width = 2.dp,
+                width = if (isHovered) 2.dp else 1.dp,
                 color = borderColor,
-                shape = RoundedCornerShape(24.dp),
+                shape = shape,
             )
-            .clip(RoundedCornerShape(24.dp))
+            .clip(shape)
             .background(
                 if (isHovered && !isFull) {
                     color.copy(alpha = 0.08f)
                 } else {
                     Color.Transparent
                 }
-            )
+            ),
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -275,7 +255,7 @@ private fun DropZone(
                     text = "Full",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier.padding(top = 4.dp),
                 )
             }
         }

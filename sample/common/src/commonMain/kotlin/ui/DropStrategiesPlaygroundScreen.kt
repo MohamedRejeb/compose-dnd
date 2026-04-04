@@ -26,24 +26,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,11 +55,11 @@ import com.mohamedrejeb.compose.dnd.drag.DraggableItem
 import com.mohamedrejeb.compose.dnd.drag.DropStrategy
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
+import components.DemoScreenScaffold
 import components.DndSettingsDrawer
 import components.RedBox
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DropStrategiesPlaygroundScreen(
     onBack: () -> Unit,
@@ -74,7 +67,7 @@ fun DropStrategiesPlaygroundScreen(
     var dragAfterLongPress by remember { mutableStateOf(false) }
     var requireFirstDownUnconsumed by remember { mutableStateOf(false) }
     val drawerState = androidx.compose.material3.rememberDrawerState(
-        initialValue = androidx.compose.material3.DrawerValue.Closed
+        initialValue = androidx.compose.material3.DrawerValue.Closed,
     )
     val scope = rememberCoroutineScope()
 
@@ -85,26 +78,13 @@ fun DropStrategiesPlaygroundScreen(
         requireFirstDownUnconsumed = requireFirstDownUnconsumed,
         onRequireFirstDownUnconsumedChange = { requireFirstDownUnconsumed = it },
     ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(text = "Drop Strategies")
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = "Back",
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Rounded.Settings, contentDescription = "Settings")
-                        }
-                    },
-                )
+        DemoScreenScaffold(
+            title = "Drop Strategies",
+            onBack = onBack,
+            actions = {
+                IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                    Icon(Icons.Rounded.Settings, contentDescription = "Settings")
+                }
             },
         ) { paddingValues ->
             DropStrategiesPlaygroundContent(
@@ -112,9 +92,8 @@ fun DropStrategiesPlaygroundScreen(
                 requireFirstDownUnconsumed = requireFirstDownUnconsumed,
                 modifier = Modifier
                     .fillMaxSize()
-                    .safeDrawingPadding()
                     .padding(paddingValues)
-                    .padding(20.dp)
+                    .padding(16.dp),
             )
         }
     }
@@ -159,7 +138,7 @@ private fun DropStrategiesPlaygroundContent(
         )
 
         Text(
-            text = "Overlapping targets — drag the box across them to see which one gets selected",
+            text = "Overlapping targets -- drag the box across them to see which one gets selected",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -167,7 +146,7 @@ private fun DropStrategiesPlaygroundContent(
         OverlappingTargetsDemo(dndState = dndState, selectedStrategy = selectedStrategy)
 
         Text(
-            text = "Different sizes — the small target covers faster by percentage",
+            text = "Different sizes -- the small target covers faster by percentage",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp),
@@ -184,17 +163,18 @@ private fun OverlappingTargetsDemo(
     dndState: DragAndDropState<Int>,
     selectedStrategy: DropStrategy,
 ) {
+    val shape = MaterialTheme.shapes.medium
+
     DragAndDropContainer(
         state = dndState,
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp)
+            .height(280.dp),
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         ) {
-            // Draggable item
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -203,8 +183,8 @@ private fun OverlappingTargetsDemo(
                     .border(
                         width = 1.dp,
                         color = MaterialTheme.colorScheme.outlineVariant,
-                        shape = RoundedCornerShape(16.dp),
-                    )
+                        shape = shape,
+                    ),
             ) {
                 DraggableItem(
                     state = dndState,
@@ -217,19 +197,17 @@ private fun OverlappingTargetsDemo(
                     RedBox(
                         modifier = Modifier
                             .graphicsLayer { alpha = if (isDragging) 0f else 1f }
-                            .fillMaxSize()
+                            .fillMaxSize(),
                     )
                 }
             }
 
-            // Three targets placed close together with overlap via negative spacing
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
+                    .height(150.dp),
             ) {
                 val totalWidth = maxWidth
-                // Targets overlap: each one is offset so they share horizontal space
                 val targetWidth = totalWidth * 0.45f
 
                 TargetBox(
@@ -240,7 +218,7 @@ private fun OverlappingTargetsDemo(
                     modifier = Modifier
                         .width(targetWidth)
                         .height(150.dp)
-                        .align(Alignment.CenterStart)
+                        .align(Alignment.CenterStart),
                 )
 
                 TargetBox(
@@ -251,7 +229,7 @@ private fun OverlappingTargetsDemo(
                     modifier = Modifier
                         .width(targetWidth)
                         .height(120.dp)
-                        .align(Alignment.Center)
+                        .align(Alignment.Center),
                 )
 
                 TargetBox(
@@ -262,7 +240,7 @@ private fun OverlappingTargetsDemo(
                     modifier = Modifier
                         .width(targetWidth)
                         .height(150.dp)
-                        .align(Alignment.CenterEnd)
+                        .align(Alignment.CenterEnd),
                 )
             }
         }
@@ -276,17 +254,18 @@ private fun DifferentSizesDemo(
     dndState: DragAndDropState<Int>,
     selectedStrategy: DropStrategy,
 ) {
+    val shape = MaterialTheme.shapes.medium
+
     DragAndDropContainer(
         state = dndState,
         modifier = Modifier
             .fillMaxWidth()
-            .height(300.dp)
+            .height(300.dp),
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         ) {
-            // Draggable item
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -295,8 +274,8 @@ private fun DifferentSizesDemo(
                     .border(
                         width = 1.dp,
                         color = MaterialTheme.colorScheme.outlineVariant,
-                        shape = RoundedCornerShape(16.dp),
-                    )
+                        shape = shape,
+                    ),
             ) {
                 DraggableItem(
                     state = dndState,
@@ -309,18 +288,17 @@ private fun DifferentSizesDemo(
                     RedBox(
                         modifier = Modifier
                             .graphicsLayer { alpha = if (isDragging) 0f else 1f }
-                            .fillMaxSize()
+                            .fillMaxSize(),
                     )
                 }
             }
 
-            // Three targets: small, medium, large — adjacent
             Row(
                 horizontalArrangement = Arrangement.spacedBy(0.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .weight(1f),
             ) {
                 TargetBox(
                     key = "small",
@@ -329,7 +307,7 @@ private fun DifferentSizesDemo(
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier
                         .width(80.dp)
-                        .height(80.dp)
+                        .height(80.dp),
                 )
 
                 TargetBox(
@@ -339,7 +317,7 @@ private fun DifferentSizesDemo(
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .width(120.dp)
-                        .height(120.dp)
+                        .height(120.dp),
                 )
 
                 TargetBox(
@@ -349,7 +327,7 @@ private fun DifferentSizesDemo(
                     color = MaterialTheme.colorScheme.tertiary,
                     modifier = Modifier
                         .weight(1f)
-                        .height(180.dp)
+                        .height(180.dp),
                 )
             }
         }
@@ -367,15 +345,16 @@ private fun TargetBox(
     modifier: Modifier = Modifier,
 ) {
     val isHovered = dndState.hoveredDropTargetKey == key
+    val shape = MaterialTheme.shapes.medium
 
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(shape)
             .border(
                 width = if (isHovered) 3.dp else 1.dp,
                 color = if (isHovered) color else MaterialTheme.colorScheme.outlineVariant,
-                shape = RoundedCornerShape(16.dp),
+                shape = shape,
             )
             .background(
                 if (isHovered) color.copy(alpha = 0.12f) else Color.Transparent
@@ -383,7 +362,7 @@ private fun TargetBox(
             .dropTarget(
                 key = key,
                 state = dndState,
-            )
+            ),
     ) {
         Text(
             text = label,
@@ -420,10 +399,12 @@ private fun StrategySelector(
                 else -> ""
             }
 
+            val chipShape = MaterialTheme.shapes.extraLarge
+
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(50))
+                    .clip(chipShape)
                     .border(
                         width = if (selected) 2.dp else 1.dp,
                         color = if (selected) {
@@ -431,7 +412,7 @@ private fun StrategySelector(
                         } else {
                             MaterialTheme.colorScheme.outlineVariant
                         },
-                        shape = RoundedCornerShape(50),
+                        shape = chipShape,
                     )
                     .background(
                         color = if (selected) {
@@ -441,7 +422,7 @@ private fun StrategySelector(
                         },
                     )
                     .clickable { onSelectedStrategyChange(strategy) }
-                    .padding(horizontal = 16.dp, vertical = 10.dp)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
             ) {
                 Text(
                     text = name,

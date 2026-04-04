@@ -15,13 +15,14 @@
  */
 package components
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DrawerState
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DndSettingsDrawer(
     drawerState: DrawerState,
@@ -41,6 +42,7 @@ fun DndSettingsDrawer(
                     onDragAfterLongPressChange = onDragAfterLongPressChange,
                     requireFirstDownUnconsumed = requireFirstDownUnconsumed,
                     onRequireFirstDownUnconsumedChange = onRequireFirstDownUnconsumedChange,
+                    modifier = Modifier.padding(8.dp),
                 )
             }
         },

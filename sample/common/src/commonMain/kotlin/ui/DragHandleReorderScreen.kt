@@ -22,22 +22,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.DragHandle
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,39 +47,21 @@ import com.mohamedrejeb.compose.dnd.reorder.ReorderContainer
 import com.mohamedrejeb.compose.dnd.reorder.ReorderableItem
 import com.mohamedrejeb.compose.dnd.reorder.rememberReorderState
 import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
+import components.DemoScreenScaffold
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DragHandleReorderScreen(
     onBack: () -> Unit,
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Reorder with Drag Handle",
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
-                },
-            )
-        },
+    DemoScreenScaffold(
+        title = "Drag Handle Reorder",
+        onBack = onBack,
     ) { paddingValues ->
         DragHandleReorderContent(
             modifier = Modifier
                 .fillMaxSize()
-                .safeDrawingPadding()
                 .padding(paddingValues)
-                .padding(20.dp)
+                .padding(16.dp),
         )
     }
 }
@@ -119,14 +94,14 @@ private fun DragHandleReorderContent(
         modifier = modifier,
     ) {
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             state = lazyListState,
             modifier = Modifier
                 .fillMaxSize()
                 .dragAutoScroll(
                     state = reorderState.dndState,
                     lazyListState = lazyListState,
-                )
+                ),
         ) {
             items(items, key = { it }) { item ->
                 ReorderableItem(
@@ -148,7 +123,7 @@ private fun DragHandleReorderContent(
                             isDragShadow = true,
                         )
                     },
-                    modifier = Modifier
+                    modifier = Modifier,
                 ) {
                     DragHandleListItem(
                         text = item,
@@ -171,6 +146,8 @@ private fun DragHandleListItem(
     modifier: Modifier = Modifier,
     handleModifier: Modifier = Modifier,
 ) {
+    val shape = MaterialTheme.shapes.medium
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
@@ -179,23 +156,22 @@ private fun DragHandleListItem(
             .then(
                 if (isDragShadow) {
                     Modifier.shadow(
-                        elevation = 8.dp,
-                        shape = RoundedCornerShape(12.dp),
+                        elevation = 12.dp,
+                        shape = shape,
                     )
                 } else {
                     Modifier
                 }
             )
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .padding(horizontal = 16.dp)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(horizontal = 16.dp),
     ) {
         Icon(
             Icons.Rounded.DragHandle,
             contentDescription = "Drag handle",
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = handleModifier
-                .size(24.dp)
+            modifier = handleModifier.size(24.dp),
         )
 
         Text(
@@ -204,7 +180,7 @@ private fun DragHandleListItem(
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
                 .padding(start = 16.dp)
-                .weight(1f)
+                .weight(1f),
         )
     }
 }

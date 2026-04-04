@@ -25,21 +25,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,41 +46,23 @@ import com.mohamedrejeb.compose.dnd.drag.DragAxis
 import com.mohamedrejeb.compose.dnd.drag.DraggableItem
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
+import components.DemoScreenScaffold
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AxisLockedDragScreen(
     onBack: () -> Unit,
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Axis-Locked Drag",
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
-                },
-            )
-        },
+    DemoScreenScaffold(
+        title = "Axis-Locked Drag",
+        onBack = onBack,
     ) { paddingValues ->
         Column(
             verticalArrangement = Arrangement.spacedBy(24.dp),
             modifier = Modifier
                 .fillMaxSize()
-                .safeDrawingPadding()
                 .padding(paddingValues)
-                .padding(20.dp)
-                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
         ) {
             HorizontalSlotDemo()
             VerticalSlotDemo()
@@ -108,7 +80,7 @@ private fun HorizontalSlotDemo() {
     val state = rememberDragAndDropState<Int>()
 
     Text(
-        text = "Horizontal Only — slide between slots",
+        text = "Horizontal Only",
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.onSurface,
     )
@@ -117,37 +89,38 @@ private fun HorizontalSlotDemo() {
         state = state,
         modifier = Modifier
             .fillMaxWidth()
-            .height(100.dp)
+            .height(100.dp),
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         ) {
             slots.forEachIndexed { index, slotKey ->
                 val isOccupied = index == itemSlot
                 val isHovered = state.hoveredDropTargetKey == slotKey
+                val shape = MaterialTheme.shapes.medium
 
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .weight(1f)
                         .height(80.dp)
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(shape)
                         .border(
-                            width = 2.dp,
+                            width = if (isHovered) 2.dp else 1.dp,
                             color = when {
                                 isHovered -> MaterialTheme.colorScheme.primary
                                 isOccupied -> Color.Transparent
                                 else -> MaterialTheme.colorScheme.outlineVariant
                             },
-                            shape = RoundedCornerShape(16.dp),
+                            shape = shape,
                         )
                         .dropTarget(
                             key = slotKey,
                             state = state,
                             onDrop = { itemSlot = index },
-                        )
+                        ),
                 ) {
                     if (isOccupied) {
                         DraggableItem(
@@ -159,10 +132,11 @@ private fun HorizontalSlotDemo() {
                             ColorChip(
                                 label = "H",
                                 color = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier
                                     .graphicsLayer {
                                         alpha = if (isDragging) 0.3f else 1f
-                                    }
+                                    },
                             )
                         }
                     } else {
@@ -187,7 +161,7 @@ private fun VerticalSlotDemo() {
     val state = rememberDragAndDropState<Int>()
 
     Text(
-        text = "Vertical Only — slide between slots",
+        text = "Vertical Only",
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.onSurface,
     )
@@ -196,37 +170,38 @@ private fun VerticalSlotDemo() {
         state = state,
         modifier = Modifier
             .fillMaxWidth()
-            .height(240.dp)
+            .height(240.dp),
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         ) {
             slots.forEachIndexed { index, slotKey ->
                 val isOccupied = index == itemSlot
                 val isHovered = state.hoveredDropTargetKey == slotKey
+                val shape = MaterialTheme.shapes.medium
 
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(shape)
                         .border(
-                            width = 2.dp,
+                            width = if (isHovered) 2.dp else 1.dp,
                             color = when {
                                 isHovered -> MaterialTheme.colorScheme.tertiary
                                 isOccupied -> Color.Transparent
                                 else -> MaterialTheme.colorScheme.outlineVariant
                             },
-                            shape = RoundedCornerShape(16.dp),
+                            shape = shape,
                         )
                         .dropTarget(
                             key = slotKey,
                             state = state,
                             onDrop = { itemSlot = index },
-                        )
+                        ),
                 ) {
                     if (isOccupied) {
                         DraggableItem(
@@ -238,10 +213,11 @@ private fun VerticalSlotDemo() {
                             ColorChip(
                                 label = "V",
                                 color = MaterialTheme.colorScheme.tertiary,
+                                contentColor = MaterialTheme.colorScheme.onTertiary,
                                 modifier = Modifier
                                     .graphicsLayer {
                                         alpha = if (isDragging) 0.3f else 1f
-                                    }
+                                    },
                             )
                         }
                     } else {
@@ -261,19 +237,18 @@ private fun VerticalSlotDemo() {
 
 @Composable
 private fun FreeMovementDemo() {
-    // 2x3 grid positions, two items can be placed
     val gridSlots = remember {
         listOf(
             "g-0-0", "g-0-1", "g-0-2",
             "g-1-0", "g-1-1", "g-1-2",
         )
     }
-    var itemASlot by remember { mutableStateOf(0) } // top-left
-    var itemBSlot by remember { mutableStateOf(5) } // bottom-right
+    var itemASlot by remember { mutableStateOf(0) }
+    var itemBSlot by remember { mutableStateOf(5) }
     val state = rememberDragAndDropState<String>()
 
     Text(
-        text = "Free (both axes) — move in a grid",
+        text = "Free (Both Axes)",
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.onSurface,
     )
@@ -282,18 +257,18 @@ private fun FreeMovementDemo() {
         state = state,
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp)
+            .height(200.dp),
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         ) {
             for (row in 0..1) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
+                        .weight(1f),
                 ) {
                     for (col in 0..2) {
                         val slotIndex = row * 3 + col
@@ -301,20 +276,21 @@ private fun FreeMovementDemo() {
                         val hasItemA = slotIndex == itemASlot
                         val hasItemB = slotIndex == itemBSlot
                         val isHovered = state.hoveredDropTargetKey == slotKey
+                        val shape = MaterialTheme.shapes.medium
 
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxSize()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(shape)
                                 .border(
-                                    width = 2.dp,
+                                    width = if (isHovered) 2.dp else 1.dp,
                                     color = when {
                                         isHovered -> MaterialTheme.colorScheme.secondary
                                         else -> MaterialTheme.colorScheme.outlineVariant
                                     },
-                                    shape = RoundedCornerShape(12.dp),
+                                    shape = shape,
                                 )
                                 .dropTarget(
                                     key = slotKey,
@@ -326,7 +302,7 @@ private fun FreeMovementDemo() {
                                             "B" -> itemBSlot = slotIndex
                                         }
                                     },
-                                )
+                                ),
                         ) {
                             when {
                                 hasItemA -> {
@@ -339,10 +315,11 @@ private fun FreeMovementDemo() {
                                         ColorChip(
                                             label = "A",
                                             color = MaterialTheme.colorScheme.primary,
+                                            contentColor = MaterialTheme.colorScheme.onPrimary,
                                             modifier = Modifier
                                                 .graphicsLayer {
                                                     alpha = if (isDragging) 0.3f else 1f
-                                                }
+                                                },
                                         )
                                     }
                                 }
@@ -356,10 +333,11 @@ private fun FreeMovementDemo() {
                                         ColorChip(
                                             label = "B",
                                             color = MaterialTheme.colorScheme.tertiary,
+                                            contentColor = MaterialTheme.colorScheme.onTertiary,
                                             modifier = Modifier
                                                 .graphicsLayer {
                                                     alpha = if (isDragging) 0.3f else 1f
-                                                }
+                                                },
                                         )
                                     }
                                 }
@@ -376,19 +354,22 @@ private fun FreeMovementDemo() {
 private fun ColorChip(
     label: String,
     color: Color,
+    contentColor: Color,
     modifier: Modifier = Modifier,
 ) {
+    val shape = MaterialTheme.shapes.medium
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .size(width = 56.dp, height = 48.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(color)
+            .clip(shape)
+            .background(color),
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.titleMedium,
-            color = Color.White,
+            color = contentColor,
         )
     }
 }

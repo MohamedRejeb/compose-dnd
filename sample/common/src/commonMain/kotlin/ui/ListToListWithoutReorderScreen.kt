@@ -24,20 +24,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,40 +40,22 @@ import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.drag.DraggableItem
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
-import components.RedBox
+import components.DemoScreenScaffold
+import components.DndItemCard
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ListToListWithoutReorderScreen(
     onBack: () -> Unit,
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "From list to list (without reorder)",
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
-                },
-            )
-        },
+    DemoScreenScaffold(
+        title = "List to List (No Reorder)",
+        onBack = onBack,
     ) { paddingValues ->
         ListToListWithoutReorderContent(
             modifier = Modifier
                 .fillMaxSize()
-                .safeDrawingPadding()
                 .padding(paddingValues)
-                .padding(20.dp)
+                .padding(16.dp),
         )
     }
 }
@@ -94,53 +66,48 @@ private fun ListToListWithoutReorderContent(
 ) {
     var listOne by remember {
         mutableStateOf(
-            listOf(
-                "item1",
-                "item2",
-                "item3",
-                "item4",
-            )
+            listOf("item1", "item2", "item3", "item4")
         )
     }
 
     var listTwo by remember {
         mutableStateOf(
-            listOf(
-                "item5",
-                "item6",
-                "item7",
-                "item8",
-            )
+            listOf("item5", "item6", "item7", "item8")
         )
     }
 
     val dragAndDropState = rememberDragAndDropState<String>()
-
-    val lazyListState = rememberLazyListState()
+    val lazyListStateOne = rememberLazyListState()
+    val lazyListStateTwo = rememberLazyListState()
 
     DragAndDropContainer(
         state = dragAndDropState,
         modifier = modifier,
     ) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-            modifier = Modifier
-                .fillMaxSize()
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxSize(),
         ) {
+            val listOneHovered = dragAndDropState.hoveredDropTargetKey == "listOne"
+            val listTwoHovered = dragAndDropState.hoveredDropTargetKey == "listTwo"
+
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-                state = lazyListState,
-                contentPadding = PaddingValues(10.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                state = lazyListStateOne,
+                contentPadding = PaddingValues(8.dp),
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
                     .border(
-                        width = 1.dp,
-                        color = with(MaterialTheme.colorScheme) {
-                            if (dragAndDropState.hoveredDropTargetKey == "listOne") primary else onSurface
+                        width = if (listOneHovered) 2.dp else 1.dp,
+                        color = if (listOneHovered) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outlineVariant
                         },
-                        shape = RoundedCornerShape(24.dp),
-                    ).dropTarget(
+                        shape = MaterialTheme.shapes.large,
+                    )
+                    .dropTarget(
                         key = "listOne",
                         state = dragAndDropState,
                         dropAnimationEnabled = false,
@@ -149,12 +116,11 @@ private fun ListToListWithoutReorderContent(
                                 val isRemoved = remove(state.data)
                                 if (!isRemoved) return@dropTarget
                             }
-
                             listOne = listOne.toMutableList().apply {
                                 add(state.data)
                             }
                         },
-                    )
+                    ),
             ) {
                 items(listOne, key = { it }) { item ->
                     DraggableItem(
@@ -163,40 +129,46 @@ private fun ListToListWithoutReorderContent(
                         data = item,
                         dropTargets = listOf("listTwo"),
                         draggableContent = {
-                            RedBox(
+                            DndItemCard(
+                                label = item,
                                 isDragShadow = true,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(60.dp)
+                                    .height(60.dp),
                             )
                         },
-                        modifier = Modifier
+                        modifier = Modifier,
                     ) {
-                        RedBox(
+                        DndItemCard(
+                            label = item,
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
-                                }.fillMaxWidth()
-                                .height(60.dp)
+                                }
+                                .fillMaxWidth()
+                                .height(60.dp),
                         )
                     }
                 }
             }
 
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-                state = lazyListState,
-                contentPadding = PaddingValues(10.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                state = lazyListStateTwo,
+                contentPadding = PaddingValues(8.dp),
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
                     .border(
-                        width = 1.dp,
-                        color = with(MaterialTheme.colorScheme) {
-                            if (dragAndDropState.hoveredDropTargetKey == "listTwo") primary else onSurface
+                        width = if (listTwoHovered) 2.dp else 1.dp,
+                        color = if (listTwoHovered) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outlineVariant
                         },
-                        shape = RoundedCornerShape(24.dp),
-                    ).dropTarget(
+                        shape = MaterialTheme.shapes.large,
+                    )
+                    .dropTarget(
                         key = "listTwo",
                         state = dragAndDropState,
                         dropAnimationEnabled = false,
@@ -205,12 +177,11 @@ private fun ListToListWithoutReorderContent(
                                 val isRemoved = remove(state.data)
                                 if (!isRemoved) return@dropTarget
                             }
-
                             listTwo = listTwo.toMutableList().apply {
                                 add(state.data)
                             }
                         },
-                    )
+                    ),
             ) {
                 items(listTwo, key = { it }) { item ->
                     DraggableItem(
@@ -219,21 +190,28 @@ private fun ListToListWithoutReorderContent(
                         data = item,
                         dropTargets = listOf("listOne"),
                         draggableContent = {
-                            RedBox(
+                            DndItemCard(
+                                label = item,
                                 isDragShadow = true,
+                                color = MaterialTheme.colorScheme.tertiaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(60.dp)
+                                    .height(60.dp),
                             )
                         },
-                        modifier = Modifier
+                        modifier = Modifier,
                     ) {
-                        RedBox(
+                        DndItemCard(
+                            label = item,
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier = Modifier
                                 .graphicsLayer {
                                     alpha = if (isDragging) 0f else 1f
-                                }.fillMaxWidth()
-                                .height(60.dp)
+                                }
+                                .fillMaxWidth()
+                                .height(60.dp),
                         )
                     }
                 }

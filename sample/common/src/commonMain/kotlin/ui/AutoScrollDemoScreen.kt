@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -38,19 +37,12 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -66,12 +58,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 import com.mohamedrejeb.compose.dnd.reorder.ReorderContainer
 import com.mohamedrejeb.compose.dnd.reorder.ReorderableItem
 import com.mohamedrejeb.compose.dnd.reorder.rememberReorderState
 import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
+import components.DemoScreenScaffold
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,25 +73,13 @@ fun AutoScrollDemoScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("LazyRow", "Grid", "Scroll")
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Auto-Scroll Demo") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
-                },
-            )
-        },
+    DemoScreenScaffold(
+        title = "Auto-Scroll Demo",
+        onBack = onBack,
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .safeDrawingPadding()
                 .padding(paddingValues),
         ) {
             PrimaryTabRow(selectedTabIndex = selectedTab) {
@@ -116,17 +96,17 @@ fun AutoScrollDemoScreen(
                 0 -> LazyRowReorderContent(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(20.dp),
+                        .padding(16.dp),
                 )
                 1 -> LazyGridReorderContent(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(20.dp),
+                        .padding(16.dp),
                 )
                 2 -> ScrollStateReorderContent(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(20.dp),
+                        .padding(16.dp),
                 )
             }
         }
@@ -174,9 +154,11 @@ private fun LazyRowReorderContent(modifier: Modifier = Modifier) {
                         }
                     },
                     draggableContent = {
-                        HorizontalNumberedItem(
+                        AutoScrollItem(
                             number = number,
                             isDragShadow = true,
+                            color = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier
                                 .width(80.dp)
                                 .fillMaxHeight(),
@@ -184,8 +166,10 @@ private fun LazyRowReorderContent(modifier: Modifier = Modifier) {
                     },
                     modifier = Modifier,
                 ) {
-                    HorizontalNumberedItem(
+                    AutoScrollItem(
                         number = number,
+                        color = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier
                             .graphicsLayer { alpha = if (isDragging) 0f else 1f }
                             .width(80.dp)
@@ -238,9 +222,11 @@ private fun LazyGridReorderContent(modifier: Modifier = Modifier) {
                         }
                     },
                     draggableContent = {
-                        GridNumberedItem(
+                        AutoScrollItem(
                             number = number,
                             isDragShadow = true,
+                            color = MaterialTheme.colorScheme.secondary,
+                            contentColor = MaterialTheme.colorScheme.onSecondary,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(80.dp),
@@ -248,8 +234,10 @@ private fun LazyGridReorderContent(modifier: Modifier = Modifier) {
                     },
                     modifier = Modifier,
                 ) {
-                    GridNumberedItem(
+                    AutoScrollItem(
                         number = number,
+                        color = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary,
                         modifier = Modifier
                             .graphicsLayer { alpha = if (isDragging) 0f else 1f }
                             .fillMaxWidth()
@@ -302,7 +290,7 @@ private fun ScrollStateReorderContent(modifier: Modifier = Modifier) {
                             }
                         },
                         draggableContent = {
-                            ScrollNumberedItem(
+                            ScrollListItem(
                                 number = number,
                                 isDragShadow = true,
                                 modifier = Modifier
@@ -312,7 +300,7 @@ private fun ScrollStateReorderContent(modifier: Modifier = Modifier) {
                         },
                         modifier = Modifier,
                     ) {
-                        ScrollNumberedItem(
+                        ScrollListItem(
                             number = number,
                             modifier = Modifier
                                 .graphicsLayer { alpha = if (isDragging) 0f else 1f }
@@ -329,25 +317,29 @@ private fun ScrollStateReorderContent(modifier: Modifier = Modifier) {
 // -- Item composables --
 
 @Composable
-private fun HorizontalNumberedItem(
+private fun AutoScrollItem(
     number: String,
+    color: androidx.compose.ui.graphics.Color,
+    contentColor: androidx.compose.ui.graphics.Color,
     isDragShadow: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
+    val shape = MaterialTheme.shapes.medium
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .then(
-                if (isDragShadow) Modifier.shadow(16.dp, RoundedCornerShape(16.dp))
+                if (isDragShadow) Modifier.shadow(16.dp, shape)
                 else Modifier
             )
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.primary),
+            .clip(shape)
+            .background(color),
     ) {
         Text(
             text = "#$number",
-            color = MaterialTheme.colorScheme.onPrimary,
-            fontSize = 18.sp,
+            color = contentColor,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
         )
@@ -355,51 +347,28 @@ private fun HorizontalNumberedItem(
 }
 
 @Composable
-private fun GridNumberedItem(
+private fun ScrollListItem(
     number: String,
     isDragShadow: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier
-            .then(
-                if (isDragShadow) Modifier.shadow(16.dp, RoundedCornerShape(16.dp))
-                else Modifier
-            )
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.secondary),
-    ) {
-        Text(
-            text = "#$number",
-            color = MaterialTheme.colorScheme.onSecondary,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-        )
-    }
-}
+    val shape = MaterialTheme.shapes.medium
 
-@Composable
-private fun ScrollNumberedItem(
-    number: String,
-    isDragShadow: Boolean = false,
-    modifier: Modifier = Modifier,
-) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .then(
-                if (isDragShadow) Modifier.shadow(16.dp, RoundedCornerShape(16.dp))
+                if (isDragShadow) Modifier.shadow(16.dp, shape)
                 else Modifier
             )
-            .clip(RoundedCornerShape(16.dp))
+            .clip(shape)
             .background(MaterialTheme.colorScheme.tertiaryContainer)
             .padding(horizontal = 16.dp),
     ) {
         Text(
             text = "#$number",
             color = MaterialTheme.colorScheme.onTertiaryContainer,
-            fontSize = 16.sp,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
         Spacer(modifier = Modifier.width(12.dp))
