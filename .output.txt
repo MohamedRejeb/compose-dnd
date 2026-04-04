@@ -1,0 +1,428 @@
+Command finished with exit code 0.
+Command output:
+commit 193faed7bce639a95bd2052fc60ae0140c22fe45
+Author: MohamedRejeb <mohamedrejeb445@gmail.com>
+Date:   Sat Apr 4 18:26:32 2026 +0100
+
+    chore: migrate to vanniktech maven-publish and add renovate configuration
+
+diff --git a/.github/workflows/deploy.yml b/.github/workflows/deploy.yml
+index 5625d9c..5250cc6 100644
+--- a/.github/workflows/deploy.yml
++++ b/.github/workflows/deploy.yml
+@@ -1,52 +1,53 @@
+-# This workflow uses actions that are not certified by GitHub.
+-# They are provided by a third-party and are governed by
+-# separate terms of service, privacy policy, and support
+-# documentation.
+-# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
+-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
+-
+ name: Deploy to central
+ 
+-on: workflow_dispatch
++on:
++  workflow_dispatch:
++    inputs:
++      version:
++        description: 'Release version (e.g., 0.5.0)'
++        required: true
++        type: string
+ 
+ permissions:
+-    contents: read
++  contents: write
++  pull-requests: write
+ 
+ jobs:
+-    build:
+-        uses: ./.github/workflows/gradle.yml
+-    deploy:
+-        needs: build
+-        strategy:
+-            matrix:
+-                include:
+-                    - target: publish
+-                      os: macos-latest
+-        runs-on: ${{ matrix.os }}
+-        steps:
+-            - uses: actions/checkout@v3
+-            - name: Validate Gradle Wrapper
+-              uses: gradle/wrapper-validation-action@v1
+-            - uses: actions/cache@v3
+-              with:
+-                  path: |
+-                      ~/.konan
+-                  key: ${{ runner.os }}-${{ hashFiles('**/.lock') }}
+-            - name: Set up JDK 17
+-              uses: actions/setup-java@v3
+-              with:
+-                  java-version: '17'
+-                  distribution: 'temurin'
+-            - name: Gradle publish
+-              uses: gradle/gradle-build-action@ce999babab2de1c4b649dc15f0ee67e6246c994f
+-              with:
+-                  arguments: |
+-                      ${{ matrix.target }}
+-                      closeAndReleaseSonatypeStagingRepository
+-              env:
+-                  OSSRH_STAGING_PROFILE_ID: ${{ secrets.OSSRH_STAGING_PROFILE_ID }}
+-                  OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+-                  OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+-                  OSSRH_GPG_SECRET_KEY_PASSWORD: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+-                  OSSRH_GPG_SECRET_KEY_ID: ${{ secrets.OSSRH_GPG_SECRET_KEY_ID }}
+-                  OSSRH_GPG_SECRET_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
++  build:
++    uses: ./.github/workflows/gradle.yml
++
++  deploy:
++    needs: build
++    runs-on: macos-latest
++
++    env:
++      VERSION: ${{ inputs.version }}
++      ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.OSSRH_USERNAME }}
++      ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.OSSRH_PASSWORD }}
++      ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.OSSRH_GPG_SECRET_KEY_ID }}
++      ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
++      ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
++
++    steps:
++    - uses: actions/checkout@v6
++
++    - name: Validate Gradle Wrapper
++      uses: gradle/wrapper-validation-action@v3
++
++    - uses: actions/cache@v5
++      with:
++        path: |
++          ~/.konan
++        key: ${{ runner.os }}-${{ hashFiles('**/.lock') }}
++
++    - name: Set up JDK 17
++      uses: actions/setup-java@v5
++      with:
++        java-version: '17'
++        distribution: 'temurin'
++
++    - name: Setup gradle
++      uses: gradle/actions/setup-gradle@v5
++
++    - name: Publish to Maven Central
++      run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
+diff --git a/.github/workflows/gradle.yml b/.github/workflows/gradle.yml
+index 641373c..c105840 100644
+--- a/.github/workflows/gradle.yml
++++ b/.github/workflows/gradle.yml
+@@ -15,25 +15,25 @@ jobs:
+         runs-on: macos-latest
+ 
+         steps:
+-            - uses: actions/checkout@v4
++            - uses: actions/checkout@v6
+ 
+             - name: Validate Gradle Wrapper
+-              uses: gradle/wrapper-validation-action@v2
++              uses: gradle/wrapper-validation-action@v3
+ 
+-            - uses: actions/cache@v4
++            - uses: actions/cache@v5
+               with:
+                   path: |
+                       ~/.konan
+                   key: ${{ runner.os }}-${{ hashFiles('**/.lock') }}
+ 
+             - name: Set up JDK 17
+-              uses: actions/setup-java@v4
++              uses: actions/setup-java@v5
+               with:
+                   java-version: '17'
+                   distribution: 'zulu'
+ 
+             - name: Setup gradle
+-              uses: gradle/actions/setup-gradle@v3
++              uses: gradle/actions/setup-gradle@v5
+ 
+             - name: Gradle test
+               run: ./gradlew allTests
+@@ -46,23 +46,22 @@ jobs:
+         needs: build
+         runs-on: macos-latest
+         steps:
+-            - uses: actions/checkout@v4
++            - uses: actions/checkout@v6
+             - name: Set up JDK 17
+-              uses: actions/setup-java@v4
++              uses: actions/setup-java@v5
+               with:
+                   java-version: '17'
+                   distribution: 'zulu'
+ 
+             - name: Setup Gradle
+-              uses: gradle/actions/setup-gradle@v3
++              uses: gradle/actions/setup-gradle@v5
+ 
+             - name: Deploy snapshot
+               env:
+                   VERSION: 0.5.0-SNAPSHOT
+-                  OSSRH_STAGING_PROFILE_ID: ${{ secrets.OSSRH_STAGING_PROFILE_ID }}
+-                  OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+-                  OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+-                  OSSRH_GPG_SECRET_KEY_PASSWORD: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+-                  OSSRH_GPG_SECRET_KEY_ID: ${{ secrets.OSSRH_GPG_SECRET_KEY_ID }}
+-                  OSSRH_GPG_SECRET_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
++                  ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.OSSRH_USERNAME }}
++                  ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.OSSRH_PASSWORD }}
++                  ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.OSSRH_GPG_SECRET_KEY_ID }}
++                  ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
++                  ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+               run: ./gradlew publish
+diff --git a/build.gradle.kts b/build.gradle.kts
+index 4bfe7e2..3ab2c07 100644
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -1,13 +1,19 @@
+ plugins {
+     // this is necessary to avoid the plugins to be loaded multiple times
+     // in each subproject's classloader
+-    id("root.publication")
++    alias(libs.plugins.vanniktech.maven.publish) apply false
+     alias(libs.plugins.jetbrainsCompose) apply false
+     alias(libs.plugins.composeCompiler) apply false
+     alias(libs.plugins.androidApplication) apply false
+     alias(libs.plugins.androidLibrary) apply false
+     alias(libs.plugins.kotlinMultiplatform) apply false
+     alias(libs.plugins.kotlinAndroid) apply false
+-    alias(libs.plugins.kotlinSerialization) apply false
+     alias(libs.plugins.spotless) apply false
+ }
++
++val composeDndVersion = System.getenv("VERSION") ?: "0.5.0-SNAPSHOT"
++
++allprojects {
++    group = "com.mohamedrejeb.dnd"
++    version = composeDndVersion
++}
+diff --git a/convention-plugins/build.gradle.kts b/convention-plugins/build.gradle.kts
+index 0091ad4..1815578 100644
+--- a/convention-plugins/build.gradle.kts
++++ b/convention-plugins/build.gradle.kts
+@@ -3,7 +3,7 @@ plugins {
+ }
+ 
+ dependencies {
+-    implementation(libs.nexus.publish)
++    implementation(libs.vanniktech.maven.publish)
+     implementation(libs.spotless.gradle)
+     // hack to access version catalogue https://github.com/gradle/gradle/issues/15383
+     compileOnly(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
+diff --git a/convention-plugins/src/main/kotlin/module.publication.gradle.kts b/convention-plugins/src/main/kotlin/module.publication.gradle.kts
+index 3be7ba4..1b7657e 100644
+--- a/convention-plugins/src/main/kotlin/module.publication.gradle.kts
++++ b/convention-plugins/src/main/kotlin/module.publication.gradle.kts
+@@ -1,62 +1,38 @@
+-import org.gradle.api.publish.maven.MavenPublication
+-import org.gradle.api.tasks.bundling.Jar
+-import org.gradle.kotlin.dsl.`maven-publish`
+-
+ plugins {
+-    `maven-publish`
+-    signing
++    id("com.vanniktech.maven.publish")
+ }
+ 
+-publishing {
+-    // Configure all publications
+-    publications.withType<MavenPublication> {
+-        // Stub javadoc.jar artifact
+-        artifact(tasks.register("${name}JavadocJar", Jar::class) {
+-            archiveClassifier.set("javadoc")
+-            archiveAppendix.set(this@withType.name)
+-        })
++mavenPublishing {
++    publishToMavenCentral()
++    signAllPublications()
+ 
+-        // Provide artifacts information required by Maven Central
+-        pom {
+-            name.set("Compose Drag and Drop")
+-            description.set("A library that allows you to easily add drag and drop functionality to your Jetpack Compose or Compose Multiplatform projects.")
+-            url.set("https://github.com/MohamedRejeb/compose-dnd")
++    coordinates(group.toString(), project.name, version.toString())
+ 
+-            licenses {
+-                license {
+-                    name.set("Apache-2.0")
+-                    url.set("https://opensource.org/licenses/Apache-2.0")
+-                }
+-            }
+-            developers {
+-                developer {
+-                    id.set("MohamedRejeb")
+-                    name.set("Mohamed Rejeb")
+-                    email.set("mohamedrejeb445@gmail.com")
+-                }
+-            }
+-            issueManagement {
+-                system.set("Github")
+-                url.set("https://github.com/MohamedRejeb/compose-dnd/issues")
++    pom {
++        name.set("Compose Drag and Drop")
++        description.set("A library that allows you to easily add drag and drop functionality to your Jetpack Compose or Compose Multiplatform projects.")
++        url.set("https://github.com/MohamedRejeb/compose-dnd")
++
++        licenses {
++            license {
++                name.set("Apache-2.0")
++                url.set("https://opensource.org/licenses/Apache-2.0")
+             }
+-            scm {
+-                connection.set("https://github.com/MohamedRejeb/compose-dnd.git")
+-                url.set("https://github.com/MohamedRejeb/compose-dnd")
++        }
++        developers {
++            developer {
++                id.set("MohamedRejeb")
++                name.set("Mohamed Rejeb")
++                email.set("mohamedrejeb445@gmail.com")
+             }
+         }
++        issueManagement {
++            system.set("Github")
++            url.set("https://github.com/MohamedRejeb/compose-dnd/issues")
++        }
++        scm {
++            connection.set("https://github.com/MohamedRejeb/compose-dnd.git")
++            url.set("https://github.com/MohamedRejeb/compose-dnd")
++        }
+     }
+ }
+-
+-signing {
+-    useInMemoryPgpKeys(
+-        System.getenv("OSSRH_GPG_SECRET_KEY_ID"),
+-        System.getenv("OSSRH_GPG_SECRET_KEY"),
+-        System.getenv("OSSRH_GPG_SECRET_KEY_PASSWORD"),
+-    )
+-    sign(publishing.publications)
+-}
+-
+-// TODO: remove after https://youtrack.jetbrains.com/issue/KT-46466 is fixed
+-project.tasks.withType(AbstractPublishToMaven::class.java).configureEach {
+-    dependsOn(project.tasks.withType(Sign::class.java))
+-}
+diff --git a/convention-plugins/src/main/kotlin/root.publication.gradle.kts b/convention-plugins/src/main/kotlin/root.publication.gradle.kts
+deleted file mode 100644
+index d773788..0000000
+--- a/convention-plugins/src/main/kotlin/root.publication.gradle.kts
++++ /dev/null
+@@ -1,22 +0,0 @@
+-plugins {
+-    id("io.github.gradle-nexus.publish-plugin")
+-}
+-
+-allprojects {
+-    group = "com.mohamedrejeb.dnd"
+-    version = System.getenv("VERSION") ?: "0.4.0"
+-}
+-
+-nexusPublishing {
+-    // Configure maven central repository
+-    // https://github.com/gradle-nexus/publish-plugin#publishing-to-maven-central-via-sonatype-ossrh
+-    repositories {
+-        sonatype {
+-            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+-            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+-            stagingProfileId.set(System.getenv("OSSRH_STAGING_PROFILE_ID"))
+-            username.set(System.getenv("OSSRH_USERNAME"))
+-            password.set(System.getenv("OSSRH_PASSWORD"))
+-        }
+-    }
+-}
+diff --git a/gradle/libs.versions.toml b/gradle/libs.versions.toml
+index b1eadef..ae5a7a2 100644
+--- a/gradle/libs.versions.toml
++++ b/gradle/libs.versions.toml
+@@ -1,15 +1,15 @@
+ [versions]
+-kotlin = "2.3.20"
+-compose = "1.10.3"
+-agp = "8.13.2"
++kotlin = "2.1.21"
++compose = "1.8.0"
++agp = "8.2.2"
+ android-minSdk = "24"
+-android-compileSdk = "36"
+-android-targetSdk = "36"
+-androidx-activityCompose = "1.13.0"
+-androidx-core-ktx = "1.16.0"
+-jetbrains-navigation-compose = "2.9.2"
+-spotless = "7.2.1"
+-nexus-publish = "2.0.0"
++android-compileSdk = "34"
++android-targetSdk = "34"
++androidx-activityCompose = "1.9.2"
++androidx-core-ktx = "1.13.1"
++voyager = "1.1.0-beta02"
++spotless = "6.25.0"
++vanniktech-maven-publish = "0.36.0"
+ 
+ [libraries]
+ spotless-gradle = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
+@@ -17,16 +17,15 @@ spotless-gradle = { module = "com.diffplug.spotless:spotless-plugin-gradle", ver
+ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core-ktx" }
+ androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
+ 
+-nexus-publish = { module = "io.github.gradle-nexus.publish-plugin:io.github.gradle-nexus.publish-plugin.gradle.plugin", version.ref = "nexus-publish" }
+-jetbrains-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "jetbrains-navigation-compose" }
++vanniktech-maven-publish = { module = "com.vanniktech.maven.publish:com.vanniktech.maven.publish.gradle.plugin", version.ref = "vanniktech-maven-publish" }
++voyager-navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyager" }
+ 
+ [plugins]
+ jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose" }
+ composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+-kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ androidApplication = { id = "com.android.application", version.ref = "agp" }
+ androidLibrary = { id = "com.android.library", version.ref = "agp" }
+ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+ kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+ spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+-nexus-publish = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexus-publish" }
++vanniktech-maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech-maven-publish" }
+diff --git a/renovate.json b/renovate.json
+new file mode 100644
+index 0000000..fb9cdc0
+--- /dev/null
++++ b/renovate.json
+@@ -0,0 +1,31 @@
++{
++  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
++  "extends": [
++    "config:recommended"
++  ],
++  "schedule": ["before 8am every day"],
++  "packageRules": [
++    {
++      "description": "Group Kotlin ecosystem updates",
++      "matchPackagePatterns": ["^org.jetbrains.kotlin"],
++      "groupName": "Kotlin",
++      "ignoreUnstable": false
++    },
++    {
++      "description": "Group Compose Multiplatform updates",
++      "matchPackagePatterns": ["^org.jetbrains.compose"],
++      "groupName": "Compose Multiplatform",
++      "ignoreUnstable": false
++    },
++    {
++      "description": "Group AndroidX updates",
++      "matchPackagePatterns": ["^androidx\\."],
++      "groupName": "AndroidX"
++    },
++    {
++      "description": "Group GitHub Actions updates",
++      "matchManagers": ["github-actions"],
++      "groupName": "GitHub Actions"
++    }
++  ]
++}
