@@ -1,16 +1,15 @@
 [versions]
-kotlin = "2.1.21"
-compose = "1.8.0"
-agp = "8.2.2"
+kotlin = "2.3.20"
+compose = "1.10.3"
+agp = "8.13.2"
 android-minSdk = "24"
-android-compileSdk = "34"
-android-targetSdk = "34"
-androidx-activityCompose = "1.9.2"
-androidx-core-ktx = "1.13.1"
-voyager = "1.1.0-beta02"
+android-compileSdk = "36"
+android-targetSdk = "36"
+androidx-activityCompose = "1.13.0"
+androidx-core-ktx = "1.16.0"
 jetbrains-navigation-compose = "2.9.2"
-spotless = "6.25.0"
-vanniktech-maven-publish = "0.33.0"
+spotless = "7.2.1"
+vanniktech-maven-publish = "0.36.0"
 
 [libraries]
 spotless-gradle = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
@@ -19,7 +18,6 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 
 vanniktech-maven-publish = { module = "com.vanniktech.maven.publish:com.vanniktech.maven.publish.gradle.plugin", version.ref = "vanniktech-maven-publish" }
-voyager-navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyager" }
 jetbrains-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "jetbrains-navigation-compose" }
 
 [plugins]
