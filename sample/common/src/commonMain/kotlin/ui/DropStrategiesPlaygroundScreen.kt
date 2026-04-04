@@ -149,8 +149,8 @@ private fun DropStrategiesPlaygroundContent(
         // HUD
         val hoveredKey = dndState.hoveredDropTargetKey
         Text(
-            text = if (hoveredKey != "") "Hovered: $hoveredKey" else "Hovered: none",
-            color = if (hoveredKey != "") {
+            text = if (hoveredKey != null) "Hovered: $hoveredKey" else "Hovered: none",
+            color = if (hoveredKey != null) {
                 MaterialTheme.colorScheme.primary
             } else {
                 MaterialTheme.colorScheme.outlineVariant

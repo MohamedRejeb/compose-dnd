@@ -21,6 +21,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import navigation.AxisLockedDragRoute
+import navigation.AutoScrollDemoRoute
 import navigation.ConditionalDropRoute
 import navigation.DragHandleReorderRoute
 import navigation.DropStrategiesPlaygroundRoute
@@ -31,6 +32,7 @@ import navigation.ListToListWithReorderRoute
 import navigation.ListToListWithoutReorderRoute
 import navigation.ReorderListRoute
 import theme.AppTheme
+import ui.AutoScrollDemoScreen
 import ui.AxisLockedDragScreen
 import ui.ConditionalDropScreen
 import ui.DragHandleReorderScreen
@@ -84,6 +86,9 @@ fun App() {
                         onNavigateToConditionalDrop = {
                             navController.navigate(ConditionalDropRoute)
                         },
+                        onNavigateToAutoScrollDemo = {
+                            navController.navigate(AutoScrollDemoRoute)
+                        },
                     )
                 }
                 composable<ItemToItemOneDirectionRoute> {
@@ -128,6 +133,11 @@ fun App() {
                 }
                 composable<ConditionalDropRoute> {
                     ConditionalDropScreen(
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable<AutoScrollDemoRoute> {
+                    AutoScrollDemoScreen(
                         onBack = { navController.popBackStack() },
                     )
                 }

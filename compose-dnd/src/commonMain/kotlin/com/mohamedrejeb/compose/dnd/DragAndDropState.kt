@@ -87,7 +87,7 @@ class DragAndDropState<T>(
     /**
      * Key of the [DropTargetState] that is currently hovered
      */
-    var hoveredDropTargetKey by mutableStateOf<Any>("")
+    var hoveredDropTargetKey by mutableStateOf<Any?>(null)
         internal set
 
     /**
@@ -126,6 +126,13 @@ class DragAndDropState<T>(
     internal var pointerId by mutableStateOf<PointerId?>(null)
 
     /**
+     * True while the pointer is actively dragging. Set to false immediately when
+     * the drag ends or is canceled, before any drop animation starts.
+     * Used by auto-scroll to stop scrolling as soon as the user releases.
+     */
+    internal var isActiveDrag by mutableStateOf(false)
+
+    /**
      * Add or update [DraggableItemState]
      *
      * @param state - new state
@@ -146,6 +153,7 @@ class DragAndDropState<T>(
 
     private var dragStartPositionInRoot: Offset = Offset.Zero
     private var dragStartOffset: Offset = Offset.Zero
+    private var lastPointerOffset: Offset = Offset.Zero
 
     internal val dragPosition: MutableState<Offset> = mutableStateOf(Offset.Zero)
     internal val dragPositionAnimatable: Animatable<Offset, AnimationVector2D> = Animatable(Offset.Zero, Offset.VectorConverter)
@@ -173,6 +181,7 @@ class DragAndDropState<T>(
 
         dragPosition.value = draggableItemState.positionInRoot
 
+        isActiveDrag = true
         dragStartPositionInRoot = draggableItemState.positionInRoot
         dragStartOffset = offset
         currentDraggableItem = draggableItemState.copy()
@@ -193,6 +202,7 @@ class DragAndDropState<T>(
     internal suspend fun handleDrag(
         offset: Offset,
     ) = coroutineScope {
+        lastPointerOffset = offset
         val currentDraggableItem = currentDraggableItem ?: return@coroutineScope
         val dropTargetIds = currentDraggableItem.dropTargets
 
@@ -236,8 +246,18 @@ class DragAndDropState<T>(
 
         dragPosition.value = newTopLeft
 
-        hoveredDropTargetKey = hoveredDropTarget?.key ?: ""
+        hoveredDropTargetKey = hoveredDropTarget?.key
         draggedItem = newDraggedItemState
+    }
+
+    /**
+     * Re-evaluate drop targets using the last known pointer position.
+     * Called by auto-scroll to update hover state when the list scrolls
+     * but the pointer hasn't moved.
+     */
+    internal suspend fun reevaluateDropTargets() {
+        if (draggedItem == null) return
+        handleDrag(lastPointerOffset)
     }
 
     /**
@@ -247,6 +267,7 @@ class DragAndDropState<T>(
      * - It clears the drag state
      */
     internal suspend fun handleDragEnd() = coroutineScope {
+        isActiveDrag = false
         val currentDraggableItem = currentDraggableItem ?: return@coroutineScope
 
         val dropTarget = dropTargetMap.values.find { it.key == hoveredDropTargetKey }
@@ -301,6 +322,7 @@ class DragAndDropState<T>(
      * - It clears the drag state
      */
     internal suspend fun handleDragCancel() = coroutineScope {
+        isActiveDrag = false
         val currentDraggableItem = currentDraggableItem ?: return@coroutineScope
 
         val animateToPosition = currentDraggableItem.positionInRoot - dragPosition.value
@@ -319,9 +341,11 @@ class DragAndDropState<T>(
      * Clear the drag state after drag is finished
      */
     private suspend fun clearDragState() {
+        isActiveDrag = false
         currentDraggableItem = null
         draggedItem = null
-        hoveredDropTargetKey = ""
+        hoveredDropTargetKey = null
+        lastPointerOffset = Offset.Zero
         dragStartOffset = Offset.Zero
         dragStartPositionInRoot = Offset.Zero
         dragPosition.value = Offset.Zero

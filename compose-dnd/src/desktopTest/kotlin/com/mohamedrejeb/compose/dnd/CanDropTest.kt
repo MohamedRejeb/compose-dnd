@@ -122,7 +122,7 @@ class CanDropTest {
 
     @Test
     fun canDropFalse_preventsHover() = runComposeUiTest {
-        var hoveredKey: Any = ""
+        var hoveredKey: Any? = null
 
         setContent {
             val state = rememberDragAndDropState<Int>()
@@ -168,7 +168,7 @@ class CanDropTest {
         }
 
         waitForIdle()
-        assertEquals("", hoveredKey, "Should NOT hover over a target with canDrop=false")
+        assertEquals(null, hoveredKey, "Should NOT hover over a target with canDrop=false")
 
         onNodeWithTag("draggable").performTouchInput { up() }
         waitForIdle()
