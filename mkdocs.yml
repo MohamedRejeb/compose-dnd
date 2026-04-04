@@ -1,0 +1,86 @@
+site_name: 'Compose DND'
+site_description: 'A library that allows you to easily add drag and drop functionality to your Jetpack Compose or Compose Multiplatform projects.'
+site_author: 'Mohamed Rejeb'
+site_url: 'https://github.com/MohamedRejeb/compose-dnd'
+remote_branch: gh-pages
+edit_uri: ""
+
+theme:
+  name: 'material'
+  language: 'en'
+  favicon: 'images/logo.ico'
+  logo: 'images/logo.svg'
+  palette:
+    - scheme: default
+      primary: white
+      accent: white
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: red
+      accent: lime
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  font:
+    text: 'Roboto'
+    code: 'Roboto Mono'
+
+repo_name: 'Compose DND'
+repo_url: 'https://github.com/MohamedRejeb/compose-dnd'
+
+extra:
+  compose_dnd_version: '0.5.0'
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/MohamedRejeb
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/MohamadRejeb
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/mohamedrejeb/
+
+nav:
+  - 'Overview': index.md
+  - 'Installation': installation.md
+  - 'Drag and Drop':
+    - 'Overview': drag-and-drop/overview.md
+    - 'Reorder List': drag-and-drop/reorder.md
+    - 'Auto Scroll': drag-and-drop/auto-scroll.md
+    - 'Drop Strategies': drag-and-drop/drop-strategies.md
+    - 'Drag Handle': drag-and-drop/drag-handle.md
+    - 'Axis Lock': drag-and-drop/axis-lock.md
+    - 'Conditional Drop': drag-and-drop/conditional-drop.md
+  - 'Code of Conduct': code_of_conduct.md
+
+extra_css:
+  - 'css/site.css'
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.arithmatex:
+      generic: true
+  - footnotes
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.mark
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+plugins:
+  - search
+  - macros
+  - minify:
+      minify_html: true
+
+copyright: '&copy; 2025 Mohamed Rejeb'

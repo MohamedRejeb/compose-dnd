@@ -1,5 +1,5 @@
 /*
- * Copyright 2025, Mohamed Ben Rejeb and the Compose Dnd project contributors
+ * Copyright 2023, Mohamed Ben Rejeb and the Compose Dnd project contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,8 +115,7 @@ private fun HorizontalSlotDemo() {
                                 else -> MaterialTheme.colorScheme.outlineVariant
                             },
                             shape = shape,
-                        )
-                        .dropTarget(
+                        ).dropTarget(
                             key = slotKey,
                             state = state,
                             onDrop = { itemSlot = index },
@@ -196,8 +195,7 @@ private fun VerticalSlotDemo() {
                                 else -> MaterialTheme.colorScheme.outlineVariant
                             },
                             shape = shape,
-                        )
-                        .dropTarget(
+                        ).dropTarget(
                             key = slotKey,
                             state = state,
                             onDrop = { itemSlot = index },
@@ -291,8 +289,7 @@ private fun FreeMovementDemo() {
                                         else -> MaterialTheme.colorScheme.outlineVariant
                                     },
                                     shape = shape,
-                                )
-                                .dropTarget(
+                                ).dropTarget(
                                     key = slotKey,
                                     state = state,
                                     canDrop = !hasItemA && !hasItemB,

@@ -26,9 +26,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.DragHandle
-import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.material.icons.rounded.FilterNone
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.Height

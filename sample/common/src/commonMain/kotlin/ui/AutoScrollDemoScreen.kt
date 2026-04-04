@@ -1,5 +1,5 @@
 /*
- * Copyright 2025, Mohamed Ben Rejeb and the Compose Dnd project contributors
+ * Copyright 2023, Mohamed Ben Rejeb and the Compose Dnd project contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -330,10 +330,12 @@ private fun AutoScrollItem(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .then(
-                if (isDragShadow) Modifier.shadow(16.dp, shape)
-                else Modifier
-            )
-            .clip(shape)
+                if (isDragShadow) {
+                    Modifier.shadow(16.dp, shape)
+                } else {
+                    Modifier
+                }
+            ).clip(shape)
             .background(color),
     ) {
         Text(
@@ -358,10 +360,12 @@ private fun ScrollListItem(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .then(
-                if (isDragShadow) Modifier.shadow(16.dp, shape)
-                else Modifier
-            )
-            .clip(shape)
+                if (isDragShadow) {
+                    Modifier.shadow(16.dp, shape)
+                } else {
+                    Modifier
+                }
+            ).clip(shape)
             .background(MaterialTheme.colorScheme.tertiaryContainer)
             .padding(horizontal = 16.dp),
     ) {

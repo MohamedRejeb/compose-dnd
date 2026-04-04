@@ -1,5 +1,5 @@
 /*
- * Copyright 2025, Mohamed Ben Rejeb and the Compose Dnd project contributors
+ * Copyright 2023, Mohamed Ben Rejeb and the Compose Dnd project contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -222,8 +222,7 @@ private fun DropZone(
                 width = if (isHovered) 2.dp else 1.dp,
                 color = borderColor,
                 shape = shape,
-            )
-            .clip(shape)
+            ).clip(shape)
             .background(
                 if (isHovered && !isFull) {
                     color.copy(alpha = 0.08f)

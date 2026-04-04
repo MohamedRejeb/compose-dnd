@@ -1,5 +1,5 @@
 /*
- * Copyright 2025, Mohamed Ben Rejeb and the Compose Dnd project contributors
+ * Copyright 2023, Mohamed Ben Rejeb and the Compose Dnd project contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -406,8 +406,7 @@ private fun resolveScrollAxis(
     itemSize: Size,
     containerTopLeft: Offset,
     containerSize: Size,
-): ScrollAxisBounds {
-    return if (orientation == Orientation.Vertical) {
+): ScrollAxisBounds = if (orientation == Orientation.Vertical) {
         ScrollAxisBounds(
             itemStart = dragPosition.y,
             itemEnd = dragPosition.y + itemSize.height,
@@ -422,7 +421,6 @@ private fun resolveScrollAxis(
             containerEnd = containerTopLeft.x + containerSize.width,
         )
     }
-}
 
 /**
  * Computes the scroll speed based on how close the dragged item is to the container edge.
