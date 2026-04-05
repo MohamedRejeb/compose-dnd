@@ -98,11 +98,13 @@ fun AutoScrollDemoScreen(
                         .fillMaxSize()
                         .padding(16.dp),
                 )
+
                 1 -> LazyGridReorderContent(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp),
                 )
+
                 2 -> ScrollStateReorderContent(
                     modifier = Modifier
                         .fillMaxSize()
@@ -164,7 +166,7 @@ private fun LazyRowReorderContent(modifier: Modifier = Modifier) {
                                 .fillMaxHeight(),
                         )
                     },
-                    modifier = Modifier,
+                    modifier = Modifier.animateItem(),
                 ) {
                     AutoScrollItem(
                         number = number,
@@ -232,7 +234,7 @@ private fun LazyGridReorderContent(modifier: Modifier = Modifier) {
                                 .height(80.dp),
                         )
                     },
-                    modifier = Modifier,
+                    modifier = Modifier.animateItem(),
                 ) {
                     AutoScrollItem(
                         number = number,

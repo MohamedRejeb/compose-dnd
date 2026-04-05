@@ -92,6 +92,7 @@ private fun ReorderScreenContent(
                 DndItemCard(
                     label = "#$number",
                     modifier = Modifier
+                        .animateItem()
                         .graphicsLayer { alpha = if (isDragging) 0f else 1f }
                         .reorderableItem(
                             key = item,
