@@ -73,6 +73,9 @@ private fun ConditionalDropContent(
     val evenFull = evenTargetCount >= 2
     val oddFull = oddTargetCount >= 2
 
+    // Read the dragged item's data to validate parity in canDrop
+    val draggedNumber = state.draggedItem?.data?.toIntOrNull()
+
     DragAndDropContainer(
         state = state,
         modifier = modifier,
@@ -130,7 +133,8 @@ private fun ConditionalDropContent(
                         .dropTarget(
                             key = "even",
                             state = state,
-                            canDrop = !evenFull,
+                            canDrop = !evenFull && (draggedNumber == null || draggedNumber % 2 == 0),
+                            dropAnimationEnabled = false,
                             onDrop = { droppedItem ->
                                 val num = droppedItem.data.toIntOrNull() ?: return@dropTarget
                                 if (num % 2 == 0) {
@@ -152,7 +156,8 @@ private fun ConditionalDropContent(
                         .dropTarget(
                             key = "odd",
                             state = state,
-                            canDrop = !oddFull,
+                            canDrop = !oddFull && (draggedNumber == null || draggedNumber % 2 != 0),
+                            dropAnimationEnabled = false,
                             onDrop = { droppedItem ->
                                 val num = droppedItem.data.toIntOrNull() ?: return@dropTarget
                                 if (num % 2 != 0) {
