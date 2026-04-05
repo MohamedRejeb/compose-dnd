@@ -453,12 +453,15 @@ internal fun computeScrollSpeed(
             val ratio = (startOverlap / startThresholdPx).coerceIn(0f, 1f)
             -maxScrollSpeed * ratio * ratio
         }
+
         // Item's end edge is within the end threshold → scroll toward end
         endOverlap > 0f -> {
             val ratio = (endOverlap / endThresholdPx).coerceIn(0f, 1f)
             maxScrollSpeed * ratio * ratio
         }
 
-        else -> 0f
+        else -> {
+            0f
+        }
     }
 }

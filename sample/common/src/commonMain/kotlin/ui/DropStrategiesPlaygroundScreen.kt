@@ -437,16 +437,21 @@ private fun StrategySelector(
 @Composable
 private fun StrategyDescription(strategy: DropStrategy) {
     val description = when (strategy) {
-        DropStrategy.Surface ->
+        DropStrategy.Surface -> {
             "Picks the target with the most overlap area (pixels). Favors larger targets."
+        }
 
-        DropStrategy.SurfacePercentage ->
+        DropStrategy.SurfacePercentage -> {
             "Picks the target with the highest overlap relative to its own size. Favors smaller targets."
+        }
 
-        DropStrategy.CenterDistance ->
+        DropStrategy.CenterDistance -> {
             "Picks the target whose center is closest to the dragged item. Size doesn't matter."
+        }
 
-        else -> ""
+        else -> {
+            ""
+        }
     }
 
     Text(
