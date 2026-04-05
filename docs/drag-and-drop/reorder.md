@@ -204,3 +204,48 @@ private fun ItemCard(
 
 !!! tip
     Use `graphicsLayer { alpha = if (isDragging) 0f else 1f }` to hide the original item while it is being dragged, so only the drag shadow is visible.
+
+## reorderableItem Modifier
+
+As an alternative to the `ReorderableItem` composable wrapper, you can use the `Modifier.reorderableItem` modifier. This combines `draggableItem` and `dropTarget` into a single modifier and reduces boilerplate.
+
+```kotlin
+val dndState = rememberDragAndDropState<String>()
+
+DragAndDropContainer(state = dndState) {
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        items(items, key = { it }) { item ->
+            val isDragging = dndState.isDragging(item)
+
+            ItemCard(
+                text = item,
+                modifier = Modifier
+                    .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+                    .reorderableItem(
+                        key = item,
+                        data = item,
+                        state = dndState,
+                        onDragEnter = { state ->
+                            items = items.toMutableList().apply {
+                                val index = indexOf(item)
+                                if (index != -1) {
+                                    remove(state.data)
+                                    add(index, state.data)
+                                }
+                            }
+                        },
+                        draggableContent = {
+                            ItemCard(text = item, isDragShadow = true)
+                        },
+                    )
+                    .fillMaxWidth(),
+            )
+        }
+    }
+}
+```
+
+!!! note
+    When using the modifier API, use `rememberDragAndDropState` and `DragAndDropContainer` directly instead of `rememberReorderState` and `ReorderContainer`. Use `DragAndDropState.isDragging(key)` to check drag state.
