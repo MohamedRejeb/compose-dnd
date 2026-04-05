@@ -20,14 +20,35 @@ import androidx.compose.ui.geometry.Size
 import com.mohamedrejeb.compose.dnd.drop.DropTargetState
 import com.mohamedrejeb.compose.dnd.utils.MathUtils
 
+/**
+ * Strategy for determining which drop target receives the dragged item when
+ * multiple targets overlap.
+ *
+ * Built-in strategies:
+ * - [Surface] — Largest absolute overlap area wins.
+ * - [SurfacePercentage] — Largest overlap as a percentage of the dragged item wins. (Default)
+ * - [CenterDistance] — Closest center-to-center distance wins.
+ */
 interface DropStrategy {
 
+    /**
+     * Determine which drop target the dragged item is currently hovering over.
+     *
+     * @param draggedItemTopLeft Top-left position of the dragged item in root coordinates.
+     * @param draggedItemSize Size of the dragged item.
+     * @param dropTargets List of candidate drop targets that intersect with the dragged item.
+     * @return The drop target that should receive the drop, or null if none qualifies.
+     */
     fun <T> getHoveredDropTarget(
         draggedItemTopLeft: Offset,
         draggedItemSize: Size,
         dropTargets: List<DropTargetState<T>>,
     ): DropTargetState<T>?
 
+    /**
+     * Selects the target with the largest absolute overlap area.
+     * Z-index is factored in by adding `zIndex * maxArea` to the score.
+     */
     object Surface : DropStrategy {
         override fun <T> getHoveredDropTarget(
             draggedItemTopLeft: Offset,
@@ -47,6 +68,10 @@ interface DropStrategy {
                 }
     }
 
+    /**
+     * Selects the target with the largest overlap as a percentage of the dragged item area.
+     * This is the default strategy. Z-index is added to the percentage score.
+     */
     object SurfacePercentage : DropStrategy {
         override fun <T> getHoveredDropTarget(
             draggedItemTopLeft: Offset,
@@ -66,6 +91,9 @@ interface DropStrategy {
                 }
     }
 
+    /**
+     * Selects the target whose center is closest to the dragged item's center.
+     */
     object CenterDistance : DropStrategy {
         override fun <T> getHoveredDropTarget(
             draggedItemTopLeft: Offset,

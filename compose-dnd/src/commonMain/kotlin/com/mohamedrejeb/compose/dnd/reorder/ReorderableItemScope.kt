@@ -24,6 +24,10 @@ import com.mohamedrejeb.compose.dnd.drag.DragHandleModifier
 import com.mohamedrejeb.compose.dnd.drag.DraggableItemScope
 import com.mohamedrejeb.compose.dnd.drag.DraggableItemState
 
+/**
+ * Scope for [ReorderableItem] content. Extends [DraggableItemScope] with
+ * access to [isDragging] state and [dragHandle] modifier.
+ */
 interface ReorderableItemScope : DraggableItemScope
 
 internal class ReorderableItemScopeImpl<T>(

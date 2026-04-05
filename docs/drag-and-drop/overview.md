@@ -4,7 +4,8 @@ Compose DND provides a declarative API for adding drag and drop functionality to
 
 - `DragAndDropState` -- Holds the state for all drag and drop operations.
 - `DragAndDropContainer` -- A container that wraps all draggable items and drop targets.
-- `DraggableItem` -- Makes a composable draggable.
+- `DraggableItem` composable -- Makes a composable draggable (wrapper approach).
+- `draggableItem` modifier -- Makes a composable draggable (modifier approach, less boilerplate).
 - `dropTarget` modifier -- Marks a composable as a drop target.
 
 ## Creating DragAndDropState
@@ -91,6 +92,32 @@ Inside `DraggableItem`'s content lambda, you have access to `DraggableItemScope`
 - `key: Any` -- The key of this item.
 - `isDragging: Boolean` -- Whether this item is currently being dragged.
 
+## draggableItem Modifier
+
+As an alternative to the `DraggableItem` composable wrapper, you can use the `Modifier.draggableItem` modifier directly. This reduces boilerplate by eliminating the wrapper composable.
+
+```kotlin
+val isDragging = dragAndDropState.isDragging("item-1")
+
+Text(
+    text = "Drag me",
+    modifier = Modifier
+        .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+        .draggableItem(
+            state = dragAndDropState,
+            key = "item-1",
+            data = "Hello World",
+            draggableContent = {
+                Text("Drag me") // Content shown as drag shadow
+            },
+        )
+)
+```
+
+The `draggableItem` modifier accepts the same parameters as `DraggableItem` (except `content`, which is the composable it's applied to). The `draggableContent` parameter is required — it defines what the drag shadow looks like.
+
+Use `DragAndDropState.isDragging(key)` to check if a specific item is being dragged.
+
 ## Drop Target
 
 Use the `Modifier.dropTarget` extension to mark any composable as a drop target.
@@ -127,6 +154,7 @@ Box(
 | `dropAlignment`       | `Alignment`                            | `Alignment.Center` | Alignment of the dropped item within the target for the drop animation. |
 | `dropOffset`          | `Offset`                               | `Offset.Zero`      | Additional offset for the drop animation position. |
 | `dropAnimationEnabled`| `Boolean`                              | `true`             | Whether to animate the drop. If `false`, the drop callback fires immediately. |
+| `canDrop`             | `Boolean`                              | `true`             | Whether this target accepts drops. When `false`, dragged items cannot hover over or be dropped on this target. Can read `state.draggedItem?.data` to validate dynamically. |
 | `onDrop`              | `(DraggedItemState<T>) -> Unit`        | `{}`               | Called when an item is dropped on this target. |
 | `onDragEnter`         | `(DraggedItemState<T>) -> Unit`        | `{}`               | Called when a dragged item enters this target. |
 | `onDragExit`          | `(DraggedItemState<T>) -> Unit`        | `{}`               | Called when a dragged item exits this target. |

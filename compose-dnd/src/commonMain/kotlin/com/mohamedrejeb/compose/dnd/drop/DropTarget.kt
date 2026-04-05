@@ -36,10 +36,18 @@ import com.mohamedrejeb.compose.dnd.drag.DraggedItemState
  * Mark this composable as a drop target.
  *
  * @param key The key used to identify the drop target.
- * @param zIndex The z-index of the drop target.
  * @param state The drag and drop state.
- * @param dropAlignment The alignment of the dropped item.
- * @param dropOffset The offset of the dropped item.
+ * @param zIndex The z-index of the drop target. When multiple targets overlap,
+ * the one with the highest z-index takes priority.
+ * @param dropAlignment The alignment of the dropped item within this target
+ * for the drop animation.
+ * @param dropOffset An additional offset applied to the drop animation position.
+ * @param dropAnimationEnabled Whether the drop animation is enabled. When false,
+ * the dragged item disappears immediately on drop without animating to the target.
+ * @param canDrop Whether this target currently accepts drops. When false, the target
+ * is excluded from hover detection — dragged items cannot hover over it or be dropped on it.
+ * This is a Compose-evaluated boolean, so it can read state (e.g., `state.draggedItem?.data`)
+ * to dynamically accept or reject specific items.
  * @param onDrop The action to perform when an item is dropped onto the target.
  * Accepts the dragged item state as a parameter.
  * @param onDragEnter The action to perform when an item is dragged over the target.
