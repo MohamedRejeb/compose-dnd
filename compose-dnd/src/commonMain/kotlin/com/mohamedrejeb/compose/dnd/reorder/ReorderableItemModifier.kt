@@ -98,8 +98,7 @@ fun <T> Modifier.reorderableItem(
             dropAnimationSpec = dropAnimationSpec,
             sizeDropAnimationSpec = sizeDropAnimationSpec,
             draggableContent = draggableContent,
-        )
-        .dropTarget(
+        ).dropTarget(
             key = key,
             state = state,
             zIndex = zIndex,

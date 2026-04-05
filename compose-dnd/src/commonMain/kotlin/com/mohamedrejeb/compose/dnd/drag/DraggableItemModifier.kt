@@ -92,8 +92,7 @@ fun <T> Modifier.draggableItem(
                 sizeDropAnimationSpec = sizeDropAnimationSpec,
                 draggableContent = draggableContent,
             )
-        )
-        .pointerInput(
+        ).pointerInput(
             key,
             enabled,
             state,
