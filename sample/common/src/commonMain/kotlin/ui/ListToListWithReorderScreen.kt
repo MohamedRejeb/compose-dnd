@@ -145,7 +145,7 @@ private fun ListToListWithReorderContent(
                                     .height(60.dp),
                             )
                         },
-                        modifier = Modifier,
+                        modifier = Modifier.animateItem(),
                     ) {
                         DndItemCard(
                             label = item,
@@ -214,7 +214,7 @@ private fun ListToListWithReorderContent(
                                     .height(60.dp),
                             )
                         },
-                        modifier = Modifier,
+                        modifier = Modifier.animateItem(),
                     ) {
                         DndItemCard(
                             label = item,

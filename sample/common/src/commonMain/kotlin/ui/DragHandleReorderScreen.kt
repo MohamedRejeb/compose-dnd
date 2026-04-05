@@ -123,7 +123,7 @@ private fun DragHandleReorderContent(
                             isDragShadow = true,
                         )
                     },
-                    modifier = Modifier,
+                    modifier = Modifier.animateItem(),
                 ) {
                     DragHandleListItem(
                         text = item,

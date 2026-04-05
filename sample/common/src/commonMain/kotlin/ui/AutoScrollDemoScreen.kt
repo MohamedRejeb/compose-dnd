@@ -164,7 +164,7 @@ private fun LazyRowReorderContent(modifier: Modifier = Modifier) {
                                 .fillMaxHeight(),
                         )
                     },
-                    modifier = Modifier,
+                    modifier = Modifier.animateItem(),
                 ) {
                     AutoScrollItem(
                         number = number,
@@ -232,7 +232,7 @@ private fun LazyGridReorderContent(modifier: Modifier = Modifier) {
                                 .height(80.dp),
                         )
                     },
-                    modifier = Modifier,
+                    modifier = Modifier.animateItem(),
                 ) {
                     AutoScrollItem(
                         number = number,
