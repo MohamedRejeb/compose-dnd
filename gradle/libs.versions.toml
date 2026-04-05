@@ -6,9 +6,9 @@ android-minSdk = "23"
 android-compileSdk = "36"
 android-targetSdk = "36"
 androidx-activityCompose = "1.13.0"
-androidx-core-ktx = "1.16.0"
+androidx-core-ktx = "1.18.0"
 jetbrains-navigation-compose = "2.9.2"
-spotless = "7.2.1"
+spotless = "8.4.0"
 vanniktech-maven-publish = "0.36.0"
 
 [libraries]
