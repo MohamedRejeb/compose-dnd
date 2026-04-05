@@ -23,8 +23,9 @@ import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 
 /**
  * Remember [ReorderState]
- * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press
+ * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press.
  * This parameter is applied to all [ReorderableItem]s. If you want to change it for a specific item, use [ReorderableItem] parameter.
+ * @param requireFirstDownUnconsumed if true, the first down event must be unconsumed to start the drag.
  * @return [ReorderState]
  */
 @Composable
