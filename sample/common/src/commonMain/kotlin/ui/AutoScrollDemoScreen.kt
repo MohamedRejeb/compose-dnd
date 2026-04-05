@@ -98,11 +98,13 @@ fun AutoScrollDemoScreen(
                         .fillMaxSize()
                         .padding(16.dp),
                 )
+
                 1 -> LazyGridReorderContent(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp),
                 )
+
                 2 -> ScrollStateReorderContent(
                     modifier = Modifier
                         .fillMaxSize()

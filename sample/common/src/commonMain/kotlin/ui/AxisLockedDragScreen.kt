@@ -320,6 +320,7 @@ private fun FreeMovementDemo() {
                                         )
                                     }
                                 }
+
                                 hasItemB -> {
                                     DraggableItem(
                                         state = state,

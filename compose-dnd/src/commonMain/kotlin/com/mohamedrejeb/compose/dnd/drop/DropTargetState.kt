@@ -51,58 +51,68 @@ class DropTargetState<T> internal constructor(
 
     internal fun getDropTopLeft(droppedItemSize: Size): Offset =
         topLeft + dropOffset + when (dropAlignment) {
-            Alignment.TopStart ->
+            Alignment.TopStart -> {
                 Offset.Zero
+            }
 
-            Alignment.TopCenter ->
+            Alignment.TopCenter -> {
                 Offset(
                     x = size.width / 2f - droppedItemSize.width / 2f,
                     y = 0f,
                 )
+            }
 
-            Alignment.TopEnd ->
+            Alignment.TopEnd -> {
                 Offset(
                     x = size.width - droppedItemSize.width,
                     y = 0f,
                 )
+            }
 
-            Alignment.CenterStart ->
+            Alignment.CenterStart -> {
                 Offset(
                     x = 0f,
                     y = size.height / 2f - droppedItemSize.height / 2f,
                 )
+            }
 
-            Alignment.Center ->
+            Alignment.Center -> {
                 Offset(
                     x = size.width / 2f - droppedItemSize.width / 2f,
                     y = size.height / 2f - droppedItemSize.height / 2f,
                 )
+            }
 
-            Alignment.CenterEnd ->
+            Alignment.CenterEnd -> {
                 Offset(
                     x = size.width - droppedItemSize.width,
                     y = size.height / 2f - droppedItemSize.height / 2f,
                 )
+            }
 
-            Alignment.BottomStart ->
+            Alignment.BottomStart -> {
                 Offset(
                     x = 0f,
                     y = size.height - droppedItemSize.height,
                 )
+            }
 
-            Alignment.BottomCenter ->
+            Alignment.BottomCenter -> {
                 Offset(
                     x = size.width / 2f - droppedItemSize.width / 2f,
                     y = size.height - droppedItemSize.height,
                 )
+            }
 
-            Alignment.BottomEnd ->
+            Alignment.BottomEnd -> {
                 Offset(
                     x = size.width - droppedItemSize.width,
                     y = size.height - droppedItemSize.height,
                 )
+            }
 
-            else ->
+            else -> {
                 Offset.Zero
+            }
         }
 }
