@@ -1,5 +1,5 @@
 /*
- * Copyright 2025, Mohamed Ben Rejeb and the Compose Dnd project contributors
+ * Copyright 2023, Mohamed Ben Rejeb and the Compose Dnd project contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,8 +152,7 @@ class DragScrollPinTest {
                                     draggableContent = {
                                         Box(Modifier.fillMaxWidth().height(item.heightDp.dp))
                                     },
-                                )
-                                .testTag("item-${item.id}"),
+                                ).testTag("item-${item.id}"),
                         )
                     }
                 }
@@ -264,6 +263,7 @@ class DragScrollPinTest {
                                 col1ScrollIndex = colState.firstVisibleItemIndex
                                 col1ScrollOffset = colState.firstVisibleItemScrollOffset
                             }
+
                             "col2" -> {
                                 col2ScrollIndex = colState.firstVisibleItemIndex
                                 col2ScrollOffset = colState.firstVisibleItemScrollOffset
@@ -320,8 +320,7 @@ class DragScrollPinTest {
                                             draggableContent = {
                                                 Box(Modifier.fillMaxWidth().height(item.heightDp.dp))
                                             },
-                                        )
-                                        .testTag("item-${item.id}"),
+                                        ).testTag("item-${item.id}"),
                                 )
                             }
                         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025, Mohamed Ben Rejeb and the Compose Dnd project contributors
+ * Copyright 2023, Mohamed Ben Rejeb and the Compose Dnd project contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,9 @@ import org.junit.Test
 @OptIn(ExperimentalTestApi::class, ExperimentalDndApi::class)
 class CrossListDragTest {
 
-    private data class Item(val id: String)
+    private data class Item(
+        val id: String
+    )
 
     /**
      * Two side-by-side LazyColumns sharing one DragAndDropState.
@@ -101,8 +103,7 @@ class CrossListDragTest {
                                         draggableContent = {
                                             Box(Modifier.fillMaxWidth().height(100.dp))
                                         },
-                                    )
-                                    .testTag("item-${item.id}"),
+                                    ).testTag("item-${item.id}"),
                             )
                         }
                     }
@@ -139,8 +140,7 @@ class CrossListDragTest {
                                         draggableContent = {
                                             Box(Modifier.fillMaxWidth().height(100.dp))
                                         },
-                                    )
-                                    .testTag("item-${item.id}"),
+                                    ).testTag("item-${item.id}"),
                             )
                         }
                     }
@@ -228,8 +228,7 @@ class CrossListDragTest {
                                         draggableContent = {
                                             Box(Modifier.fillMaxWidth().height(100.dp))
                                         },
-                                    )
-                                    .testTag("item-${item.id}"),
+                                    ).testTag("item-${item.id}"),
                             )
                         }
                     }
@@ -262,8 +261,7 @@ class CrossListDragTest {
                                         draggableContent = {
                                             Box(Modifier.fillMaxWidth().height(100.dp))
                                         },
-                                    )
-                                    .testTag("item-${item.id}"),
+                                    ).testTag("item-${item.id}"),
                             )
                         }
                     }
