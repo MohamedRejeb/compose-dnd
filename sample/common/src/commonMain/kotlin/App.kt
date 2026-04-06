@@ -22,6 +22,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import navigation.AutoScrollDemoRoute
 import navigation.AxisLockedDragRoute
+import navigation.KanbanBoardRoute
 import navigation.ConditionalDropRoute
 import navigation.DragHandleReorderRoute
 import navigation.DropStrategiesPlaygroundRoute
@@ -34,6 +35,7 @@ import navigation.ReorderListRoute
 import theme.AppTheme
 import ui.AutoScrollDemoScreen
 import ui.AxisLockedDragScreen
+import ui.KanbanBoardScreen
 import ui.ConditionalDropScreen
 import ui.DragHandleReorderScreen
 import ui.DropStrategiesPlaygroundScreen
@@ -89,6 +91,9 @@ fun App() {
                         onNavigateToAutoScrollDemo = {
                             navController.navigate(AutoScrollDemoRoute)
                         },
+                        onNavigateToKanbanBoard = {
+                            navController.navigate(KanbanBoardRoute)
+                        },
                     )
                 }
                 composable<ItemToItemOneDirectionRoute> {
@@ -138,6 +143,11 @@ fun App() {
                 }
                 composable<AutoScrollDemoRoute> {
                     AutoScrollDemoScreen(
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable<KanbanBoardRoute> {
+                    KanbanBoardScreen(
                         onBack = { navController.popBackStack() },
                     )
                 }

@@ -64,6 +64,7 @@ fun HomeScreen(
     onNavigateToAxisLockedDrag: () -> Unit,
     onNavigateToConditionalDrop: () -> Unit,
     onNavigateToAutoScrollDemo: () -> Unit,
+    onNavigateToKanbanBoard: () -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -148,6 +149,12 @@ fun HomeScreen(
             // -- Advanced Features --
             SectionHeader(title = "Advanced Features")
 
+            DemoListItem(
+                title = "Kanban Board",
+                description = "Cross-column card transfer with nested scroll",
+                icon = Icons.Rounded.GridView,
+                onClick = onNavigateToKanbanBoard,
+            )
             DemoListItem(
                 title = "Auto-Scroll Demo",
                 description = "Row, Grid, and ScrollState auto-scroll while dragging",
