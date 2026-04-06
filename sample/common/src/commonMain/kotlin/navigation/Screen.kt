@@ -49,3 +49,6 @@ data object ConditionalDropRoute
 
 @Serializable
 data object AutoScrollDemoRoute
+
+@Serializable
+data object KanbanBoardRoute
