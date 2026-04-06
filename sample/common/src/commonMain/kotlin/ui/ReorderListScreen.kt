@@ -116,8 +116,7 @@ private fun ReorderScreenContent(
                                         .height(60.dp),
                                 )
                             },
-                        )
-                        .fillMaxWidth()
+                        ).fillMaxWidth()
                         .height(60.dp),
                 )
             }
