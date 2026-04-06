@@ -51,6 +51,13 @@ jobs:
             - name: Gradle test
               run: ./gradlew allTests
 
+            - name: Android instrumented tests
+              uses: reactivecircus/android-emulator-runner@v2
+              with:
+                  api-level: 34
+                  arch: x86_64
+                  script: ./gradlew :compose-dnd:connectedDebugAndroidTest
+
     deploy:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         needs: build

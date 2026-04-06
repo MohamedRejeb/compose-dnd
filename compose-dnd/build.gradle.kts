@@ -59,19 +59,23 @@ kotlin {
     iosSimulatorArm64()
 
     sourceSets.commonMain.dependencies {
-        implementation(compose.runtime)
-        implementation(compose.foundation)
-        implementation(compose.material)
+        implementation(libs.compose.foundation)
+        implementation(libs.compose.ui)
     }
 
     sourceSets.commonTest.dependencies {
         implementation(kotlin("test"))
     }
 
-    @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
     sourceSets.named("desktopTest").dependencies {
-        implementation(compose.uiTest)
+        implementation(libs.compose.ui.test)
         implementation(compose.desktop.currentOs)
+    }
+
+    sourceSets.androidInstrumentedTest.dependencies {
+        implementation(libs.compose.ui.test)
+        implementation(libs.androidx.ui.test.junit4)
+        implementation(libs.androidx.runner)
     }
 }
 
@@ -85,6 +89,7 @@ android {
         minSdk = libs.versions.android.minSdk
             .get()
             .toInt()
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
