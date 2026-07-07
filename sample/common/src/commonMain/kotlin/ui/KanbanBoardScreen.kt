@@ -64,7 +64,6 @@ import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import com.mohamedrejeb.compose.dnd.drag.DropStrategy
 import com.mohamedrejeb.compose.dnd.reorder.reorderableItem
 import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
-import com.mohamedrejeb.compose.dnd.scroll.dragScrollPin
 import components.DemoScreenScaffold
 
 // -- Data model --

@@ -92,6 +92,13 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    testOptions {
+        // Without this the test APK targets minSdk and Android 13+ covers it with a permission prompt.
+        targetSdk = libs.versions.android.compileSdk
+            .get()
+            .toInt()
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11

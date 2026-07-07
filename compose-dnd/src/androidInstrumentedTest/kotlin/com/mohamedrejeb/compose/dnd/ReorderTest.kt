@@ -1,5 +1,5 @@
 /*
- * Copyright 2025, Mohamed Ben Rejeb and the Compose Dnd project contributors
+ * Copyright 2023, Mohamed Ben Rejeb and the Compose Dnd project contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,9 @@ class ReorderTest {
         containerHeightDp: Int = 600,
         useDragScrollPin: Boolean = false,
         dragAfterLongPress: Boolean = true,
+        useAnimateItem: Boolean = false,
+        initialScrollIndex: Int = 0,
+        initialScrollOffset: Int = 0,
         interaction: ReorderTestScope.() -> Unit,
         assertions: (items: List<SizedItem>, reorderCount: Int, scrollIndex: Int, scrollOffset: Int) -> Unit,
     ) = runComposeUiTest {
@@ -74,7 +77,10 @@ class ReorderTest {
         setContent {
             density = LocalDensity.current
             val dndState = rememberDragAndDropState<SizedItem>()
-            val listState = rememberLazyListState()
+            val listState = rememberLazyListState(
+                initialFirstVisibleItemIndex = initialScrollIndex,
+                initialFirstVisibleItemScrollOffset = initialScrollOffset,
+            )
 
             scrollIndex = listState.firstVisibleItemIndex
             scrollOffset = listState.firstVisibleItemScrollOffset
@@ -129,7 +135,7 @@ class ReorderTest {
                                     draggableContent = {
                                         Box(Modifier.fillMaxWidth().height(item.heightDp.dp))
                                     },
-                                )
+                                ).then(if (useAnimateItem) Modifier.animateItem() else Modifier)
                                 .testTag("item-${item.id}"),
                         )
                     }
@@ -156,6 +162,7 @@ class ReorderTest {
     ) {
         fun dpToPx(dp: Int): Float = with(density) { dp.dp.toPx() }
 
+        /** Drag [tag] vertically by [dyDp] (positive = down), optionally long-pressing first and releasing at the end. */
         fun dragItem(
             tag: String,
             dyDp: Int,
@@ -258,6 +265,25 @@ class ReorderTest {
         },
     )
 
+    // -- animateItem tests --
+
+    /** Reordering with animateItem enabled must still produce a single clean swap. */
+    @Test
+    fun animateItem_differentSizedItems_cleanSwap() = reorderTest(
+        initialItems = listOf(
+            SizedItem("A", 100),
+            SizedItem("B", 200),
+            SizedItem("C", 150),
+        ),
+        useAnimateItem = true,
+        interaction = { dragItem("item-A", dyDp = 150) },
+        assertions = { items, reorderCount, _, _ ->
+            assertTrue("Reorder should have triggered", reorderCount > 0)
+            assertEquals("B should be first", "B", items[0].id)
+            assertEquals("A should be second", "A", items[1].id)
+        },
+    )
+
     // -- Scroll pin tests --
 
     @Test
@@ -279,4 +305,127 @@ class ReorderTest {
             assertEquals("Scroll offset should remain 0", 0, scrollOffset)
         },
     )
+
+    // -- Drag start position tests --
+
+    /**
+     * In a scrolled list, picking up an item with a tiny drag must not enter any
+     * other target. A false enter means the drag start coordinates were wrong.
+     */
+    @Test
+    fun scrolledList_pickUpThirdItem_noFalseReorder() = runComposeUiTest {
+        val initialItems = listOf(
+            SizedItem("A", 300),
+            SizedItem("B", 100),
+            SizedItem("C", 200),
+            SizedItem("D", 100),
+            SizedItem("E", 100),
+        )
+        var items by mutableStateOf(initialItems)
+        var reorderCount by mutableIntStateOf(0)
+        var firstEnteredTarget: String? = null
+        var cWasPickedUp = false
+        var density = Density(1f)
+
+        setContent {
+            density = LocalDensity.current
+            val dndState = rememberDragAndDropState<SizedItem>()
+            // Scroll 280dp into item A so only 20dp of A is visible
+            val scrollOffsetPx = with(density) { 280.dp.toPx().toInt() }
+            val listState = rememberLazyListState(
+                initialFirstVisibleItemIndex = 0,
+                initialFirstVisibleItemScrollOffset = scrollOffsetPx,
+            )
+
+            DragAndDropContainer(
+                state = dndState,
+                modifier = Modifier.width(300.dp).height(300.dp),
+            ) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .width(300.dp)
+                        .height(300.dp)
+                        .testTag("lazyColumn"),
+                ) {
+                    items(items, key = { it.id }) { item ->
+                        val isDragging = dndState.isDragging(item.id)
+                        if (isDragging && item.id == "C") {
+                            cWasPickedUp = true
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(item.heightDp.dp)
+                                .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+                                .reorderableItem(
+                                    key = item.id,
+                                    data = item,
+                                    state = dndState,
+                                    dropStrategy = DropStrategy.CenterDistance,
+                                    dragAfterLongPress = true,
+                                    onDragEnter = { state ->
+                                        val draggedItem = state.data
+                                        if (draggedItem.id == item.id) return@reorderableItem
+                                        if (firstEnteredTarget == null) {
+                                            firstEnteredTarget = item.id
+                                        }
+                                        reorderCount++
+                                        val targetIndex =
+                                            items.indexOfFirst { it.id == item.id }
+                                        if (targetIndex == -1) return@reorderableItem
+                                        items = items
+                                            .filter { it.id != draggedItem.id }
+                                            .toMutableList()
+                                            .apply {
+                                                add(targetIndex.coerceAtMost(size), draggedItem)
+                                            }
+                                    },
+                                    draggableContent = {
+                                        Box(Modifier.fillMaxWidth().height(item.heightDp.dp))
+                                    },
+                                )
+                                .testTag("item-${item.id}"),
+                        )
+                    }
+                }
+            }
+        }
+
+        waitForIdle()
+
+        val dragDistancePx = with(density) { 10.dp.toPx() }
+
+        // Pick up C with a tiny drag, it should not cause any reorder
+        onNodeWithTag("item-C").performTouchInput {
+            longPressDrag(
+                start = center,
+                end = Offset(center.x, center.y + dragDistancePx),
+            )
+        }
+        waitForIdle()
+
+        println("[TEST] scrolled: items=${items.map{it.id}} reorders=$reorderCount firstEntered=$firstEnteredTarget")
+
+        // Without a real pickup the assertions below pass without testing anything
+        assertTrue(
+            "C should have been picked up by the long-press drag",
+            cWasPickedUp,
+        )
+
+        assertEquals(
+            "Tiny drag must not enter any other target (firstEntered=$firstEnteredTarget)",
+            0,
+            reorderCount,
+        )
+        assertEquals(
+            "Order must be unchanged after a tiny drag",
+            listOf("A", "B", "C", "D", "E"),
+            items.map { it.id },
+        )
+
+        onNodeWithTag("item-C").performTouchInput { up() }
+        waitForIdle()
+    }
 }
