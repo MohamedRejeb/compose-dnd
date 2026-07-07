@@ -27,7 +27,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.input.pointer.PointerId
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.drag.DraggableItem
 import com.mohamedrejeb.compose.dnd.drag.DraggableItemState
 import com.mohamedrejeb.compose.dnd.drag.DraggedItemState
@@ -38,10 +43,21 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 /**
+ * Default reorder hysteresis distance for [rememberDragAndDropState].
+ *
+ * After a reorder swap, the cursor has to move back at least this far in the
+ * opposite direction before the swapped target can be re-entered and the swap
+ * undone. This prevents a slow drag from triggering the same swap repeatedly.
+ */
+val DefaultReorderHysteresisDistance: Dp = 8.dp
+
+/**
  * Remember [DragAndDropState]
  * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press
  * This parameter is applied to all [DraggableItem]s. If you want to change it for a specific item, use [DraggableItem] parameter.
  * @param requireFirstDownUnconsumed if true, the first down event should be unconsumed
+ * @param reorderHysteresisDistance how far the cursor must move back, opposite the swap direction,
+ * before a just-swapped reorder target can be re-entered. `0.dp` disables it.
  * @param T type of the data that is dragged
  * @return [DragAndDropState]
  * @see DragAndDropState
@@ -50,10 +66,13 @@ import kotlinx.coroutines.launch
 fun <T> rememberDragAndDropState(
     dragAfterLongPress: Boolean = false,
     requireFirstDownUnconsumed: Boolean = false,
+    reorderHysteresisDistance: Dp = DefaultReorderHysteresisDistance,
 ): DragAndDropState<T> {
+    val density = LocalDensity.current
     val state = remember { DragAndDropState<T>() }
     state.dragAfterLongPress = dragAfterLongPress
     state.requireFirstDownUnconsumed = requireFirstDownUnconsumed
+    state.reorderHysteresisDistancePx = with(density) { reorderHysteresisDistance.toPx() }
     return state
 }
 
@@ -162,7 +181,15 @@ class DragAndDropState<T>(
 
     private var dragStartPositionInRoot: Offset = Offset.Zero
     private var dragStartOffset: Offset = Offset.Zero
-    private var lastPointerOffset: Offset = Offset.Zero
+    private var lastPointerOffset: Offset = Offset.Unspecified
+
+    private val reorderHysteresis = ReorderHysteresis()
+
+    internal var reorderHysteresisDistancePx: Float
+        get() = reorderHysteresis.reverseDistancePx
+        set(value) {
+            reorderHysteresis.reverseDistancePx = value
+        }
 
     internal val dragPosition: MutableState<Offset> = mutableStateOf(Offset.Zero)
     internal val dragPositionAnimatable: Animatable<Offset, AnimationVector2D> = Animatable(Offset.Zero, Offset.VectorConverter)
@@ -192,6 +219,7 @@ class DragAndDropState<T>(
 
         isActiveDrag = true
         dragStartPositionInRoot = draggableItemState.positionInRoot
+        reorderHysteresis.reset()
         dragStartOffset = offset
         currentDraggableItem = draggableItemState.copy()
         draggedItem = DraggedItemState(
@@ -211,22 +239,36 @@ class DragAndDropState<T>(
     internal suspend fun handleDrag(
         offset: Offset,
     ) = coroutineScope {
+        // reevaluateDropTargets can fire before any real pointer event arrived
+        if (offset.isUnspecified) return@coroutineScope
+
+        val movementDelta = if (lastPointerOffset.isSpecified) {
+            offset - lastPointerOffset
+        } else {
+            Offset.Zero
+        }
         lastPointerOffset = offset
+        reorderHysteresis.trackMovement(movementDelta)
+
         val currentDraggableItem = currentDraggableItem ?: return@coroutineScope
         val dropTargetIds = currentDraggableItem.dropTargets
+
+        reorderHysteresis.liftIfReversed(offset)
 
         val rawDragAmount = offset - dragStartOffset
         val dragAmount = currentDraggableItem.dragAxis.applyConstraint(rawDragAmount)
         val newTopLeft = dragStartPositionInRoot + dragAmount
+        val hysteresisExcludedKey = reorderHysteresis.excludedKey
         val hoveredDropTargets =
             dropTargetMap.values
                 .filter {
-                    MathUtils.isRectangleIntersected(
-                        topLeft1 = newTopLeft,
-                        size1 = currentDraggableItem.size,
-                        topLeft2 = it.topLeft,
-                        size2 = it.size,
-                    ) &&
+                    it.key != hysteresisExcludedKey &&
+                        MathUtils.isRectangleIntersected(
+                            topLeft1 = newTopLeft,
+                            size1 = currentDraggableItem.size,
+                            topLeft2 = it.topLeft,
+                            size2 = it.size,
+                        ) &&
                         (dropTargetIds.isEmpty() || it.key in dropTargetIds) &&
                         it.canDrop
                 }.groupBy { it.zIndex }
@@ -252,6 +294,22 @@ class DragAndDropState<T>(
                 ?.onDragExit
                 ?.invoke(newDraggedItemState)
             hoveredDropTarget?.onDragEnter?.invoke(newDraggedItemState)
+
+            // Arm only on a reorder swap: reorderableItem registers the dragged
+            // item's own slot as a drop target, plain drop targets never do.
+            val newKey = hoveredDropTarget?.key
+            val ownSlotIntersects =
+                hoveredDropTargets.any { it.key == currentDraggableItem.key }
+            if (
+                newKey != null &&
+                newKey != currentDraggableItem.key &&
+                ownSlotIntersects
+            ) {
+                reorderHysteresis.arm(
+                    key = newKey,
+                    pointerOffset = offset,
+                )
+            }
         }
 
         dragPosition.value = newTopLeft
@@ -286,7 +344,11 @@ class DragAndDropState<T>(
             val draggedItem = draggableItemMap[currentDraggableItem.key]
 
             val positionAnimation = launch {
-                val dropTopLeft = dropTarget?.getDropTopLeft(currentDraggableItem.size) ?: currentDraggableItem.positionInRoot
+                // With no hovered target, animate to the item's current registered
+                // position, the drag start position is stale if the list reordered
+                val dropTopLeft = dropTarget?.getDropTopLeft(currentDraggableItem.size)
+                    ?: draggedItem?.positionInRoot
+                    ?: currentDraggableItem.positionInRoot
 
                 val sizeDiff =
                     if (draggedItem == null) {
@@ -335,7 +397,9 @@ class DragAndDropState<T>(
         isActiveDrag = false
         val currentDraggableItem = currentDraggableItem ?: return@coroutineScope
 
-        val animateToPosition = currentDraggableItem.positionInRoot - dragPosition.value
+        val currentPosition = draggableItemMap[currentDraggableItem.key]?.positionInRoot
+            ?: currentDraggableItem.positionInRoot
+        val animateToPosition = currentPosition - dragPosition.value
 
         launch {
             dragPositionAnimatable.animateTo(
@@ -355,9 +419,10 @@ class DragAndDropState<T>(
         currentDraggableItem = null
         draggedItem = null
         hoveredDropTargetKey = null
-        lastPointerOffset = Offset.Zero
+        lastPointerOffset = Offset.Unspecified
         dragStartOffset = Offset.Zero
         dragStartPositionInRoot = Offset.Zero
+        reorderHysteresis.reset()
         dragPosition.value = Offset.Zero
         dragPositionAnimatable.snapTo(Offset.Zero)
     }

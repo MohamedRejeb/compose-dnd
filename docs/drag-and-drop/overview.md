@@ -22,6 +22,7 @@ val dragAndDropState = rememberDragAndDropState<String>()
 |------------------------------|-----------|---------|-----------------------------------------------------------------------------|
 | `dragAfterLongPress`         | `Boolean` | `false` | If `true`, drag starts after a long press. If `false`, drag starts on touch move. Applied to all items unless overridden per item. |
 | `requireFirstDownUnconsumed` | `Boolean` | `false` | If `true`, the first down pointer event must be unconsumed to initiate drag. |
+| `reorderHysteresisDistance`  | `Dp`      | `DefaultReorderHysteresisDistance` (`8.dp`) | How far the cursor must move back, opposite the swap direction, before a just-swapped reorder target can be re-entered. Prevents swap oscillation during slow drags. `0.dp` disables it. |
 
 ## DragAndDropContainer
 
@@ -80,6 +81,7 @@ DraggableItem(
 | `requireFirstDownUnconsumed` | `Boolean`                      | Inherits from state            | Override the unconsumed pointer requirement for this item. |
 | `dropTargets`                | `List<Any>`                    | `emptyList()`                  | Restrict which drop targets this item can be dropped on. Empty means any target. |
 | `dropStrategy`               | `DropStrategy`                 | `DropStrategy.SurfacePercentage` | Strategy for choosing the hovered drop target. |
+| `dragAxis`                   | `DragAxis`                     | `DragAxis.Free`                | Constrain drag movement to one axis. See [Axis Lock](axis-lock.md). |
 | `dropAnimationSpec`          | `AnimationSpec<Offset>`        | `SpringSpec()`                 | Animation for position when dropping. |
 | `sizeDropAnimationSpec`      | `AnimationSpec<Size>`          | `SpringSpec()`                 | Animation for size when dropping. |
 | `draggableContent`           | `(@Composable () -> Unit)?`    | `null`                         | Custom content shown as the drag shadow. If `null`, the item content is used. |
@@ -114,7 +116,7 @@ Text(
 )
 ```
 
-The `draggableItem` modifier accepts the same parameters as `DraggableItem` (except `content`, which is the composable it's applied to). The `draggableContent` parameter is required — it defines what the drag shadow looks like.
+The `draggableItem` modifier accepts the same parameters as `DraggableItem` (except `content`, which is the composable it's applied to), plus a `hasDragHandle: Boolean` flag. The `draggableContent` parameter is required — it defines what the drag shadow looks like.
 
 Use `DragAndDropState.isDragging(key)` to check if a specific item is being dragged.
 

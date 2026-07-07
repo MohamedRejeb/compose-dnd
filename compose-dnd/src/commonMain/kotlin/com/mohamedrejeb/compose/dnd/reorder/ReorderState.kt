@@ -18,6 +18,9 @@ package com.mohamedrejeb.compose.dnd.reorder
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import com.mohamedrejeb.compose.dnd.DefaultReorderHysteresisDistance
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 
@@ -26,18 +29,27 @@ import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
  * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press.
  * This parameter is applied to all [ReorderableItem]s. If you want to change it for a specific item, use [ReorderableItem] parameter.
  * @param requireFirstDownUnconsumed if true, the first down event must be unconsumed to start the drag.
+ * @param reorderHysteresisDistance how far the cursor must move back, opposite the swap direction,
+ * before a just-swapped reorder target can be re-entered. `0.dp` disables it.
  * @return [ReorderState]
  */
+@OptIn(ExperimentalDndApi::class)
 @Composable
 fun <T> rememberReorderState(
     dragAfterLongPress: Boolean = false,
     requireFirstDownUnconsumed: Boolean = false,
-): ReorderState<T> = remember(dragAfterLongPress, requireFirstDownUnconsumed) {
-        ReorderState(
+    reorderHysteresisDistance: Dp = DefaultReorderHysteresisDistance,
+): ReorderState<T> {
+    val density = LocalDensity.current
+    val state = remember(dragAfterLongPress, requireFirstDownUnconsumed) {
+        ReorderState<T>(
             dragAfterLongPress = dragAfterLongPress,
             requireFirstDownUnconsumed = requireFirstDownUnconsumed,
         )
     }
+    state.dndState.reorderHysteresisDistancePx = with(density) { reorderHysteresisDistance.toPx() }
+    return state
+}
 
 /**
  * State of the reorder

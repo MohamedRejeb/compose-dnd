@@ -25,6 +25,38 @@ import com.mohamedrejeb.compose.dnd.gesture.detectDragStartGesture
 import kotlinx.coroutines.delay
 
 /**
+ * Marks this composable as the drag handle for the draggable item identified by [key].
+ *
+ * Use with the [draggableItem] or
+ * [reorderableItem][com.mohamedrejeb.compose.dnd.reorder.reorderableItem] modifiers:
+ * pass `hasDragHandle = true` to the item modifier, then apply this modifier to the handle
+ * composable. Only the handle region initiates drag — the rest of the item remains
+ * interactive (clickable, scrollable, etc.).
+ *
+ * Inside [DraggableItem] or [ReorderableItem][com.mohamedrejeb.compose.dnd.reorder.ReorderableItem]
+ * content, use the scope's `Modifier.dragHandle()` instead — it does not need [key] and [state].
+ *
+ * @param key The key of the draggable item this handle controls.
+ * @param state The drag and drop state.
+ * @param enabled Whether the drag handle is active.
+ * @param dragAfterLongPress If true, drag starts after long press on the handle.
+ * @param requireFirstDownUnconsumed If true, the first down event must be unconsumed.
+ */
+fun <T> Modifier.dragHandle(
+    key: Any,
+    state: DragAndDropState<T>,
+    enabled: Boolean = true,
+    dragAfterLongPress: Boolean = false,
+    requireFirstDownUnconsumed: Boolean = false,
+): Modifier = this then DragHandleModifier(
+    key = key,
+    state = state,
+    enabled = enabled,
+    dragAfterLongPress = dragAfterLongPress,
+    requireFirstDownUnconsumed = requireFirstDownUnconsumed,
+)
+
+/**
  * Creates a modifier that attaches drag gesture detection to a handle region.
  * Tracks the handle's own root position so the drag offset is computed correctly
  * relative to where the user touched, not the item's top-left.
