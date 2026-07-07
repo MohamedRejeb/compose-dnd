@@ -344,7 +344,11 @@ class DragAndDropState<T>(
             val draggedItem = draggableItemMap[currentDraggableItem.key]
 
             val positionAnimation = launch {
-                val dropTopLeft = dropTarget?.getDropTopLeft(currentDraggableItem.size) ?: currentDraggableItem.positionInRoot
+                // With no hovered target, animate to the item's current registered
+                // position, the drag start position is stale if the list reordered
+                val dropTopLeft = dropTarget?.getDropTopLeft(currentDraggableItem.size)
+                    ?: draggedItem?.positionInRoot
+                    ?: currentDraggableItem.positionInRoot
 
                 val sizeDiff =
                     if (draggedItem == null) {
@@ -393,7 +397,9 @@ class DragAndDropState<T>(
         isActiveDrag = false
         val currentDraggableItem = currentDraggableItem ?: return@coroutineScope
 
-        val animateToPosition = currentDraggableItem.positionInRoot - dragPosition.value
+        val currentPosition = draggableItemMap[currentDraggableItem.key]?.positionInRoot
+            ?: currentDraggableItem.positionInRoot
+        val animateToPosition = currentPosition - dragPosition.value
 
         launch {
             dragPositionAnimatable.animateTo(
