@@ -75,6 +75,7 @@ ReorderableItem(
 | `requireFirstDownUnconsumed` | `Boolean`                                 | Inherits from state              | Override unconsumed pointer requirement. |
 | `dropTargets`                | `List<Any>`                               | `emptyList()`                    | Restrict which targets this item can be dropped on. |
 | `dropStrategy`               | `DropStrategy`                            | `DropStrategy.SurfacePercentage` | Strategy for choosing the hovered target. |
+| `dragAxis`                   | `DragAxis`                                | `DragAxis.Free`                  | Constrain drag movement to one axis. See [Axis Lock](axis-lock.md). |
 | `onDrop`                     | `(DraggedItemState<T>) -> Unit`           | `{}`                             | Called when an item is dropped on this target. |
 | `onDragEnter`                | `(DraggedItemState<T>) -> Unit`           | `{}`                             | Called when a dragged item enters this target. |
 | `onDragExit`                 | `(DraggedItemState<T>) -> Unit`           | `{}`                             | Called when a dragged item exits this target. |
@@ -107,6 +108,18 @@ onDragEnter = { state ->
 
 !!! note
     The `onDragEnter` callback receives the `DraggedItemState` of the item being dragged. Use `state.data` to identify the dragged item and reposition it in your list.
+
+## Reorder Hysteresis
+
+When two items of different sizes swap, the swap itself can move the target back under the cursor and immediately trigger the reverse swap, causing the two items to oscillate during a slow drag. Compose DND prevents this with a built-in hysteresis: after a swap, the cursor has to travel a minimum distance in the opposite direction before the just-swapped target can be re-entered.
+
+The default distance is `8.dp` and works out of the box with both `ReorderContainer` and `DragAndDropContainer`. When using `rememberDragAndDropState` directly, you can tune it:
+
+```kotlin
+val dndState = rememberDragAndDropState<String>(
+    reorderHysteresisDistance = 16.dp, // 0.dp disables hysteresis
+)
+```
 
 ## Observing Reorder State
 

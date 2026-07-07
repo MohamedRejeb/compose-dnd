@@ -51,6 +51,7 @@ nav:
     - 'Drag Handle': drag-and-drop/drag-handle.md
     - 'Axis Lock': drag-and-drop/axis-lock.md
     - 'Conditional Drop': drag-and-drop/conditional-drop.md
+    - 'Multiple Lists (Kanban)': drag-and-drop/kanban-board.md
   - 'Code of Conduct': code_of_conduct.md
 
 extra_css:

@@ -4,19 +4,37 @@ By default, dragging can be initiated from anywhere within a `DraggableItem` or 
 
 ## Overview
 
-To use a drag handle:
+The content lambda of `DraggableItem` and `ReorderableItem` provides a scope (`DraggableItemScope` / `ReorderableItemScope`) that exposes a `Modifier.dragHandle()` function. Apply it to the composable that should act as the handle:
 
-1. Set `dragAfterLongPress = false` on your item (this is the default).
-2. Enable the drag handle on the item by setting `hasDragHandle = true`.
-3. Place a `DragHandle` composable inside the item's content to define the draggable area.
+```kotlin
+ReorderableItem(state = reorderState, key = item, data = item) {
+    Row {
+        Icon(
+            imageVector = Icons.Rounded.DragHandle,
+            contentDescription = "Drag handle",
+            modifier = Modifier.dragHandle(), // only this area initiates drag
+        )
+        Text(item) // the rest of the item stays interactive
+    }
+}
+```
 
-!!! warning "Experimental API"
-    The drag handle API is annotated with `@ExperimentalDndApi`. You must opt in with `@OptIn(ExperimentalDndApi::class)` to use it.
+Calling `dragHandle()` automatically switches the item to handle-driven dragging — no extra flag is needed on the item itself.
+
+!!! note
+    Drag handles require the composable wrapper API (`DraggableItem` / `ReorderableItem`), because `dragHandle()` is provided by the content scope. The `draggableItem` / `reorderableItem` modifiers cannot provide a handle themselves.
+
+### dragHandle Parameters
+
+| Parameter                    | Type      | Default | Description                                                        |
+|------------------------------|-----------|---------|--------------------------------------------------------------------|
+| `enabled`                    | `Boolean` | `true`  | Whether the drag handle is active.                                 |
+| `dragAfterLongPress`         | `Boolean` | `false` | If `true`, drag starts after a long press on the handle.          |
+| `requireFirstDownUnconsumed` | `Boolean` | `false` | If `true`, the first down event on the handle must be unconsumed. |
 
 ## Using Drag Handle with ReorderableItem
 
 ```kotlin
-@OptIn(ExperimentalDndApi::class)
 @Composable
 fun DragHandleExample() {
     val reorderState = rememberReorderState<String>()
@@ -36,7 +54,6 @@ fun DragHandleExample() {
                     state = reorderState,
                     key = item,
                     data = item,
-                    hasDragHandle = true,
                     onDrop = {},
                     onDragEnter = { state ->
                         items = items.toMutableList().apply {
@@ -59,12 +76,11 @@ fun DragHandleExample() {
                             .padding(horizontal = 16.dp),
                     ) {
                         // Only this area initiates the drag
-                        DragHandle {
-                            Icon(
-                                imageVector = Icons.Default.DragHandle,
-                                contentDescription = "Drag handle",
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Rounded.DragHandle,
+                            contentDescription = "Drag handle",
+                            modifier = Modifier.dragHandle(),
+                        )
 
                         Spacer(modifier = Modifier.width(16.dp))
 
@@ -82,20 +98,17 @@ fun DragHandleExample() {
 The drag handle also works with `DraggableItem`:
 
 ```kotlin
-@OptIn(ExperimentalDndApi::class)
 DraggableItem(
     state = dragAndDropState,
     key = "item-1",
     data = "Hello",
-    hasDragHandle = true,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        DragHandle {
-            Icon(
-                imageVector = Icons.Default.DragHandle,
-                contentDescription = "Drag handle",
-            )
-        }
+        Icon(
+            imageVector = Icons.Rounded.DragHandle,
+            contentDescription = "Drag handle",
+            modifier = Modifier.dragHandle(),
+        )
 
         Spacer(modifier = Modifier.width(8.dp))
 
@@ -106,10 +119,10 @@ DraggableItem(
 
 ## How It Works
 
-When `hasDragHandle = true`:
+When `Modifier.dragHandle()` is applied inside an item's content:
 
-- Touch events on the item body are **not** intercepted for drag gestures.
-- Only touch events starting inside the `DragHandle` composable will initiate a drag.
+- The item stops intercepting touch events on its body for drag gestures.
+- Only touch events starting inside the handle area will initiate a drag.
 - Other interactive elements (buttons, text fields, checkboxes) inside the item remain fully functional.
 
 !!! tip

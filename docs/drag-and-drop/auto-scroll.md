@@ -102,6 +102,7 @@ You can customize the auto scroll behavior using `DragAutoScrollConfig`:
 @OptIn(ExperimentalDndApi::class)
 val config = DragAutoScrollConfig(
     minScrollThreshold = 48.dp,
+    maxScrollThreshold = 160.dp,
     maxScrollSpeed = 1500f,
 )
 
@@ -110,7 +111,7 @@ LazyColumn(
     modifier = Modifier
         .fillMaxSize()
         .dragAutoScroll(
-            state = reorderState,
+            state = reorderState.dndState,
             lazyListState = lazyListState,
             config = config,
         ),
@@ -121,17 +122,54 @@ LazyColumn(
 
 | Parameter            | Type   | Default  | Description                                                               |
 |----------------------|--------|----------|---------------------------------------------------------------------------|
-| `minScrollThreshold` | `Dp`   | `48.dp`  | Minimum distance from the edge where scrolling begins. Actual threshold is the larger of this value and the first/last visible item size. |
+| `minScrollThreshold` | `Dp`   | `48.dp`  | Minimum distance from the edge where scrolling begins. The effective threshold adapts to the first/last visible item size: `clamp(itemSize, minScrollThreshold, maxScrollThreshold)`. |
+| `maxScrollThreshold` | `Dp`   | `160.dp` | Maximum distance from the edge for auto-scroll activation. Prevents the adaptive threshold from growing too large with tall items or containers. |
 | `maxScrollSpeed`     | `Float`| `1500f`  | The maximum scroll speed in pixels per second at the very edge.           |
 
 ## How It Works
 
 The auto scroll mechanism uses a dynamic threshold approach:
 
-1. **Detection** -- When a dragged item is within `minScrollThreshold` distance from the container edge, scrolling begins.
+1. **Detection** -- When a dragged item is within the scroll threshold distance from the container edge, scrolling begins.
 2. **Quadratic Easing** -- Scroll speed increases quadratically as the dragged item moves closer to the edge. This provides a natural feel where small movements near the threshold produce slow scrolling, while pushing toward the edge accelerates.
 3. **Frame-Synced** -- Scroll operations are synchronized with the frame rate for smooth, jank-free scrolling.
 4. **Bidirectional** -- Scrolling works in both directions: toward the start and toward the end of the container.
+
+## Scroll Pinning (dragScrollPin)
+
+When reorderable items have **different sizes**, swapping two items changes the content size above the viewport. Compose's key-based scroll anchoring then adjusts the scroll position to compensate, which shows up as a visible jump during the drag.
+
+The `dragScrollPin` modifier fixes this by pinning the scroll position right before each reorder swap, so the viewport stays stable:
+
+```kotlin
+@OptIn(ExperimentalDndApi::class)
+@Composable
+fun ScrollPinExample() {
+    val reorderState = rememberReorderState<String>()
+    val lazyListState = rememberLazyListState()
+
+    ReorderContainer(
+        state = reorderState,
+    ) {
+        LazyColumn(
+            state = lazyListState,
+            modifier = Modifier
+                .fillMaxSize()
+                .dragScrollPin(
+                    state = reorderState.dndState,
+                    lazyListState = lazyListState,
+                ),
+        ) {
+            // items with varying heights...
+        }
+    }
+}
+```
+
+A `lazyGridState` overload is available for `LazyVerticalGrid` / `LazyHorizontalGrid`.
+
+!!! note
+    `dragAutoScroll` already includes the scroll pinning behavior, so you do **not** need both. Use `dragScrollPin` on its own only when you want jump-free reordering without automatic edge scrolling.
 
 ## Full Working Example
 
