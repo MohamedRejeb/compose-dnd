@@ -21,8 +21,7 @@ ReorderableItem(state = reorderState, key = item, data = item) {
 
 Calling `dragHandle()` automatically switches the item to handle-driven dragging — no extra flag is needed on the item itself.
 
-!!! note
-    Drag handles require the composable wrapper API (`DraggableItem` / `ReorderableItem`), because `dragHandle()` is provided by the content scope. The `draggableItem` / `reorderableItem` modifiers cannot provide a handle themselves.
+With the `draggableItem` / `reorderableItem` modifiers there is no content scope, so a standalone variant takes the item's `key` and `state` instead — see [Using Drag Handle with the Modifier API](#using-drag-handle-with-the-modifier-api).
 
 ### dragHandle Parameters
 
@@ -116,6 +115,36 @@ DraggableItem(
     }
 }
 ```
+
+## Using Drag Handle with the Modifier API
+
+When using the `draggableItem` or `reorderableItem` modifiers, pass `hasDragHandle = true` to the item and use the standalone `Modifier.dragHandle(key, state)` overload on the handle composable:
+
+```kotlin
+Row(
+    modifier = Modifier
+        .draggableItem(
+            key = "item-1",
+            data = "Hello",
+            state = dragAndDropState,
+            hasDragHandle = true,
+            draggableContent = { ItemCard("Hello") },
+        ),
+) {
+    Icon(
+        imageVector = Icons.Rounded.DragHandle,
+        contentDescription = "Drag handle",
+        modifier = Modifier.dragHandle(
+            key = "item-1",
+            state = dragAndDropState,
+        ),
+    )
+
+    Text("Drag me by the handle")
+}
+```
+
+The standalone overload accepts the same `enabled`, `dragAfterLongPress`, and `requireFirstDownUnconsumed` parameters as the scope version.
 
 ## How It Works
 

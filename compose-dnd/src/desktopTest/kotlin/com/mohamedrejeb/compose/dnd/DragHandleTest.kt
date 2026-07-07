@@ -32,6 +32,8 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.drag.DraggableItem
+import com.mohamedrejeb.compose.dnd.drag.dragHandle
+import com.mohamedrejeb.compose.dnd.drag.draggableItem
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import kotlin.test.Test
 import kotlin.test.assertFalse
@@ -187,5 +189,151 @@ class DragHandleTest {
 
         waitForIdle()
         assertFalse(dropped, "onDrop should NOT be called when dragging from content (not handle)")
+    }
+
+    @Test
+    fun standaloneDragHandle_triggersDropWithModifierApi() = runComposeUiTest {
+        var dropped = false
+
+        setContent {
+            val state = rememberDragAndDropState<Int>()
+
+            DragAndDropContainer(
+                state = state,
+                modifier = Modifier.size(400.dp),
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                            .draggableItem(
+                                key = "item",
+                                data = 1,
+                                state = state,
+                                hasDragHandle = true,
+                                draggableContent = {
+                                    Box(Modifier.size(50.dp))
+                                },
+                            ),
+                    ) {
+                        // The drag handle region
+                        Box(
+                            modifier = Modifier
+                                .width(50.dp)
+                                .height(100.dp)
+                                .testTag("handle")
+                                .dragHandle(
+                                    key = "item",
+                                    state = state,
+                                )
+                        )
+                        // The content region
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(100.dp)
+                                .testTag("content")
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .dropTarget(
+                                key = "target",
+                                state = state,
+                                onDrop = { dropped = true },
+                            )
+                    )
+                }
+            }
+        }
+
+        // Drag from the handle
+        onNodeWithTag("handle").performTouchInput {
+            simulateDrag(
+                start = center,
+                end = Offset(center.x, center.y + 300f),
+            )
+        }
+
+        waitForIdle()
+        assertTrue(dropped, "onDrop should be called when dragging from the standalone handle")
+    }
+
+    @Test
+    fun standaloneDragHandle_doesNotDragFromItemBodyWithModifierApi() = runComposeUiTest {
+        var dropped = false
+
+        setContent {
+            val state = rememberDragAndDropState<Int>()
+
+            DragAndDropContainer(
+                state = state,
+                modifier = Modifier.size(400.dp),
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                            .draggableItem(
+                                key = "item",
+                                data = 1,
+                                state = state,
+                                hasDragHandle = true,
+                                draggableContent = {
+                                    Box(Modifier.size(50.dp))
+                                },
+                            ),
+                    ) {
+                        // The drag handle region
+                        Box(
+                            modifier = Modifier
+                                .width(50.dp)
+                                .height(100.dp)
+                                .testTag("handle")
+                                .dragHandle(
+                                    key = "item",
+                                    state = state,
+                                )
+                        )
+                        // The content region
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(100.dp)
+                                .testTag("content")
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .dropTarget(
+                                key = "target",
+                                state = state,
+                                onDrop = { dropped = true },
+                            )
+                    )
+                }
+            }
+        }
+
+        waitForIdle()
+
+        // Drag from the content area (not the handle)
+        onNodeWithTag("content").performTouchInput {
+            simulateDrag(
+                start = center,
+                end = Offset(center.x, center.y + 300f),
+            )
+        }
+
+        waitForIdle()
+        assertFalse(dropped, "onDrop should NOT be called when dragging from the item body (not handle)")
     }
 }
