@@ -1,5 +1,5 @@
 /*
- * Copyright 2025, Mohamed Ben Rejeb and the Compose Dnd project contributors
+ * Copyright 2023, Mohamed Ben Rejeb and the Compose Dnd project contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,10 +58,10 @@ import androidx.compose.ui.unit.sp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
+import com.mohamedrejeb.compose.dnd.drag.DropStrategy
 import com.mohamedrejeb.compose.dnd.drag.isDragging
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
-import com.mohamedrejeb.compose.dnd.drag.DropStrategy
 import com.mohamedrejeb.compose.dnd.reorder.reorderableItem
 import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
 import components.DemoScreenScaffold
@@ -70,7 +70,10 @@ import components.DemoScreenScaffold
 
 private enum class Priority { Low, Medium, High, Urgent }
 
-private enum class Tag(val label: String, val color: Color) {
+private enum class Tag(
+    val label: String,
+    val color: Color
+) {
     Frontend("Frontend", Color(0xFF5B8DEF)),
     Backend("Backend", Color(0xFF4CAF50)),
     Design("Design", Color(0xFFAB6FE8)),
@@ -305,8 +308,7 @@ private fun KanbanColumnUi(
                                     modifier = Modifier.width(264.dp),
                                 )
                             },
-                        )
-                        .animateItem()
+                        ).animateItem()
                         .fillMaxWidth(),
                 )
             }
@@ -323,8 +325,7 @@ private fun KanbanColumnUi(
                                 width = 1.dp,
                                 color = MaterialTheme.colorScheme.outlineVariant,
                                 shape = MaterialTheme.shapes.medium,
-                            )
-                            .dropTarget(
+                            ).dropTarget(
                                 key = "empty-${column.id}",
                                 state = dndState,
                                 dropAnimationEnabled = false,
@@ -370,15 +371,13 @@ private fun KanbanCardUi(
                 } else {
                     Modifier
                 }
-            )
-            .clip(shape)
+            ).clip(shape)
             .background(MaterialTheme.colorScheme.surface)
             .border(
                 width = 0.5.dp,
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                 shape = shape,
-            )
-            .padding(12.dp),
+            ).padding(12.dp),
     ) {
         // Priority indicator + title
         Row(
