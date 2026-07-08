@@ -37,7 +37,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
-import com.mohamedrejeb.compose.dnd.drag.DraggableItem
+import com.mohamedrejeb.compose.dnd.drag.draggableItem
+import com.mohamedrejeb.compose.dnd.drag.isDragging
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import components.DemoScreenScaffold
@@ -122,31 +123,29 @@ private fun ListToListWithoutReorderContent(
                     ),
             ) {
                 items(listOne, key = { it }) { item ->
-                    DraggableItem(
-                        state = dragAndDropState,
-                        key = item,
-                        data = item,
-                        dropTargets = listOf("listTwo"),
-                        draggableContent = {
-                            DndItemCard(
-                                label = item,
-                                isDragShadow = true,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(60.dp),
-                            )
-                        },
-                        modifier = Modifier,
-                    ) {
-                        DndItemCard(
-                            label = item,
-                            modifier = Modifier
-                                .graphicsLayer {
-                                    alpha = if (isDragging) 0f else 1f
-                                }.fillMaxWidth()
-                                .height(60.dp),
-                        )
-                    }
+                    val isDragging = dragAndDropState.isDragging(item)
+
+                    DndItemCard(
+                        label = item,
+                        modifier = Modifier
+                            .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+                            .draggableItem(
+                                key = item,
+                                data = item,
+                                state = dragAndDropState,
+                                dropTargets = listOf("listTwo"),
+                                draggableContent = {
+                                    DndItemCard(
+                                        label = item,
+                                        isDragShadow = true,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(60.dp),
+                                    )
+                                },
+                            ).fillMaxWidth()
+                            .height(60.dp),
+                    )
                 }
             }
 
@@ -181,35 +180,33 @@ private fun ListToListWithoutReorderContent(
                     ),
             ) {
                 items(listTwo, key = { it }) { item ->
-                    DraggableItem(
-                        state = dragAndDropState,
-                        key = item,
-                        data = item,
-                        dropTargets = listOf("listOne"),
-                        draggableContent = {
-                            DndItemCard(
-                                label = item,
-                                isDragShadow = true,
-                                color = MaterialTheme.colorScheme.tertiaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(60.dp),
-                            )
-                        },
-                        modifier = Modifier,
-                    ) {
-                        DndItemCard(
-                            label = item,
-                            color = MaterialTheme.colorScheme.tertiaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                            modifier = Modifier
-                                .graphicsLayer {
-                                    alpha = if (isDragging) 0f else 1f
-                                }.fillMaxWidth()
-                                .height(60.dp),
-                        )
-                    }
+                    val isDragging = dragAndDropState.isDragging(item)
+
+                    DndItemCard(
+                        label = item,
+                        color = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier
+                            .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+                            .draggableItem(
+                                key = item,
+                                data = item,
+                                state = dragAndDropState,
+                                dropTargets = listOf("listOne"),
+                                draggableContent = {
+                                    DndItemCard(
+                                        label = item,
+                                        isDragShadow = true,
+                                        color = MaterialTheme.colorScheme.tertiaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(60.dp),
+                                    )
+                                },
+                            ).fillMaxWidth()
+                            .height(60.dp),
+                    )
                 }
             }
         }

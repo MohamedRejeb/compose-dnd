@@ -18,6 +18,7 @@ package com.mohamedrejeb.compose.dnd.drag
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInRoot
 import com.mohamedrejeb.compose.dnd.DragAndDropState
@@ -68,10 +69,13 @@ internal fun <T> DragHandleModifier(
     dragAfterLongPress: Boolean,
     requireFirstDownUnconsumed: Boolean,
 ): Modifier {
-    var handlePositionInRoot: Offset = Offset.Zero
+    // Keep the coordinates and resolve the position at gesture time. A cached
+    // offset goes stale after a reorder because onPlaced does not fire again
+    // when only the item moved within the list.
+    var handleCoordinates: LayoutCoordinates? = null
 
     return Modifier
-        .onPlaced { handlePositionInRoot = it.positionInRoot() }
+        .onPlaced { handleCoordinates = it }
         .pointerInput(
             key,
             enabled,
@@ -97,7 +101,12 @@ internal fun <T> DragHandleModifier(
                 dragAfterLongPress = dragAfterLongPress,
                 requireFirstDownUnconsumed = requireFirstDownUnconsumed,
                 isHandle = true,
-                gestureSourcePositionInRoot = { handlePositionInRoot },
+                gestureSourcePositionInRoot = {
+                    handleCoordinates
+                        ?.takeIf { it.isAttached }
+                        ?.positionInRoot()
+                        ?: Offset.Zero
+                },
             )
         }
 }

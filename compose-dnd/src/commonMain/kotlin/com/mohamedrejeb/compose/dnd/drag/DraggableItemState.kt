@@ -20,6 +20,7 @@ import androidx.compose.animation.core.SpringSpec
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.layout.LayoutCoordinates
 
 internal class DraggableItemState<T>(
     var key: Any,
@@ -37,6 +38,10 @@ internal class DraggableItemState<T>(
 
     var content: @Composable () -> Unit,
 ) {
+    // Live coordinates, positionInRoot alone goes stale while animateItem
+    // is gliding the item because layer frames do not trigger onPlaced
+    var layoutCoordinates: LayoutCoordinates? = null
+
     fun copy(): DraggableItemState<T> = DraggableItemState(
             key = key,
             data = data,

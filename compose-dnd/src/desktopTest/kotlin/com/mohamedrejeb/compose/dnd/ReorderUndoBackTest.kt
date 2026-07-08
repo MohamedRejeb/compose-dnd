@@ -113,8 +113,7 @@ class ReorderUndoBackTest {
                                     draggableContent = {
                                         Box(Modifier.fillMaxWidth().height(item.heightDp.dp))
                                     },
-                                )
-                                .testTag("item-${item.id}"),
+                                ).testTag("item-${item.id}"),
                         )
                     }
                 }
@@ -238,8 +237,7 @@ class ReorderUndoBackTest {
                                     draggableContent = {
                                         Box(Modifier.fillMaxWidth().height(item.heightDp.dp))
                                     },
-                                )
-                                .testTag("item-${item.id}"),
+                                ).testTag("item-${item.id}"),
                         )
                     }
                 }
@@ -347,8 +345,7 @@ class ReorderUndoBackTest {
                                     draggableContent = {
                                         Box(Modifier.fillMaxWidth().height(item.heightDp.dp))
                                     },
-                                )
-                                .testTag("item-${item.id}"),
+                                ).testTag("item-${item.id}"),
                         )
                     }
                 }

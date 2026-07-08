@@ -39,7 +39,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
-import com.mohamedrejeb.compose.dnd.drag.DraggableItem
+import com.mohamedrejeb.compose.dnd.drag.draggableItem
+import com.mohamedrejeb.compose.dnd.drag.isDragging
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import components.DemoScreenScaffold
@@ -97,21 +98,25 @@ private fun ConditionalDropContent(
             ) {
                 listOf("1", "2", "3", "4", "5", "6").forEach { number ->
                     val isEven = number.toInt() % 2 == 0
+                    val isDragging = state.isDragging(number)
 
-                    DraggableItem(
-                        state = state,
-                        key = number,
-                        data = number,
-                    ) {
-                        NumberChip(
-                            number = number,
-                            isEven = isEven,
-                            modifier = Modifier
-                                .graphicsLayer {
-                                    alpha = if (isDragging) 0.3f else 1f
+                    NumberChip(
+                        number = number,
+                        isEven = isEven,
+                        modifier = Modifier
+                            .graphicsLayer { alpha = if (isDragging) 0.3f else 1f }
+                            .draggableItem(
+                                key = number,
+                                data = number,
+                                state = state,
+                                draggableContent = {
+                                    NumberChip(
+                                        number = number,
+                                        isEven = isEven,
+                                    )
                                 },
-                        )
-                    }
+                            ),
+                    )
                 }
             }
 

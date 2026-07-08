@@ -58,13 +58,16 @@ import androidx.compose.ui.unit.sp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
+import com.mohamedrejeb.compose.dnd.drag.DragAxis
 import com.mohamedrejeb.compose.dnd.drag.DropStrategy
+import com.mohamedrejeb.compose.dnd.drag.dragHandle
 import com.mohamedrejeb.compose.dnd.drag.isDragging
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import com.mohamedrejeb.compose.dnd.reorder.reorderableItem
 import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
 import components.DemoScreenScaffold
+import components.GripDots
 
 // -- Data model --
 
@@ -168,13 +171,18 @@ private fun KanbanBoardContent(
     modifier: Modifier = Modifier,
 ) {
     val dndState = rememberDragAndDropState<KanbanCard>()
+    val columnDndState = rememberDragAndDropState<KanbanColumn>()
     var columns by remember { mutableStateOf(initialColumns()) }
     val rowState = rememberLazyListState()
 
     DragAndDropContainer(
-        state = dndState,
+        state = columnDndState,
         modifier = modifier,
     ) {
+        DragAndDropContainer(
+            state = dndState,
+            modifier = Modifier.fillMaxSize(),
+        ) {
         LazyRow(
             state = rowState,
             contentPadding = PaddingValues(horizontal = 12.dp),
@@ -184,12 +192,25 @@ private fun KanbanBoardContent(
                 .dragAutoScroll(
                     state = dndState,
                     lazyListState = rowState,
+                ).dragAutoScroll(
+                    state = columnDndState,
+                    lazyListState = rowState,
                 ),
         ) {
             items(columns, key = { it.id }) { column ->
                 KanbanColumnUi(
                     column = column,
                     dndState = dndState,
+                    columnDndState = columnDndState,
+                    onColumnEnter = { dragged, target ->
+                        if (dragged.id != target.id) {
+                            columns = columns.toMutableList().apply {
+                                val from = indexOfFirst { it.id == dragged.id }
+                                val to = indexOfFirst { it.id == target.id }
+                                if (from != -1 && to != -1) add(to, removeAt(from))
+                            }
+                        }
+                    },
                     onReorder = { draggedCard, targetCard ->
                         if (draggedCard.id == targetCard.id) return@KanbanColumnUi
 
@@ -216,8 +237,10 @@ private fun KanbanBoardContent(
                             }
                         }
                     },
+                    modifier = Modifier.animateItem(),
                 )
             }
+        }
         }
     }
 }
@@ -227,25 +250,45 @@ private fun KanbanBoardContent(
 private fun KanbanColumnUi(
     column: KanbanColumn,
     dndState: DragAndDropState<KanbanCard>,
+    columnDndState: DragAndDropState<KanbanColumn>,
+    onColumnEnter: (dragged: KanbanColumn, target: KanbanColumn) -> Unit,
     onReorder: (draggedCard: KanbanCard, targetCard: KanbanCard) -> Unit,
     onDropInEmpty: (draggedCard: KanbanCard) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colState = rememberLazyListState()
     val shape = MaterialTheme.shapes.large
+    val isColumnDragging = columnDndState.isDragging("col-${column.id}")
 
     Column(
         modifier = modifier
-            .width(280.dp)
+            .graphicsLayer { alpha = if (isColumnDragging) 0f else 1f }
+            .reorderableItem(
+                key = "col-${column.id}",
+                data = column,
+                state = columnDndState,
+                hasDragHandle = true,
+                dragAxis = DragAxis.Horizontal,
+                dropStrategy = DropStrategy.CenterDistance,
+                onDragEnter = { state -> onColumnEnter(state.data, column) },
+                draggableContent = {
+                    ColumnDragPreview(column = column)
+                },
+            ).width(280.dp)
             .fillMaxHeight()
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .padding(8.dp),
     ) {
-        // Column header
+        // Column header doubles as the drag handle for reordering columns
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .dragHandle(
+                    key = "col-${column.id}",
+                    state = columnDndState,
+                ).padding(horizontal = 8.dp, vertical = 10.dp),
         ) {
             Box(
                 modifier = Modifier
@@ -270,6 +313,10 @@ private fun KanbanColumnUi(
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                     .padding(horizontal = 6.dp, vertical = 1.dp),
             )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            GripDots(color = MaterialTheme.colorScheme.outlineVariant)
         }
 
         // Cards list
@@ -292,6 +339,7 @@ private fun KanbanColumnUi(
                     card = card,
                     columnColor = column.color,
                     modifier = Modifier
+                        .animateItem()
                         .graphicsLayer { alpha = if (isDragging) 0f else 1f }
                         .reorderableItem(
                             key = card.id,
@@ -308,8 +356,7 @@ private fun KanbanColumnUi(
                                     modifier = Modifier.width(264.dp),
                                 )
                             },
-                        ).animateItem()
-                        .fillMaxWidth(),
+                        ).fillMaxWidth()
                 )
             }
 
@@ -340,6 +387,67 @@ private fun KanbanColumnUi(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ColumnDragPreview(
+    column: KanbanColumn,
+) {
+    val shape = MaterialTheme.shapes.large
+
+    Column(
+        modifier = Modifier
+            .graphicsLayer { rotationZ = -2f }
+            .shadow(elevation = 16.dp, shape = shape)
+            .width(280.dp)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .padding(8.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 10.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(column.color),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = column.title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            GripDots(color = MaterialTheme.colorScheme.outlineVariant)
+        }
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(bottom = 8.dp),
+        ) {
+            column.cards.take(3).forEach { card ->
+                KanbanCardUi(
+                    card = card,
+                    columnColor = column.color,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            if (column.cards.size > 3) {
+                Text(
+                    text = "+${column.cards.size - 3} more",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
             }
         }
     }

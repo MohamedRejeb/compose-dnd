@@ -8,7 +8,7 @@ A library that allows you to easily add drag and drop functionality to your Jetp
 [![BuildPassing](https://shields.io/badge/build-passing-brightgreen)](https://github.com/MohamedRejeb/compose-dnd/actions)
 [![Maven Central](https://img.shields.io/maven-central/v/com.mohamedrejeb.dnd/compose-dnd)](https://search.maven.org/search?q=g:%22com.mohamedrejeb.dnd%22%20AND%20a:%22compose-dnd%22)
 
-![Compose DND thumbnail](docs/images/thumbnail.png)
+![Compose DND sample](docs/images/hero.gif)
 
 ## Features
 
@@ -64,7 +64,7 @@ kotlin {
 
 ### Drag and Drop
 
-Create a `DragAndDropState` and wrap your content with `DragAndDropContainer`:
+Create a `DragAndDropState`, wrap your content with `DragAndDropContainer`, and use the `draggableItem` and `dropTarget` modifiers:
 
 ```kotlin
 val dragAndDropState = rememberDragAndDropState<String>()
@@ -72,13 +72,21 @@ val dragAndDropState = rememberDragAndDropState<String>()
 DragAndDropContainer(
     state = dragAndDropState,
 ) {
-    DraggableItem(
-        state = dragAndDropState,
-        key = "item-1",
-        data = "Hello",
-    ) {
-        Text("Drag me")
-    }
+    val isDragging = dragAndDropState.isDragging("item-1")
+
+    Text(
+        text = "Drag me",
+        modifier = Modifier
+            .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+            .draggableItem(
+                key = "item-1",
+                data = "Hello",
+                state = dragAndDropState,
+                draggableContent = {
+                    Text("Drag me") // Shown as the drag shadow
+                },
+            ),
+    )
 
     Box(
         modifier = Modifier
@@ -97,32 +105,38 @@ DragAndDropContainer(
 
 ### Reorder List
 
-Create a `ReorderState` and use `ReorderableItem` which is both draggable and a drop target:
+The `reorderableItem` modifier makes an item both draggable and a drop target, which is all a sortable list needs:
 
 ```kotlin
-val reorderState = rememberReorderState<String>()
+val dndState = rememberDragAndDropState<String>()
 
-ReorderContainer(
-    state = reorderState,
+DragAndDropContainer(
+    state = dndState,
 ) {
     LazyColumn {
         items(items, key = { it }) { item ->
-            ReorderableItem(
-                state = reorderState,
-                key = item,
-                data = item,
-                onDrop = {},
-                onDragEnter = { state ->
-                    items = items.toMutableList().apply {
-                        val index = indexOf(item)
-                        if (index == -1) return@ReorderableItem
-                        remove(state.data)
-                        add(index, state.data)
-                    }
-                },
-            ) {
-                Text(item)
-            }
+            Text(
+                text = item,
+                modifier = Modifier
+                    .graphicsLayer { alpha = if (dndState.isDragging(item)) 0f else 1f }
+                    .reorderableItem(
+                        key = item,
+                        data = item,
+                        state = dndState,
+                        onDragEnter = { state ->
+                            items = items.toMutableList().apply {
+                                val index = indexOf(item)
+                                if (index != -1) {
+                                    remove(state.data)
+                                    add(index, state.data)
+                                }
+                            }
+                        },
+                        draggableContent = {
+                            Text(item)
+                        },
+                    ),
+            )
         }
     }
 }
@@ -139,16 +153,9 @@ DragAndDropContainer(
 ) { }
 ```
 
-Or for a specific item:
+Or for a specific item by passing `enabled = false` to the `draggableItem` or `reorderableItem` modifier.
 
-```kotlin
-DraggableItem(
-    state = dragAndDropState,
-    key = "item-1",
-    data = "Hello",
-    enabled = false,
-) { }
-```
+> Prefer wrapping composables instead of modifiers? The `DraggableItem` and `ReorderableItem` wrapper composables offer the same features - see the [documentation](https://mohamedrejeb.github.io/compose-dnd/).
 
 > For more details and advanced features (auto scroll, drop strategies, drag handles, axis lock), check out the [documentation](https://mohamedrejeb.github.io/compose-dnd/) and the [sample project](https://github.com/MohamedRejeb/compose-dnd/tree/main/sample/common/src/commonMain/kotlin).
 

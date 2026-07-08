@@ -23,6 +23,11 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -178,15 +183,26 @@ private val AppTypography = Typography(
 
 @Composable
 fun AppTheme(
-    useDarkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    val colors = if (useDarkTheme) DarkColors else LightColors
+    val systemDark = isSystemInDarkTheme()
+    var darkTheme by remember(systemDark) { mutableStateOf(systemDark) }
 
-    MaterialTheme(
-        colorScheme = colors,
-        shapes = AppShapes,
-        typography = AppTypography,
-        content = content,
-    )
+    val controller = remember(darkTheme) {
+        ThemeController(
+            darkTheme = darkTheme,
+            toggle = { darkTheme = !darkTheme },
+        )
+    }
+
+    val colors = if (darkTheme) DarkColors else LightColors
+
+    CompositionLocalProvider(LocalThemeController provides controller) {
+        MaterialTheme(
+            colorScheme = colors,
+            shapes = AppShapes,
+            typography = AppTypography,
+            content = content,
+        )
+    }
 }

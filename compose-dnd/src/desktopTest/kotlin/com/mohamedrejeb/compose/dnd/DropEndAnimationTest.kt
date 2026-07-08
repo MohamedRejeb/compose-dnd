@@ -97,8 +97,7 @@ class DropEndAnimationTest {
                                             draggableContent = {
                                                 Box(Modifier.fillMaxWidth().height(100.dp))
                                             },
-                                        )
-                                        .testTag("item-$item"),
+                                        ).testTag("item-$item"),
                                 )
                             }
                         }

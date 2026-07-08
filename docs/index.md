@@ -7,7 +7,7 @@ A library that allows you to easily add drag and drop functionality to your Jetp
 [![Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Maven Central](https://img.shields.io/maven-central/v/com.mohamedrejeb.dnd/compose-dnd)](https://search.maven.org/search?q=g:%22com.mohamedrejeb.dnd%22%20AND%20a:%22compose-dnd%22)
 
-![Compose DND thumbnail](images/thumbnail.png)
+<video src="videos/hero.mp4" autoplay loop muted playsinline width="720"></video>
 
 ## Features
 
@@ -48,13 +48,21 @@ val dragAndDropState = rememberDragAndDropState<String>()
 DragAndDropContainer(
     state = dragAndDropState,
 ) {
-    DraggableItem(
-        state = dragAndDropState,
-        key = "item-1",
-        data = "Hello",
-    ) {
-        Text("Drag me")
-    }
+    val isDragging = dragAndDropState.isDragging("item-1")
+
+    Text(
+        text = "Drag me",
+        modifier = Modifier
+            .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+            .draggableItem(
+                key = "item-1",
+                data = "Hello",
+                state = dragAndDropState,
+                draggableContent = {
+                    Text("Drag me") // Shown as the drag shadow
+                },
+            ),
+    )
 
     Box(
         modifier = Modifier

@@ -1,10 +1,13 @@
 # Multiple Lists (Kanban)
 
-A Kanban board combines several features into a single screen: multiple columns, cross-column card transfer, positional insertion, and auto-scroll on both axes. This guide walks through the pattern used by the Kanban Board sample.
+A Kanban board combines several features into a single screen: multiple columns, cross-column card transfer, positional insertion, auto-scroll on both axes, and reordering the columns themselves. This guide walks through the pattern used by the Kanban Board sample.
+
+<video src="../../videos/kanban.mp4" autoplay loop muted playsinline width="720"></video>
 
 The building blocks:
 
-- One shared `DragAndDropState` for the whole board, so cards can move between any columns.
+- One shared `DragAndDropState` for cards, so they can move between any columns.
+- A second `DragAndDropState` for the columns, dragged by their header. Two states let card drags and column drags coexist on one screen.
 - An outer `LazyRow` of columns and an inner `LazyColumn` per column, each with its own `dragAutoScroll`.
 - `Modifier.reorderableItem` on each card, handling both same-column reorder and cross-column insertion in a single callback.
 - A `dropTarget` placeholder so cards can be dropped into empty columns.
@@ -93,6 +96,7 @@ fun ColumnUi(
             CardUi(
                 card = card,
                 modifier = Modifier
+                    .animateItem()
                     .graphicsLayer { alpha = if (isDragging) 0f else 1f }
                     .reorderableItem(
                         key = card.id,
@@ -105,7 +109,6 @@ fun ColumnUi(
                             CardUi(card = card, isDragShadow = true)
                         },
                     )
-                    .animateItem()
                     .fillMaxWidth(),
             )
         }
@@ -171,7 +174,66 @@ if (column.cards.isEmpty()) {
 
 `dropAnimationEnabled = false` commits the move immediately on drop — the card is re-parented into the column, so animating toward the placeholder's old position would fight the layout change.
 
+## Reordering the Columns Themselves
+
+Columns are draggable too, by their header. The trick is a **second** `DragAndDropState` typed to columns, with its own container wrapped around the card container — each drag layer tracks its own items and renders its own shadow:
+
+```kotlin
+val cardDndState = rememberDragAndDropState<Card>()
+val columnDndState = rememberDragAndDropState<Column>()
+
+DragAndDropContainer(state = columnDndState) {
+    DragAndDropContainer(state = cardDndState) {
+        LazyRow(
+            modifier = Modifier
+                .dragAutoScroll(state = cardDndState, lazyListState = rowState)
+                .dragAutoScroll(state = columnDndState, lazyListState = rowState),
+        ) {
+            // columns...
+        }
+    }
+}
+```
+
+Each column becomes a `reorderableItem` in the column state, with `hasDragHandle = true` so that only the header initiates the drag — otherwise every card gesture would also grab the column:
+
+```kotlin
+Column(
+    modifier = Modifier
+        .graphicsLayer { alpha = if (isColumnDragging) 0f else 1f }
+        .reorderableItem(
+            key = "col-${column.id}",
+            data = column,
+            state = columnDndState,
+            hasDragHandle = true,
+            dragAxis = DragAxis.Horizontal,
+            dropStrategy = DropStrategy.CenterDistance,
+            onDragEnter = { state -> onColumnEnter(state.data, column) },
+            draggableContent = { ColumnDragPreview(column) },
+        ),
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .dragHandle(
+                key = "col-${column.id}",
+                state = columnDndState,
+            ),
+    ) {
+        // header content: colored dot, title, count, grip dots
+    }
+
+    // cards LazyColumn...
+}
+```
+
+Useful details:
+
+- `dragAxis = DragAxis.Horizontal` keeps the lifted column aligned with the row.
+- The column reorder callback moves the column by id, mirroring the card logic.
+- `draggableContent` renders a simplified preview (header plus the first few cards) instead of the full live column, keeping the drag shadow cheap.
+
 !!! tip
     Cards with different heights can oscillate when swapped during a slow drag. The library prevents this with built-in reorder hysteresis — see [Reorder List](reorder.md#reorder-hysteresis).
 
-The complete implementation, including priorities, tags, and assignees on the cards, is in the sample app: `sample/common/src/commonMain/kotlin/ui/KanbanBoardScreen.kt`.
+The complete implementation, including priorities, tags, and assignees on the cards, is in the sample app: [KanbanBoardScreen.kt](https://github.com/MohamedRejeb/compose-dnd/blob/main/sample/common/src/commonMain/kotlin/ui/KanbanBoardScreen.kt).

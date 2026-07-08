@@ -16,6 +16,7 @@
 package com.mohamedrejeb.compose.dnd
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.AnimationVector2D
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.runtime.Composable
@@ -25,11 +26,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.input.pointer.PointerId
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -344,12 +347,6 @@ class DragAndDropState<T>(
             val draggedItem = draggableItemMap[currentDraggableItem.key]
 
             val positionAnimation = launch {
-                // With no hovered target, animate to the item's current registered
-                // position, the drag start position is stale if the list reordered
-                val dropTopLeft = dropTarget?.getDropTopLeft(currentDraggableItem.size)
-                    ?: draggedItem?.positionInRoot
-                    ?: currentDraggableItem.positionInRoot
-
                 val sizeDiff =
                     if (draggedItem == null) {
                         Size.Zero
@@ -359,16 +356,22 @@ class DragAndDropState<T>(
                             height = draggedItem.size.height - currentDraggableItem.size.height,
                         )
                     }
-
-                val animateToPosition = dropTopLeft - dragPosition.value - Offset(
+                val centerOffset = Offset(
                     x = sizeDiff.width / 2,
                     y = sizeDiff.height / 2,
                 )
 
-                dragPositionAnimatable.animateTo(
-                    targetValue = animateToPosition,
-                    animationSpec = currentDraggableItem.dropAnimationSpec,
-                )
+                animateDropPosition(currentDraggableItem.dropAnimationSpec) {
+                    val dropTopLeft = if (dropTarget != null) {
+                        dropTarget.layoutCoordinates
+                            ?.takeIf { it.isAttached }
+                            ?.let { dropTarget.topLeft = it.positionInRoot() }
+                        dropTarget.getDropTopLeft(currentDraggableItem.size)
+                    } else {
+                        liveItemPosition(draggedItem, currentDraggableItem.positionInRoot)
+                    }
+                    dropTopLeft - centerOffset
+                }
             }
 
             val sizeAnimation = launch {
@@ -396,20 +399,50 @@ class DragAndDropState<T>(
     internal suspend fun handleDragCancel() = coroutineScope {
         isActiveDrag = false
         val currentDraggableItem = currentDraggableItem ?: return@coroutineScope
-
-        val currentPosition = draggableItemMap[currentDraggableItem.key]?.positionInRoot
-            ?: currentDraggableItem.positionInRoot
-        val animateToPosition = currentPosition - dragPosition.value
+        val draggedItem = draggableItemMap[currentDraggableItem.key]
 
         launch {
-            dragPositionAnimatable.animateTo(
-                targetValue = animateToPosition,
-                animationSpec = currentDraggableItem.dropAnimationSpec,
-            )
+            animateDropPosition(currentDraggableItem.dropAnimationSpec) {
+                liveItemPosition(draggedItem, currentDraggableItem.positionInRoot)
+            }
         }.join()
 
         clearDragState()
     }
+
+    /**
+     * Animate the drop position to a target that can keep moving while the
+     * animation runs, e.g. items still gliding under animateItem after a
+     * reorder. The target is re-resolved every frame and the animation
+     * retargeted, so the ghost lands where the item actually settles.
+     */
+    private suspend fun animateDropPosition(
+        animationSpec: AnimationSpec<Offset>,
+        targetTopLeft: () -> Offset,
+    ) = coroutineScope {
+        var target = targetTopLeft()
+        var animation = launch {
+            dragPositionAnimatable.animateTo(target - dragPosition.value, animationSpec)
+        }
+        while (animation.isActive) {
+            withFrameNanos { }
+            val newTarget = targetTopLeft()
+            if ((newTarget - target).getDistance() > 0.5f) {
+                target = newTarget
+                animation = launch {
+                    dragPositionAnimatable.animateTo(target - dragPosition.value, animationSpec)
+                }
+            }
+        }
+    }
+
+    private fun liveItemPosition(itemState: DraggableItemState<T>?, fallback: Offset): Offset =
+        itemState?.let { item ->
+            item.layoutCoordinates
+                ?.takeIf { it.isAttached }
+                ?.positionInRoot()
+                ?: item.positionInRoot
+        } ?: fallback
 
     /**
      * Clear the drag state after drag is finished

@@ -52,3 +52,6 @@ data object AutoScrollDemoRoute
 
 @Serializable
 data object KanbanBoardRoute
+
+@Serializable
+data object FormBuilderRoute

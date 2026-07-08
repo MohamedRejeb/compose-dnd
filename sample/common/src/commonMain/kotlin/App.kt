@@ -25,6 +25,7 @@ import navigation.AxisLockedDragRoute
 import navigation.ConditionalDropRoute
 import navigation.DragHandleReorderRoute
 import navigation.DropStrategiesPlaygroundRoute
+import navigation.FormBuilderRoute
 import navigation.HomeRoute
 import navigation.ItemToItemOneDirectionRoute
 import navigation.ItemToItemTwoDirectionsRoute
@@ -38,6 +39,7 @@ import ui.AxisLockedDragScreen
 import ui.ConditionalDropScreen
 import ui.DragHandleReorderScreen
 import ui.DropStrategiesPlaygroundScreen
+import ui.FormBuilderScreen
 import ui.HomeScreen
 import ui.ItemToItemOneDirectionScreen
 import ui.ItemToItemTwoDirectionsScreen
@@ -94,6 +96,9 @@ fun App() {
                         onNavigateToKanbanBoard = {
                             navController.navigate(KanbanBoardRoute)
                         },
+                        onNavigateToFormBuilder = {
+                            navController.navigate(FormBuilderRoute)
+                        },
                     )
                 }
                 composable<ItemToItemOneDirectionRoute> {
@@ -148,6 +153,11 @@ fun App() {
                 }
                 composable<KanbanBoardRoute> {
                     KanbanBoardScreen(
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable<FormBuilderRoute> {
+                    FormBuilderScreen(
                         onBack = { navController.popBackStack() },
                     )
                 }

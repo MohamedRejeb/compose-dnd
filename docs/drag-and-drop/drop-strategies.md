@@ -2,6 +2,8 @@
 
 When a dragged item overlaps multiple drop targets, a **drop strategy** determines which target is considered "hovered." Compose DND provides several built-in strategies and allows you to create custom ones.
 
+<video src="../../videos/drop-strategies.mp4" autoplay loop muted playsinline width="720"></video>
+
 ## What Are Drop Strategies?
 
 During a drag operation, the dragged item may visually overlap more than one drop target at the same time. The drop strategy is the algorithm that decides which single drop target should receive the `onDragEnter`, `onDragExit`, and `onDrop` callbacks.
@@ -13,14 +15,18 @@ During a drag operation, the dragged item may visually overlap more than one dro
 Selects the drop target that has the highest percentage of its surface covered by the dragged item. This is the default strategy and works well for most use cases.
 
 ```kotlin
-DraggableItem(
-    state = dragAndDropState,
-    key = "item-1",
-    data = "Hello",
-    dropStrategy = DropStrategy.SurfacePercentage,
-) {
-    // ...
-}
+Text(
+    text = "Hello",
+    modifier = Modifier.draggableItem(
+        key = "item-1",
+        data = "Hello",
+        state = dragAndDropState,
+        dropStrategy = DropStrategy.SurfacePercentage,
+        draggableContent = {
+            Text(text = "Hello")
+        },
+    ),
+)
 ```
 
 The percentage is calculated as:
@@ -36,14 +42,18 @@ This means a smaller drop target that is fully covered by the dragged item may b
 Selects the drop target with the largest absolute overlapping area (in pixels) with the dragged item, regardless of the target's own size.
 
 ```kotlin
-DraggableItem(
-    state = dragAndDropState,
-    key = "item-1",
-    data = "Hello",
-    dropStrategy = DropStrategy.Surface,
-) {
-    // ...
-}
+Text(
+    text = "Hello",
+    modifier = Modifier.draggableItem(
+        key = "item-1",
+        data = "Hello",
+        state = dragAndDropState,
+        dropStrategy = DropStrategy.Surface,
+        draggableContent = {
+            Text(text = "Hello")
+        },
+    ),
+)
 ```
 
 ### CenterDistance
@@ -51,14 +61,18 @@ DraggableItem(
 Selects the drop target whose center is closest to the center of the dragged item. This strategy ignores overlap area entirely and focuses on proximity.
 
 ```kotlin
-DraggableItem(
-    state = dragAndDropState,
-    key = "item-1",
-    data = "Hello",
-    dropStrategy = DropStrategy.CenterDistance,
-) {
-    // ...
-}
+Text(
+    text = "Hello",
+    modifier = Modifier.draggableItem(
+        key = "item-1",
+        data = "Hello",
+        state = dragAndDropState,
+        dropStrategy = DropStrategy.CenterDistance,
+        draggableContent = {
+            Text(text = "Hello")
+        },
+    ),
+)
 ```
 
 ## Comparison
@@ -95,19 +109,24 @@ Box(
 }
 ```
 
-## Usage with ReorderableItem
+## Usage with reorderableItem
 
-Drop strategies also work with `ReorderableItem`:
+Drop strategies also work with the `reorderableItem` modifier:
 
 ```kotlin
-ReorderableItem(
-    state = reorderState,
-    key = item,
-    data = item,
-    dropStrategy = DropStrategy.CenterDistance,
-    onDragEnter = { state ->
-        // Reorder logic
-    },
+Card(
+    modifier = Modifier.reorderableItem(
+        key = item,
+        data = item,
+        state = dndState,
+        dropStrategy = DropStrategy.CenterDistance,
+        onDragEnter = { state ->
+            // Reorder logic
+        },
+        draggableContent = {
+            // Drag shadow content
+        },
+    ),
 ) {
     // ...
 }
@@ -133,12 +152,16 @@ object MyCustomStrategy : DropStrategy {
 Then use it:
 
 ```kotlin
-DraggableItem(
-    state = dragAndDropState,
-    key = "item-1",
-    data = "Hello",
-    dropStrategy = MyCustomStrategy,
-) {
-    // ...
-}
+Text(
+    text = "Hello",
+    modifier = Modifier.draggableItem(
+        key = "item-1",
+        data = "Hello",
+        state = dragAndDropState,
+        dropStrategy = MyCustomStrategy,
+        draggableContent = {
+            Text(text = "Hello")
+        },
+    ),
+)
 ```

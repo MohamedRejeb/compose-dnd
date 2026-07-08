@@ -18,9 +18,10 @@ package components
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,16 +32,19 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import theme.LocalThemeController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DemoScreenScaffold(
     title: String,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
+    val theme = LocalThemeController.current
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -51,22 +55,33 @@ fun DemoScreenScaffold(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    if (onBack != null) {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = "Back",
+                            )
+                        }
+                    }
+                },
+                actions = {
+                    actions()
+                    IconButton(onClick = theme.toggle) {
                         Icon(
-                            Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back",
+                            imageVector = if (theme.darkTheme) Icons.Outlined.LightMode else Icons.Outlined.DarkMode,
+                            contentDescription = if (theme.darkTheme) "Switch to light theme" else "Switch to dark theme",
                         )
                     }
                 },
-                actions = actions,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface,
                 ),
             )
         },
-        modifier = modifier
-            .fillMaxSize()
-            .safeDrawingPadding(),
+        containerColor = MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onBackground,
+        modifier = modifier.fillMaxSize(),
         content = content,
     )
 }

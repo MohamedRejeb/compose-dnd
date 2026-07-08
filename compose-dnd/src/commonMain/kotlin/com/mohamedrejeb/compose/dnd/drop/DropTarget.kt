@@ -179,6 +179,7 @@ private data class DropTargetNode<T>(
         val size = coordinates.size.toSize()
         val topLeft = coordinates.positionInRoot()
 
+        dropTargetState.layoutCoordinates = coordinates
         dropTargetState.size = size
         dropTargetState.topLeft = topLeft
     }

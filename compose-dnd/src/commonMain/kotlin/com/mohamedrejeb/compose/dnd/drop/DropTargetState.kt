@@ -18,6 +18,7 @@ package com.mohamedrejeb.compose.dnd.drop
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.layout.LayoutCoordinates
 import com.mohamedrejeb.compose.dnd.drag.DraggedItemState
 
 class DropTargetState<T> internal constructor(
@@ -48,6 +49,8 @@ class DropTargetState<T> internal constructor(
 
     var topLeft: Offset = topLeft
         internal set
+
+    internal var layoutCoordinates: LayoutCoordinates? = null
 
     internal fun getDropTopLeft(droppedItemSize: Size): Offset =
         topLeft + dropOffset + when (dropAlignment) {
