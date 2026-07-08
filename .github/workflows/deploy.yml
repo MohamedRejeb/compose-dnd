@@ -51,3 +51,7 @@ jobs:
 
     - name: Publish to Maven Central
       run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
+
+  pages:
+    needs: deploy
+    uses: ./.github/workflows/mkdocs.yml

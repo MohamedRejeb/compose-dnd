@@ -8,7 +8,7 @@ edit_uri: ""
 theme:
   name: 'material'
   language: 'en'
-  favicon: 'images/logo.ico'
+  favicon: 'images/logo.svg'
   logo: 'images/logo.svg'
   palette:
     - scheme: default
@@ -53,6 +53,7 @@ nav:
     - 'Conditional Drop': drag-and-drop/conditional-drop.md
     - 'Multiple Lists (Kanban)': drag-and-drop/kanban-board.md
     - 'Form Builder (Copy on Drop)': drag-and-drop/form-builder.md
+  - 'Live Demo': https://mohamedrejeb.github.io/compose-dnd/demo/
   - 'Code of Conduct': code_of_conduct.md
 
 extra_css:
