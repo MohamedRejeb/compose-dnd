@@ -356,8 +356,7 @@ private fun KanbanColumnUi(
                                     modifier = Modifier.width(264.dp),
                                 )
                             },
-                        )
-                        .fillMaxWidth()
+                        ).fillMaxWidth()
                 )
             }
 

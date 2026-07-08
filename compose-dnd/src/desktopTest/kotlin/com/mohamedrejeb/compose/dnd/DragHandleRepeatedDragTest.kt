@@ -89,8 +89,7 @@ class DragHandleRepeatedDragTest {
                                     draggableContent = {
                                         Box(Modifier.fillMaxWidth().height(100.dp))
                                     },
-                                )
-                                .animateItem()
+                                ).animateItem()
                                 .testTag("item-$item"),
                         ) {
                             Box(
