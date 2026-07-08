@@ -43,7 +43,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.drag.DragAxis
-import com.mohamedrejeb.compose.dnd.drag.DraggableItem
+import com.mohamedrejeb.compose.dnd.drag.draggableItem
+import com.mohamedrejeb.compose.dnd.drag.isDragging
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import components.DemoScreenScaffold
@@ -122,22 +123,28 @@ private fun HorizontalSlotDemo() {
                         ),
                 ) {
                     if (isOccupied) {
-                        DraggableItem(
-                            state = state,
-                            key = "h-item",
-                            data = index,
-                            dragAxis = DragAxis.Horizontal,
-                        ) {
-                            ColorChip(
-                                label = "H",
-                                color = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier
-                                    .graphicsLayer {
-                                        alpha = if (isDragging) 0.3f else 1f
+                        val isDragging = state.isDragging("h-item")
+
+                        ColorChip(
+                            label = "H",
+                            color = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier
+                                .graphicsLayer { alpha = if (isDragging) 0.3f else 1f }
+                                .draggableItem(
+                                    key = "h-item",
+                                    data = index,
+                                    state = state,
+                                    dragAxis = DragAxis.Horizontal,
+                                    draggableContent = {
+                                        ColorChip(
+                                            label = "H",
+                                            color = MaterialTheme.colorScheme.primary,
+                                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                                        )
                                     },
-                            )
-                        }
+                                ),
+                        )
                     } else {
                         Text(
                             text = "${index + 1}",
@@ -202,22 +209,28 @@ private fun VerticalSlotDemo() {
                         ),
                 ) {
                     if (isOccupied) {
-                        DraggableItem(
-                            state = state,
-                            key = "v-item",
-                            data = index,
-                            dragAxis = DragAxis.Vertical,
-                        ) {
-                            ColorChip(
-                                label = "V",
-                                color = MaterialTheme.colorScheme.tertiary,
-                                contentColor = MaterialTheme.colorScheme.onTertiary,
-                                modifier = Modifier
-                                    .graphicsLayer {
-                                        alpha = if (isDragging) 0.3f else 1f
+                        val isDragging = state.isDragging("v-item")
+
+                        ColorChip(
+                            label = "V",
+                            color = MaterialTheme.colorScheme.tertiary,
+                            contentColor = MaterialTheme.colorScheme.onTertiary,
+                            modifier = Modifier
+                                .graphicsLayer { alpha = if (isDragging) 0.3f else 1f }
+                                .draggableItem(
+                                    key = "v-item",
+                                    data = index,
+                                    state = state,
+                                    dragAxis = DragAxis.Vertical,
+                                    draggableContent = {
+                                        ColorChip(
+                                            label = "V",
+                                            color = MaterialTheme.colorScheme.tertiary,
+                                            contentColor = MaterialTheme.colorScheme.onTertiary,
+                                        )
                                     },
-                            )
-                        }
+                                ),
+                        )
                     } else {
                         Text(
                             text = "Slot ${index + 1}",
@@ -303,41 +316,53 @@ private fun FreeMovementDemo() {
                         ) {
                             when {
                                 hasItemA -> {
-                                    DraggableItem(
-                                        state = state,
-                                        key = "item-a",
-                                        data = "A",
-                                        dragAxis = DragAxis.Free,
-                                    ) {
-                                        ColorChip(
-                                            label = "A",
-                                            color = MaterialTheme.colorScheme.primary,
-                                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                                            modifier = Modifier
-                                                .graphicsLayer {
-                                                    alpha = if (isDragging) 0.3f else 1f
+                                    val isDragging = state.isDragging("item-a")
+
+                                    ColorChip(
+                                        label = "A",
+                                        color = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier
+                                            .graphicsLayer { alpha = if (isDragging) 0.3f else 1f }
+                                            .draggableItem(
+                                                key = "item-a",
+                                                data = "A",
+                                                state = state,
+                                                dragAxis = DragAxis.Free,
+                                                draggableContent = {
+                                                    ColorChip(
+                                                        label = "A",
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                                                    )
                                                 },
-                                        )
-                                    }
+                                            ),
+                                    )
                                 }
 
                                 hasItemB -> {
-                                    DraggableItem(
-                                        state = state,
-                                        key = "item-b",
-                                        data = "B",
-                                        dragAxis = DragAxis.Free,
-                                    ) {
-                                        ColorChip(
-                                            label = "B",
-                                            color = MaterialTheme.colorScheme.tertiary,
-                                            contentColor = MaterialTheme.colorScheme.onTertiary,
-                                            modifier = Modifier
-                                                .graphicsLayer {
-                                                    alpha = if (isDragging) 0.3f else 1f
+                                    val isDragging = state.isDragging("item-b")
+
+                                    ColorChip(
+                                        label = "B",
+                                        color = MaterialTheme.colorScheme.tertiary,
+                                        contentColor = MaterialTheme.colorScheme.onTertiary,
+                                        modifier = Modifier
+                                            .graphicsLayer { alpha = if (isDragging) 0.3f else 1f }
+                                            .draggableItem(
+                                                key = "item-b",
+                                                data = "B",
+                                                state = state,
+                                                dragAxis = DragAxis.Free,
+                                                draggableContent = {
+                                                    ColorChip(
+                                                        label = "B",
+                                                        color = MaterialTheme.colorScheme.tertiary,
+                                                        contentColor = MaterialTheme.colorScheme.onTertiary,
+                                                    )
                                                 },
-                                        )
-                                    }
+                                            ),
+                                    )
                                 }
                             }
                         }

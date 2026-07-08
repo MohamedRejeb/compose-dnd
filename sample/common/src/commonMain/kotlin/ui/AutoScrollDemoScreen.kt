@@ -58,10 +58,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
-import com.mohamedrejeb.compose.dnd.reorder.ReorderContainer
-import com.mohamedrejeb.compose.dnd.reorder.ReorderableItem
-import com.mohamedrejeb.compose.dnd.reorder.rememberReorderState
+import com.mohamedrejeb.compose.dnd.drag.isDragging
+import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
+import com.mohamedrejeb.compose.dnd.reorder.reorderableItem
 import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
 import components.DemoScreenScaffold
 
@@ -120,12 +121,12 @@ fun AutoScrollDemoScreen(
 @OptIn(ExperimentalDndApi::class)
 @Composable
 private fun LazyRowReorderContent(modifier: Modifier = Modifier) {
-    val reorderState = rememberReorderState<String>()
+    val dndState = rememberDragAndDropState<String>()
     var items by remember { mutableStateOf((1..30).map { "item$it" }) }
     val lazyListState = rememberLazyListState()
 
-    ReorderContainer(
-        state = reorderState,
+    DragAndDropContainer(
+        state = dndState,
         modifier = modifier,
     ) {
         LazyRow(
@@ -136,48 +137,48 @@ private fun LazyRowReorderContent(modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .height(120.dp)
                 .dragAutoScroll(
-                    state = reorderState.dndState,
+                    state = dndState,
                     lazyListState = lazyListState,
                 ),
         ) {
             items(items, key = { it }) { item ->
                 val number = item.removePrefix("item")
-                ReorderableItem(
-                    state = reorderState,
-                    key = item,
-                    data = item,
-                    onDrop = {},
-                    onDragEnter = { state ->
-                        items = items.toMutableList().apply {
-                            val index = indexOf(item)
-                            if (index == -1) return@ReorderableItem
-                            remove(state.data)
-                            add(index, state.data)
-                        }
-                    },
-                    draggableContent = {
-                        AutoScrollItem(
-                            number = number,
-                            isDragShadow = true,
-                            color = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier
-                                .width(80.dp)
-                                .fillMaxHeight(),
-                        )
-                    },
-                    modifier = Modifier.animateItem(),
-                ) {
-                    AutoScrollItem(
-                        number = number,
-                        color = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier
-                            .graphicsLayer { alpha = if (isDragging) 0f else 1f }
-                            .width(80.dp)
-                            .fillMaxHeight(),
-                    )
-                }
+                val isDragging = dndState.isDragging(item)
+
+                AutoScrollItem(
+                    number = number,
+                    color = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier
+                        .animateItem()
+                        .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+                        .reorderableItem(
+                            key = item,
+                            data = item,
+                            state = dndState,
+                            onDrop = {},
+                            onDragEnter = { state ->
+                                items = items.toMutableList().apply {
+                                    val index = indexOf(item)
+                                    if (index == -1) return@reorderableItem
+                                    remove(state.data)
+                                    add(index, state.data)
+                                }
+                            },
+                            draggableContent = {
+                                AutoScrollItem(
+                                    number = number,
+                                    isDragShadow = true,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier
+                                        .width(80.dp)
+                                        .fillMaxHeight(),
+                                )
+                            },
+                        ).width(80.dp)
+                        .fillMaxHeight(),
+                )
             }
         }
     }
@@ -188,12 +189,12 @@ private fun LazyRowReorderContent(modifier: Modifier = Modifier) {
 @OptIn(ExperimentalDndApi::class)
 @Composable
 private fun LazyGridReorderContent(modifier: Modifier = Modifier) {
-    val reorderState = rememberReorderState<String>()
+    val dndState = rememberDragAndDropState<String>()
     var items by remember { mutableStateOf((1..40).map { "item$it" }) }
     val lazyGridState = rememberLazyGridState()
 
-    ReorderContainer(
-        state = reorderState,
+    DragAndDropContainer(
+        state = dndState,
         modifier = modifier,
     ) {
         LazyVerticalGrid(
@@ -204,48 +205,48 @@ private fun LazyGridReorderContent(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxSize()
                 .dragAutoScroll(
-                    state = reorderState.dndState,
+                    state = dndState,
                     lazyGridState = lazyGridState,
                 ),
         ) {
             items(items, key = { it }) { item ->
                 val number = item.removePrefix("item")
-                ReorderableItem(
-                    state = reorderState,
-                    key = item,
-                    data = item,
-                    onDrop = {},
-                    onDragEnter = { state ->
-                        items = items.toMutableList().apply {
-                            val index = indexOf(item)
-                            if (index == -1) return@ReorderableItem
-                            remove(state.data)
-                            add(index, state.data)
-                        }
-                    },
-                    draggableContent = {
-                        AutoScrollItem(
-                            number = number,
-                            isDragShadow = true,
-                            color = MaterialTheme.colorScheme.secondary,
-                            contentColor = MaterialTheme.colorScheme.onSecondary,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(80.dp),
-                        )
-                    },
-                    modifier = Modifier.animateItem(),
-                ) {
-                    AutoScrollItem(
-                        number = number,
-                        color = MaterialTheme.colorScheme.secondary,
-                        contentColor = MaterialTheme.colorScheme.onSecondary,
-                        modifier = Modifier
-                            .graphicsLayer { alpha = if (isDragging) 0f else 1f }
-                            .fillMaxWidth()
-                            .height(80.dp),
-                    )
-                }
+                val isDragging = dndState.isDragging(item)
+
+                AutoScrollItem(
+                    number = number,
+                    color = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary,
+                    modifier = Modifier
+                        .animateItem()
+                        .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+                        .reorderableItem(
+                            key = item,
+                            data = item,
+                            state = dndState,
+                            onDrop = {},
+                            onDragEnter = { state ->
+                                items = items.toMutableList().apply {
+                                    val index = indexOf(item)
+                                    if (index == -1) return@reorderableItem
+                                    remove(state.data)
+                                    add(index, state.data)
+                                }
+                            },
+                            draggableContent = {
+                                AutoScrollItem(
+                                    number = number,
+                                    isDragShadow = true,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    contentColor = MaterialTheme.colorScheme.onSecondary,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(80.dp),
+                                )
+                            },
+                        ).fillMaxWidth()
+                        .height(80.dp),
+                )
             }
         }
     }
@@ -256,12 +257,12 @@ private fun LazyGridReorderContent(modifier: Modifier = Modifier) {
 @OptIn(ExperimentalDndApi::class)
 @Composable
 private fun ScrollStateReorderContent(modifier: Modifier = Modifier) {
-    val reorderState = rememberReorderState<String>()
+    val dndState = rememberDragAndDropState<String>()
     var items by remember { mutableStateOf((1..30).map { "item$it" }) }
     val scrollState = rememberScrollState()
 
-    ReorderContainer(
-        state = reorderState,
+    DragAndDropContainer(
+        state = dndState,
         modifier = modifier,
     ) {
         Column(
@@ -270,7 +271,7 @@ private fun ScrollStateReorderContent(modifier: Modifier = Modifier) {
                 .fillMaxSize()
                 .verticalScroll(scrollState)
                 .dragAutoScroll(
-                    state = reorderState.dndState,
+                    state = dndState,
                     scrollState = scrollState,
                     orientation = Orientation.Vertical,
                 ),
@@ -278,38 +279,37 @@ private fun ScrollStateReorderContent(modifier: Modifier = Modifier) {
             items.forEach { item ->
                 key(item) {
                     val number = item.removePrefix("item")
-                    ReorderableItem(
-                        state = reorderState,
-                        key = item,
-                        data = item,
-                        onDrop = {},
-                        onDragEnter = { state ->
-                            items = items.toMutableList().apply {
-                                val index = indexOf(item)
-                                if (index == -1) return@ReorderableItem
-                                remove(state.data)
-                                add(index, state.data)
-                            }
-                        },
-                        draggableContent = {
-                            ScrollListItem(
-                                number = number,
-                                isDragShadow = true,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp),
-                            )
-                        },
-                        modifier = Modifier,
-                    ) {
-                        ScrollListItem(
-                            number = number,
-                            modifier = Modifier
-                                .graphicsLayer { alpha = if (isDragging) 0f else 1f }
-                                .fillMaxWidth()
-                                .height(56.dp),
-                        )
-                    }
+                    val isDragging = dndState.isDragging(item)
+
+                    ScrollListItem(
+                        number = number,
+                        modifier = Modifier
+                            .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+                            .reorderableItem(
+                                key = item,
+                                data = item,
+                                state = dndState,
+                                onDrop = {},
+                                onDragEnter = { state ->
+                                    items = items.toMutableList().apply {
+                                        val index = indexOf(item)
+                                        if (index == -1) return@reorderableItem
+                                        remove(state.data)
+                                        add(index, state.data)
+                                    }
+                                },
+                                draggableContent = {
+                                    ScrollListItem(
+                                        number = number,
+                                        isDragShadow = true,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(56.dp),
+                                    )
+                                },
+                            ).fillMaxWidth()
+                            .height(56.dp),
+                    )
                 }
             }
         }

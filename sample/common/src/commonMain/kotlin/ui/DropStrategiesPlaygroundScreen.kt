@@ -51,8 +51,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.DragAndDropState
-import com.mohamedrejeb.compose.dnd.drag.DraggableItem
 import com.mohamedrejeb.compose.dnd.drag.DropStrategy
+import com.mohamedrejeb.compose.dnd.drag.draggableItem
+import com.mohamedrejeb.compose.dnd.drag.isDragging
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import components.DemoScreenScaffold
@@ -186,20 +187,22 @@ private fun OverlappingTargetsDemo(
                         shape = shape,
                     ),
             ) {
-                DraggableItem(
-                    state = dndState,
-                    key = "draggable-1",
-                    data = 1,
-                    dropTargets = listOf("a", "b", "c"),
-                    dropStrategy = selectedStrategy,
-                    modifier = Modifier.size(80.dp),
-                ) {
-                    RedBox(
-                        modifier = Modifier
-                            .graphicsLayer { alpha = if (isDragging) 0f else 1f }
-                            .fillMaxSize(),
-                    )
-                }
+                val isDragging = dndState.isDragging("draggable-1")
+
+                RedBox(
+                    modifier = Modifier
+                        .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+                        .draggableItem(
+                            key = "draggable-1",
+                            data = 1,
+                            state = dndState,
+                            dropTargets = listOf("a", "b", "c"),
+                            dropStrategy = selectedStrategy,
+                            draggableContent = {
+                                RedBox(modifier = Modifier.size(80.dp))
+                            },
+                        ).size(80.dp),
+                )
             }
 
             BoxWithConstraints(
@@ -277,20 +280,22 @@ private fun DifferentSizesDemo(
                         shape = shape,
                     ),
             ) {
-                DraggableItem(
-                    state = dndState,
-                    key = "draggable-2",
-                    data = 2,
-                    dropTargets = listOf("small", "medium", "large"),
-                    dropStrategy = selectedStrategy,
-                    modifier = Modifier.size(60.dp),
-                ) {
-                    RedBox(
-                        modifier = Modifier
-                            .graphicsLayer { alpha = if (isDragging) 0f else 1f }
-                            .fillMaxSize(),
-                    )
-                }
+                val isDragging = dndState.isDragging("draggable-2")
+
+                RedBox(
+                    modifier = Modifier
+                        .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+                        .draggableItem(
+                            key = "draggable-2",
+                            data = 2,
+                            state = dndState,
+                            dropTargets = listOf("small", "medium", "large"),
+                            dropStrategy = selectedStrategy,
+                            draggableContent = {
+                                RedBox(modifier = Modifier.size(60.dp))
+                            },
+                        ).size(60.dp),
+                )
             }
 
             Row(

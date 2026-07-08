@@ -36,7 +36,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
-import com.mohamedrejeb.compose.dnd.drag.DraggableItem
+import com.mohamedrejeb.compose.dnd.drag.draggableItem
+import com.mohamedrejeb.compose.dnd.drag.isDragging
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import components.DemoScreenScaffold
@@ -130,20 +131,21 @@ private fun ItemToItemTwoDirectionsScreenContent(
                     ),
             ) {
                 if (itemIndex == 0) {
-                    DraggableItem(
-                        state = dragAndDropState,
-                        key = 0,
-                        data = 0,
-                        dropTargets = listOf(1),
-                        modifier = Modifier.size(200.dp),
-                    ) {
-                        RedBox(
-                            modifier = Modifier
-                                .graphicsLayer {
-                                    alpha = if (isDragging) 0f else 1f
-                                }.fillMaxSize(),
-                        )
-                    }
+                    val isDragging = dragAndDropState.isDragging(0)
+
+                    RedBox(
+                        modifier = Modifier
+                            .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+                            .draggableItem(
+                                key = 0,
+                                data = 0,
+                                state = dragAndDropState,
+                                dropTargets = listOf(1),
+                                draggableContent = {
+                                    RedBox(modifier = Modifier.size(200.dp))
+                                },
+                            ).size(200.dp),
+                    )
                 }
             }
 
@@ -172,20 +174,21 @@ private fun ItemToItemTwoDirectionsScreenContent(
                     ),
             ) {
                 if (itemIndex == 1) {
-                    DraggableItem(
-                        state = dragAndDropState,
-                        key = 0,
-                        data = 1,
-                        dropTargets = listOf(0),
-                        modifier = Modifier.size(100.dp),
-                    ) {
-                        RedBox(
-                            modifier = Modifier
-                                .graphicsLayer {
-                                    alpha = if (isDragging) 0f else 1f
-                                }.fillMaxSize(),
-                        )
-                    }
+                    val isDragging = dragAndDropState.isDragging(0)
+
+                    RedBox(
+                        modifier = Modifier
+                            .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+                            .draggableItem(
+                                key = 0,
+                                data = 1,
+                                state = dragAndDropState,
+                                dropTargets = listOf(0),
+                                draggableContent = {
+                                    RedBox(modifier = Modifier.size(100.dp))
+                                },
+                            ).size(100.dp),
+                    )
                 }
             }
         }

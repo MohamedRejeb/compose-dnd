@@ -42,10 +42,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
-import com.mohamedrejeb.compose.dnd.reorder.ReorderContainer
-import com.mohamedrejeb.compose.dnd.reorder.ReorderableItem
-import com.mohamedrejeb.compose.dnd.reorder.rememberReorderState
+import com.mohamedrejeb.compose.dnd.drag.dragHandle
+import com.mohamedrejeb.compose.dnd.drag.isDragging
+import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
+import com.mohamedrejeb.compose.dnd.reorder.reorderableItem
 import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
 import components.DemoScreenScaffold
 
@@ -71,7 +73,7 @@ fun DragHandleReorderScreen(
 private fun DragHandleReorderContent(
     modifier: Modifier = Modifier,
 ) {
-    val reorderState = rememberReorderState<String>()
+    val dndState = rememberDragAndDropState<String>()
     var items by remember {
         mutableStateOf(
             listOf(
@@ -89,8 +91,8 @@ private fun DragHandleReorderContent(
 
     val lazyListState = rememberLazyListState()
 
-    ReorderContainer(
-        state = reorderState,
+    DragAndDropContainer(
+        state = dndState,
         modifier = modifier,
     ) {
         LazyColumn(
@@ -99,41 +101,44 @@ private fun DragHandleReorderContent(
             modifier = Modifier
                 .fillMaxSize()
                 .dragAutoScroll(
-                    state = reorderState.dndState,
+                    state = dndState,
                     lazyListState = lazyListState,
                 ),
         ) {
             items(items, key = { it }) { item ->
-                ReorderableItem(
-                    state = reorderState,
-                    key = item,
-                    data = item,
-                    onDrop = {},
-                    onDragEnter = { state ->
-                        items = items.toMutableList().apply {
-                            val index = indexOf(item)
-                            if (index == -1) return@ReorderableItem
-                            remove(state.data)
-                            add(index, state.data)
-                        }
-                    },
-                    draggableContent = {
-                        DragHandleListItem(
-                            text = item,
-                            isDragShadow = true,
-                        )
-                    },
-                    modifier = Modifier.animateItem(),
-                ) {
-                    DragHandleListItem(
-                        text = item,
-                        modifier = Modifier
-                            .graphicsLayer {
-                                alpha = if (isDragging) 0f else 1f
+                val isDragging = dndState.isDragging(item)
+
+                DragHandleListItem(
+                    text = item,
+                    modifier = Modifier
+                        .animateItem()
+                        .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+                        .reorderableItem(
+                            key = item,
+                            data = item,
+                            state = dndState,
+                            hasDragHandle = true,
+                            onDrop = {},
+                            onDragEnter = { state ->
+                                items = items.toMutableList().apply {
+                                    val index = indexOf(item)
+                                    if (index == -1) return@reorderableItem
+                                    remove(state.data)
+                                    add(index, state.data)
+                                }
                             },
-                        handleModifier = Modifier.dragHandle(),
-                    )
-                }
+                            draggableContent = {
+                                DragHandleListItem(
+                                    text = item,
+                                    isDragShadow = true,
+                                )
+                            },
+                        ),
+                    handleModifier = Modifier.dragHandle(
+                        key = item,
+                        state = dndState,
+                    ),
+                )
             }
         }
     }
