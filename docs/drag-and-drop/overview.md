@@ -4,9 +4,9 @@ Compose DND provides a declarative API for adding drag and drop functionality to
 
 - `DragAndDropState` -- Holds the state for all drag and drop operations.
 - `DragAndDropContainer` -- A container that wraps all draggable items and drop targets.
-- `DraggableItem` composable -- Makes a composable draggable (wrapper approach).
-- `draggableItem` modifier -- Makes a composable draggable (modifier approach, less boilerplate).
+- `draggableItem` modifier -- Makes a composable draggable.
 - `dropTarget` modifier -- Marks a composable as a drop target.
+- `DraggableItem` composable -- A wrapper alternative to the `draggableItem` modifier (see [the alternative section](#alternative-draggableitem-wrapper-composable)).
 
 ## Creating DragAndDropState
 
@@ -47,56 +47,9 @@ DragAndDropContainer(
 | `enabled`  | `Boolean`               | `true`           | Whether drag and drop is enabled.        |
 | `content`  | `@Composable () -> Unit`| Required         | The content of the container.            |
 
-## DraggableItem
+## Making Items Draggable
 
-Wrap each draggable composable with `DraggableItem`. Each item needs a unique `key` and the `data` to pass to the drop target when dropped.
-
-```kotlin
-DraggableItem(
-    state = dragAndDropState,
-    key = "item-1",
-    data = "Hello World",
-) {
-    // isDragging is available in this scope
-    Text(
-        text = "Drag me",
-        modifier = Modifier
-            .graphicsLayer {
-                alpha = if (isDragging) 0f else 1f
-            }
-    )
-}
-```
-
-### Parameters
-
-| Parameter                    | Type                           | Default                        | Description |
-|------------------------------|--------------------------------|--------------------------------|-------------|
-| `state`                      | `DragAndDropState<T>`          | Required                       | The drag and drop state. |
-| `key`                        | `Any`                          | Required                       | Unique key identifying this item. |
-| `data`                       | `T`                            | Required                       | Data passed to the drop target on drop. |
-| `modifier`                   | `Modifier`                     | `Modifier`                     | Modifier for the item. |
-| `enabled`                    | `Boolean`                      | `true`                         | Whether this specific item is draggable. |
-| `dragAfterLongPress`         | `Boolean`                      | Inherits from state            | Override the long-press drag behavior for this item. |
-| `requireFirstDownUnconsumed` | `Boolean`                      | Inherits from state            | Override the unconsumed pointer requirement for this item. |
-| `dropTargets`                | `List<Any>`                    | `emptyList()`                  | Restrict which drop targets this item can be dropped on. Empty means any target. |
-| `dropStrategy`               | `DropStrategy`                 | `DropStrategy.SurfacePercentage` | Strategy for choosing the hovered drop target. |
-| `dragAxis`                   | `DragAxis`                     | `DragAxis.Free`                | Constrain drag movement to one axis. See [Axis Lock](axis-lock.md). |
-| `dropAnimationSpec`          | `AnimationSpec<Offset>`        | `SpringSpec()`                 | Animation for position when dropping. |
-| `sizeDropAnimationSpec`      | `AnimationSpec<Size>`          | `SpringSpec()`                 | Animation for size when dropping. |
-| `draggableContent`           | `(@Composable () -> Unit)?`    | `null`                         | Custom content shown as the drag shadow. If `null`, the item content is used. |
-| `content`                    | `@Composable DraggableItemScope.() -> Unit` | Required          | The item content. Provides `isDragging` and `key` in scope. |
-
-### DraggableItemScope
-
-Inside `DraggableItem`'s content lambda, you have access to `DraggableItemScope`, which provides:
-
-- `key: Any` -- The key of this item.
-- `isDragging: Boolean` -- Whether this item is currently being dragged.
-
-## draggableItem Modifier
-
-As an alternative to the `DraggableItem` composable wrapper, you can use the `Modifier.draggableItem` modifier directly. This reduces boilerplate by eliminating the wrapper composable.
+Apply the `Modifier.draggableItem` modifier to any composable. Each item needs a unique `key`, the `data` to pass to the drop target when dropped, and a `draggableContent` that is rendered as the drag shadow:
 
 ```kotlin
 val isDragging = dragAndDropState.isDragging("item-1")
@@ -106,19 +59,35 @@ Text(
     modifier = Modifier
         .graphicsLayer { alpha = if (isDragging) 0f else 1f }
         .draggableItem(
-            state = dragAndDropState,
             key = "item-1",
             data = "Hello World",
+            state = dragAndDropState,
             draggableContent = {
-                Text("Drag me") // Content shown as drag shadow
+                Text("Drag me") // Content shown as the drag shadow
             },
-        )
+        ),
 )
 ```
 
-The `draggableItem` modifier accepts the same parameters as `DraggableItem` (except `content`, which is the composable it's applied to), plus a `hasDragHandle: Boolean` flag. The `draggableContent` parameter is required — it defines what the drag shadow looks like.
+Use `DragAndDropState.isDragging(key)` to check if a specific item is being dragged - hiding the original with `graphicsLayer { alpha = ... }` while the shadow follows the pointer is the usual pattern.
 
-Use `DragAndDropState.isDragging(key)` to check if a specific item is being dragged.
+### Parameters
+
+| Parameter                    | Type                           | Default                        | Description |
+|------------------------------|--------------------------------|--------------------------------|-------------|
+| `key`                        | `Any`                          | Required                       | Unique key identifying this item. |
+| `data`                       | `T`                            | Required                       | Data passed to the drop target on drop. |
+| `state`                      | `DragAndDropState<T>`          | Required                       | The drag and drop state. |
+| `enabled`                    | `Boolean`                      | `true`                         | Whether this specific item is draggable. |
+| `dragAfterLongPress`         | `Boolean`                      | Inherits from state            | Override the long-press drag behavior for this item. |
+| `requireFirstDownUnconsumed` | `Boolean`                      | Inherits from state            | Override the unconsumed pointer requirement for this item. |
+| `dropTargets`                | `List<Any>`                    | `emptyList()`                  | Restrict which drop targets this item can be dropped on. Empty means any target. |
+| `dropStrategy`               | `DropStrategy`                 | `DropStrategy.SurfacePercentage` | Strategy for choosing the hovered drop target. |
+| `dragAxis`                   | `DragAxis`                     | `DragAxis.Free`                | Constrain drag movement to one axis. See [Axis Lock](axis-lock.md). |
+| `hasDragHandle`              | `Boolean`                      | `false`                        | If `true`, drag is initiated from a `dragHandle` modifier instead of the whole item. See [Drag Handle](drag-handle.md). |
+| `dropAnimationSpec`          | `AnimationSpec<Offset>`        | `SpringSpec()`                 | Animation for position when dropping. |
+| `sizeDropAnimationSpec`      | `AnimationSpec<Size>`          | `SpringSpec()`                 | Animation for size when dropping. |
+| `draggableContent`           | `@Composable () -> Unit`       | Required                       | Content rendered as the drag shadow while dragging. |
 
 ## Drop Target
 
@@ -186,17 +155,19 @@ DragAndDropContainer(
 
 ### Item Level
 
-Disable drag and drop for a specific item:
+Disable drag and drop for a specific item by passing `enabled = false` to the `draggableItem` modifier:
 
 ```kotlin
-DraggableItem(
-    state = dragAndDropState,
-    key = "item-1",
-    data = "Hello",
-    enabled = false, // Only this item is disabled
-) {
-    Text("Cannot drag me")
-}
+Text(
+    text = "Cannot drag me",
+    modifier = Modifier.draggableItem(
+        key = "item-1",
+        data = "Hello",
+        state = dragAndDropState,
+        enabled = false, // Only this item is disabled
+        draggableContent = { Text("Cannot drag me") },
+    ),
+)
 ```
 
 ## Observing Drag State
@@ -253,23 +224,23 @@ fun DragAndDropExample() {
                     .border(1.dp, Color.Gray, RoundedCornerShape(16.dp)),
             ) {
                 if (!isDropped) {
-                    DraggableItem(
-                        state = dragAndDropState,
-                        key = 1,
-                        data = 1,
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .graphicsLayer {
-                                    alpha = if (isDragging) 0f else 1f
-                                }
-                                .size(100.dp)
-                                .background(Color.Red, RoundedCornerShape(16.dp)),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text("Drag me", color = Color.White)
-                        }
-                    }
+                    val isDragging = dragAndDropState.isDragging(1)
+
+                    RedBox(
+                        text = "Drag me",
+                        modifier = Modifier
+                            .graphicsLayer {
+                                alpha = if (isDragging) 0f else 1f
+                            }
+                            .draggableItem(
+                                key = 1,
+                                data = 1,
+                                state = dragAndDropState,
+                                draggableContent = {
+                                    RedBox(text = "Drag me")
+                                },
+                            ),
+                    )
                 }
             }
 
@@ -292,14 +263,7 @@ fun DragAndDropExample() {
                     ),
             ) {
                 if (isDropped) {
-                    Box(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .background(Color.Red, RoundedCornerShape(16.dp)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text("Dropped!", color = Color.White)
-                    }
+                    RedBox(text = "Dropped!")
                 } else {
                     Text("Drop here", color = Color.Gray)
                 }
@@ -307,4 +271,47 @@ fun DragAndDropExample() {
         }
     }
 }
+
+@Composable
+private fun RedBox(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .size(100.dp)
+            .background(Color.Red, RoundedCornerShape(16.dp)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text, color = Color.White)
+    }
+}
 ```
+
+## Alternative: DraggableItem Wrapper Composable
+
+If you prefer wrapping composables over modifier chains, the `DraggableItem` composable offers the same features:
+
+```kotlin
+DraggableItem(
+    state = dragAndDropState,
+    key = "item-1",
+    data = "Hello World",
+) {
+    // isDragging is available in this scope
+    Text(
+        text = "Drag me",
+        modifier = Modifier
+            .graphicsLayer {
+                alpha = if (isDragging) 0f else 1f
+            }
+    )
+}
+```
+
+It accepts the same parameters as the `draggableItem` modifier, with two differences:
+
+- `draggableContent` is optional -- when `null`, the item content itself is used as the drag shadow.
+- The `content` lambda runs in a `DraggableItemScope` that provides `key`, `isDragging`, and a scope-based `Modifier.dragHandle()` that doesn't need `key`/`state` arguments.
+
+The same applies to reorder: `ReorderableItem` is the wrapper alternative to the `reorderableItem` modifier -- see [Reorder List](reorder.md).

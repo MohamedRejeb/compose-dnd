@@ -124,9 +124,9 @@ Box(
 
 ## Interaction with dropTargets Parameter
 
-The `canDrop` parameter on the drop target is different from the `dropTargets` parameter on `DraggableItem`:
+The `canDrop` parameter on the drop target is different from the `dropTargets` parameter on the `draggableItem` modifier:
 
-| Feature        | `dropTargets` (on DraggableItem)       | `canDrop` (on dropTarget)                |
+| Feature        | `dropTargets` (on draggableItem)       | `canDrop` (on dropTarget)                |
 |----------------|----------------------------------------|------------------------------------------|
 | Defined on     | The dragged item                       | The drop target                          |
 | Filters by     | Drop target keys (allowlist)           | Custom logic based on dragged item state |

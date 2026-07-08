@@ -13,18 +13,18 @@ Use the `dragAutoScroll` modifier on a `LazyColumn` or `LazyRow` to enable autom
 @OptIn(ExperimentalDndApi::class)
 @Composable
 fun AutoScrollLazyColumnExample() {
-    val reorderState = rememberReorderState<String>()
+    val dndState = rememberDragAndDropState<String>()
     val lazyListState = rememberLazyListState()
 
-    ReorderContainer(
-        state = reorderState,
+    DragAndDropContainer(
+        state = dndState,
     ) {
         LazyColumn(
             state = lazyListState,
             modifier = Modifier
                 .fillMaxSize()
                 .dragAutoScroll(
-                    state = reorderState.dndState,
+                    state = dndState,
                     lazyListState = lazyListState,
                 ),
         ) {
@@ -42,11 +42,11 @@ For `LazyVerticalGrid` or `LazyHorizontalGrid`, use the grid variant:
 @OptIn(ExperimentalDndApi::class)
 @Composable
 fun AutoScrollLazyGridExample() {
-    val reorderState = rememberReorderState<String>()
+    val dndState = rememberDragAndDropState<String>()
     val lazyGridState = rememberLazyGridState()
 
-    ReorderContainer(
-        state = reorderState,
+    DragAndDropContainer(
+        state = dndState,
     ) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
@@ -54,7 +54,7 @@ fun AutoScrollLazyGridExample() {
             modifier = Modifier
                 .fillMaxSize()
                 .dragAutoScroll(
-                    state = reorderState.dndState,
+                    state = dndState,
                     lazyGridState = lazyGridState,
                 ),
         ) {
@@ -72,18 +72,18 @@ For regular scrollable containers using `ScrollState`, pass the orientation para
 @OptIn(ExperimentalDndApi::class)
 @Composable
 fun AutoScrollColumnExample() {
-    val reorderState = rememberReorderState<String>()
+    val dndState = rememberDragAndDropState<String>()
     val scrollState = rememberScrollState()
 
-    ReorderContainer(
-        state = reorderState,
+    DragAndDropContainer(
+        state = dndState,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scrollState)
                 .dragAutoScroll(
-                    state = reorderState.dndState,
+                    state = dndState,
                     scrollState = scrollState,
                     orientation = Orientation.Vertical,
                 ),
@@ -111,7 +111,7 @@ LazyColumn(
     modifier = Modifier
         .fillMaxSize()
         .dragAutoScroll(
-            state = reorderState.dndState,
+            state = dndState,
             lazyListState = lazyListState,
             config = config,
         ),
@@ -145,18 +145,18 @@ The `dragScrollPin` modifier fixes this by pinning the scroll position right bef
 @OptIn(ExperimentalDndApi::class)
 @Composable
 fun ScrollPinExample() {
-    val reorderState = rememberReorderState<String>()
+    val dndState = rememberDragAndDropState<String>()
     val lazyListState = rememberLazyListState()
 
-    ReorderContainer(
-        state = reorderState,
+    DragAndDropContainer(
+        state = dndState,
     ) {
         LazyColumn(
             state = lazyListState,
             modifier = Modifier
                 .fillMaxSize()
                 .dragScrollPin(
-                    state = reorderState.dndState,
+                    state = dndState,
                     lazyListState = lazyListState,
                 ),
         ) {
@@ -177,7 +177,7 @@ A `lazyGridState` overload is available for `LazyVerticalGrid` / `LazyHorizontal
 @OptIn(ExperimentalDndApi::class)
 @Composable
 fun ReorderWithAutoScroll() {
-    val reorderState = rememberReorderState<String>()
+    val dndState = rememberDragAndDropState<String>()
     var items by remember {
         mutableStateOf(
             (1..50).map { "Item $it" }
@@ -185,8 +185,8 @@ fun ReorderWithAutoScroll() {
     }
     val lazyListState = rememberLazyListState()
 
-    ReorderContainer(
-        state = reorderState,
+    DragAndDropContainer(
+        state = dndState,
         modifier = Modifier.fillMaxSize().padding(16.dp),
     ) {
         LazyColumn(
@@ -195,45 +195,58 @@ fun ReorderWithAutoScroll() {
             modifier = Modifier
                 .fillMaxSize()
                 .dragAutoScroll(
-                    state = reorderState.dndState,
+                    state = dndState,
                     lazyListState = lazyListState,
                 ),
         ) {
             items(items, key = { it }) { item ->
-                ReorderableItem(
-                    state = reorderState,
-                    key = item,
-                    data = item,
-                    onDrop = {},
-                    onDragEnter = { state ->
-                        items = items.toMutableList().apply {
-                            val index = indexOf(item)
-                            if (index == -1) return@ReorderableItem
-                            remove(state.data)
-                            add(index, state.data)
+                val isDragging = dndState.isDragging(item)
+
+                ItemCard(
+                    text = item,
+                    modifier = Modifier
+                        .graphicsLayer {
+                            alpha = if (isDragging) 0f else 1f
                         }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Card(
-                        modifier = Modifier
-                            .graphicsLayer {
-                                alpha = if (isDragging) 0f else 1f
-                            }
-                            .fillMaxWidth()
-                            .height(56.dp),
-                    ) {
-                        Box(
-                            contentAlignment = Alignment.CenterStart,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 16.dp),
-                        ) {
-                            Text(text = item)
-                        }
-                    }
-                }
+                        .reorderableItem(
+                            key = item,
+                            data = item,
+                            state = dndState,
+                            onDragEnter = { state ->
+                                items = items.toMutableList().apply {
+                                    val index = indexOf(item)
+                                    if (index != -1) {
+                                        remove(state.data)
+                                        add(index, state.data)
+                                    }
+                                }
+                            },
+                            draggableContent = {
+                                ItemCard(text = item)
+                            },
+                        )
+                        .fillMaxWidth(),
+                )
             }
+        }
+    }
+}
+
+@Composable
+private fun ItemCard(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.height(56.dp),
+    ) {
+        Box(
+            contentAlignment = Alignment.CenterStart,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+        ) {
+            Text(text = text)
         }
     }
 }

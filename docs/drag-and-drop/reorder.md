@@ -1,64 +1,53 @@
 # Reorder List
 
-Compose DND provides a higher-level API for reordering items in a list. The reorder API builds on top of the core drag and drop primitives, combining both draggable and drop target behavior into a single `ReorderableItem` composable.
+Reordering builds on the core drag and drop primitives: the `reorderableItem` modifier makes an item both draggable and a drop target at the same time, which is all a sortable list needs.
 
-## Creating ReorderState
+## Setting Up
 
-Use `rememberReorderState` to create and remember a `ReorderState` instance:
-
-```kotlin
-val reorderState = rememberReorderState<String>()
-```
-
-### Parameters
-
-| Parameter                    | Type      | Default | Description                                                                     |
-|------------------------------|-----------|---------|---------------------------------------------------------------------------------|
-| `dragAfterLongPress`         | `Boolean` | `false` | If `true`, drag starts after a long press. Applied to all items unless overridden. |
-| `requireFirstDownUnconsumed` | `Boolean` | `false` | If `true`, the first down pointer event must be unconsumed to initiate drag.   |
-| `reorderHysteresisDistance`  | `Dp`      | `8.dp`  | How far the cursor must move back, opposite the swap direction, before a just-swapped target can be re-entered. `0.dp` disables it. See [Reorder Hysteresis](#reorder-hysteresis). |
-
-## ReorderContainer
-
-All reorderable items must be placed inside a `ReorderContainer`:
+Reordering uses the standard `rememberDragAndDropState` and `DragAndDropContainer`:
 
 ```kotlin
-ReorderContainer(
-    state = reorderState,
-    modifier = Modifier.fillMaxSize(),
+val dndState = rememberDragAndDropState<String>()
+
+DragAndDropContainer(
+    state = dndState,
 ) {
     // Reorderable items go here
 }
 ```
 
-### Parameters
+See [Drag and Drop Overview](overview.md) for the state and container parameters.
 
-| Parameter  | Type                    | Default    | Description                        |
-|------------|-------------------------|------------|------------------------------------|
-| `state`    | `ReorderState<T>`       | Required   | The reorder state.                 |
-| `modifier` | `Modifier`              | `Modifier` | Modifier for the container.        |
-| `enabled`  | `Boolean`               | `true`     | Whether reordering is enabled.     |
-| `content`  | `@Composable () -> Unit`| Required   | The content of the container.      |
+## reorderableItem Modifier
 
-## ReorderableItem
-
-`ReorderableItem` is both a draggable item and a drop target. Use it for each item that can be reordered:
+Apply `Modifier.reorderableItem` to each item that can be reordered:
 
 ```kotlin
-ReorderableItem(
-    state = reorderState,
-    key = item.id,
-    data = item,
-    onDragEnter = { state ->
-        // Reorder the list when a dragged item enters this item's area
-    },
-) {
-    Text(
-        text = item.name,
+items(items, key = { it }) { item ->
+    val isDragging = dndState.isDragging(item)
+
+    ItemCard(
+        text = item,
         modifier = Modifier
-            .graphicsLayer {
-                alpha = if (isDragging) 0f else 1f
-            }
+            .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+            .reorderableItem(
+                key = item,
+                data = item,
+                state = dndState,
+                onDragEnter = { state ->
+                    items = items.toMutableList().apply {
+                        val index = indexOf(item)
+                        if (index != -1) {
+                            remove(state.data)
+                            add(index, state.data)
+                        }
+                    }
+                },
+                draggableContent = {
+                    ItemCard(text = item, isDragShadow = true)
+                },
+            )
+            .fillMaxWidth(),
     )
 }
 ```
@@ -67,31 +56,26 @@ ReorderableItem(
 
 | Parameter                    | Type                                      | Default                          | Description |
 |------------------------------|-------------------------------------------|----------------------------------|-------------|
-| `state`                      | `ReorderState<T>`                         | Required                         | The reorder state. |
 | `key`                        | `Any`                                     | Required                         | Unique key identifying this item. |
 | `data`                       | `T`                                       | Required                         | Data associated with this item. |
-| `modifier`                   | `Modifier`                                | `Modifier`                       | Modifier for the item. |
-| `zIndex`                     | `Float`                                   | `0f`                             | Z-index for overlapping items. |
+| `state`                      | `DragAndDropState<T>`                     | Required                         | The drag and drop state. |
 | `enabled`                    | `Boolean`                                 | `true`                           | Whether this item is reorderable. |
 | `dragAfterLongPress`         | `Boolean`                                 | Inherits from state              | Override long-press drag behavior. |
 | `requireFirstDownUnconsumed` | `Boolean`                                 | Inherits from state              | Override unconsumed pointer requirement. |
 | `dropTargets`                | `List<Any>`                               | `emptyList()`                    | Restrict which targets this item can be dropped on. |
 | `dropStrategy`               | `DropStrategy`                            | `DropStrategy.SurfacePercentage` | Strategy for choosing the hovered target. |
 | `dragAxis`                   | `DragAxis`                                | `DragAxis.Free`                  | Constrain drag movement to one axis. See [Axis Lock](axis-lock.md). |
+| `hasDragHandle`              | `Boolean`                                 | `false`                          | If `true`, drag is initiated from a `dragHandle` modifier. See [Drag Handle](drag-handle.md). |
+| `zIndex`                     | `Float`                                   | `0f`                             | Z-index for overlapping items. |
+| `dropAnimationSpec`          | `AnimationSpec<Offset>`                   | `SpringSpec()`                   | Animation for position when dropping. |
+| `sizeDropAnimationSpec`      | `AnimationSpec<Size>`                     | `SpringSpec()`                   | Animation for size when dropping. |
+| `dropAlignment`              | `Alignment`                               | `Alignment.Center`               | Alignment of the dropped item within the target. |
+| `dropOffset`                 | `Offset`                                  | `Offset.Zero`                    | Additional offset for the drop animation position. |
+| `dropAnimationEnabled`       | `Boolean`                                 | `true`                           | Whether to animate the drop. |
 | `onDrop`                     | `(DraggedItemState<T>) -> Unit`           | `{}`                             | Called when an item is dropped on this target. |
 | `onDragEnter`                | `(DraggedItemState<T>) -> Unit`           | `{}`                             | Called when a dragged item enters this target. |
 | `onDragExit`                 | `(DraggedItemState<T>) -> Unit`           | `{}`                             | Called when a dragged item exits this target. |
-| `dropAnimationSpec`          | `AnimationSpec<Offset>`                   | `SpringSpec()`                   | Animation for position when dropping. |
-| `sizeDropAnimationSpec`      | `AnimationSpec<Size>`                     | `SpringSpec()`                   | Animation for size when dropping. |
-| `draggableContent`           | `(@Composable () -> Unit)?`               | `null`                           | Custom drag shadow content. |
-| `content`                    | `@Composable ReorderableItemScope.() -> Unit` | Required                     | The item content. |
-
-### ReorderableItemScope
-
-`ReorderableItemScope` extends `DraggableItemScope` and provides:
-
-- `key: Any` -- The key of this item.
-- `isDragging: Boolean` -- Whether this item is currently being dragged.
+| `draggableContent`           | `@Composable () -> Unit`                  | Required                         | Content rendered as the drag shadow. |
 
 ## Reorder Logic with onDragEnter
 
@@ -101,9 +85,10 @@ The reorder logic is implemented in the `onDragEnter` callback. When a dragged i
 onDragEnter = { state ->
     items = items.toMutableList().apply {
         val targetIndex = indexOf(item)
-        if (targetIndex == -1) return@ReorderableItem
-        remove(state.data)
-        add(targetIndex, state.data)
+        if (targetIndex != -1) {
+            remove(state.data)
+            add(targetIndex, state.data)
+        }
     }
 }
 ```
@@ -118,26 +103,29 @@ When two items of different sizes swap, the swap itself can move the target back
 The default distance is `8.dp` and works out of the box. You can tune it on either state:
 
 ```kotlin
-val reorderState = rememberReorderState<String>(
+val dndState = rememberDragAndDropState<String>(
     reorderHysteresisDistance = 16.dp, // 0.dp disables hysteresis
 )
 
-// or with the low-level state
-val dndState = rememberDragAndDropState<String>(
+// or with the wrapper API state
+val reorderState = rememberReorderState<String>(
     reorderHysteresisDistance = 16.dp,
 )
 ```
 
 ## Observing Reorder State
 
-You can observe the current drag state through `ReorderState`:
+You can observe the current drag state through `DragAndDropState`:
 
 ```kotlin
 // Currently dragged item
-val draggedItem = reorderState.draggedItem
+val draggedItem = dndState.draggedItem
 
 // Key of the drop target currently being hovered
-val hoveredKey = reorderState.hoveredDropTargetKey
+val hoveredKey = dndState.hoveredDropTargetKey
+
+// Whether a specific item is being dragged
+val isDragging = dndState.isDragging(item)
 ```
 
 ## Full Working Example with LazyColumn
@@ -145,54 +133,51 @@ val hoveredKey = reorderState.hoveredDropTargetKey
 ```kotlin
 @Composable
 fun ReorderListExample() {
-    val reorderState = rememberReorderState<String>()
+    val dndState = rememberDragAndDropState<String>()
     var items by remember {
         mutableStateOf(
             listOf("Item 1", "Item 2", "Item 3", "Item 4", "Item 5")
         )
     }
-    val lazyListState = rememberLazyListState()
 
-    ReorderContainer(
-        state = reorderState,
+    DragAndDropContainer(
+        state = dndState,
         modifier = Modifier.fillMaxSize().padding(20.dp),
     ) {
         LazyColumn(
-            state = lazyListState,
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
             items(items, key = { it }) { item ->
-                ReorderableItem(
-                    state = reorderState,
-                    key = item,
-                    data = item,
-                    onDrop = {},
-                    onDragEnter = { state ->
-                        items = items.toMutableList().apply {
-                            val index = indexOf(item)
-                            if (index == -1) return@ReorderableItem
-                            remove(state.data)
-                            add(index, state.data)
-                        }
-                    },
-                    draggableContent = {
-                        ItemCard(
-                            text = item,
-                            isDragShadow = true,
+                val isDragging = dndState.isDragging(item)
+
+                ItemCard(
+                    text = item,
+                    modifier = Modifier
+                        .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+                        .reorderableItem(
+                            key = item,
+                            data = item,
+                            state = dndState,
+                            onDragEnter = { state ->
+                                items = items.toMutableList().apply {
+                                    val index = indexOf(item)
+                                    if (index != -1) {
+                                        remove(state.data)
+                                        add(index, state.data)
+                                    }
+                                }
+                            },
+                            draggableContent = {
+                                ItemCard(
+                                    text = item,
+                                    isDragShadow = true,
+                                )
+                            },
                         )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    ItemCard(
-                        text = item,
-                        modifier = Modifier
-                            .graphicsLayer {
-                                alpha = if (isDragging) 0f else 1f
-                            }
-                            .fillMaxWidth(),
-                    )
-                }
+                        .animateItem()
+                        .fillMaxWidth(),
+                )
             }
         }
     }
@@ -223,49 +208,50 @@ private fun ItemCard(
 ```
 
 !!! tip
-    Use `graphicsLayer { alpha = if (isDragging) 0f else 1f }` to hide the original item while it is being dragged, so only the drag shadow is visible.
+    Use `graphicsLayer { alpha = if (isDragging) 0f else 1f }` to hide the original item while it is being dragged, so only the drag shadow is visible. Adding `Modifier.animateItem()` inside a `LazyColumn` animates the displacement of the other items.
 
-## reorderableItem Modifier
+## Alternative: Wrapper Composables
 
-As an alternative to the `ReorderableItem` composable wrapper, you can use the `Modifier.reorderableItem` modifier. This combines `draggableItem` and `dropTarget` into a single modifier and reduces boilerplate.
+If you prefer wrapping composables over modifier chains, the reorder API is also available as `ReorderContainer` + `ReorderableItem` with a dedicated `ReorderState`:
 
 ```kotlin
-val dndState = rememberDragAndDropState<String>()
+val reorderState = rememberReorderState<String>()
 
-DragAndDropContainer(state = dndState) {
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+ReorderContainer(
+    state = reorderState,
+) {
+    LazyColumn {
         items(items, key = { it }) { item ->
-            val isDragging = dndState.isDragging(item)
-
-            ItemCard(
-                text = item,
-                modifier = Modifier
-                    .graphicsLayer { alpha = if (isDragging) 0f else 1f }
-                    .reorderableItem(
-                        key = item,
-                        data = item,
-                        state = dndState,
-                        onDragEnter = { state ->
-                            items = items.toMutableList().apply {
-                                val index = indexOf(item)
-                                if (index != -1) {
-                                    remove(state.data)
-                                    add(index, state.data)
-                                }
-                            }
-                        },
-                        draggableContent = {
-                            ItemCard(text = item, isDragShadow = true)
-                        },
-                    )
-                    .fillMaxWidth(),
-            )
+            ReorderableItem(
+                state = reorderState,
+                key = item,
+                data = item,
+                onDrop = {},
+                onDragEnter = { state ->
+                    items = items.toMutableList().apply {
+                        val index = indexOf(item)
+                        if (index == -1) return@ReorderableItem
+                        remove(state.data)
+                        add(index, state.data)
+                    }
+                },
+            ) {
+                // isDragging is available in this scope
+                Text(
+                    text = item,
+                    modifier = Modifier
+                        .graphicsLayer {
+                            alpha = if (isDragging) 0f else 1f
+                        }
+                )
+            }
         }
     }
 }
 ```
 
-!!! note
-    When using the modifier API, use `rememberDragAndDropState` and `DragAndDropContainer` directly instead of `rememberReorderState` and `ReorderContainer`. Use `DragAndDropState.isDragging(key)` to check drag state.
+Differences from the modifier API:
+
+- `rememberReorderState` creates a `ReorderState`, a thin wrapper that exposes the underlying `DragAndDropState` as `reorderState.dndState` (needed for modifiers like `dragAutoScroll`). It accepts the same `dragAfterLongPress`, `requireFirstDownUnconsumed`, and `reorderHysteresisDistance` parameters.
+- `ReorderableItem` accepts the same parameters as the `reorderableItem` modifier, but `draggableContent` is optional -- when `null`, the item content is used as the drag shadow.
+- The `content` lambda runs in a `ReorderableItemScope` providing `key`, `isDragging`, and a scope-based `Modifier.dragHandle()` that doesn't need `key`/`state` arguments.

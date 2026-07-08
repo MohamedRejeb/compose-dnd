@@ -48,13 +48,21 @@ val dragAndDropState = rememberDragAndDropState<String>()
 DragAndDropContainer(
     state = dragAndDropState,
 ) {
-    DraggableItem(
-        state = dragAndDropState,
-        key = "item-1",
-        data = "Hello",
-    ) {
-        Text("Drag me")
-    }
+    val isDragging = dragAndDropState.isDragging("item-1")
+
+    Text(
+        text = "Drag me",
+        modifier = Modifier
+            .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+            .draggableItem(
+                key = "item-1",
+                data = "Hello",
+                state = dragAndDropState,
+                draggableContent = {
+                    Text("Drag me") // Shown as the drag shadow
+                },
+            ),
+    )
 
     Box(
         modifier = Modifier
