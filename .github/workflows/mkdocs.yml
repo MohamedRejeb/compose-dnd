@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_call:
 
 permissions:
   contents: write
@@ -28,5 +29,25 @@ jobs:
       - run: pip install pillow cairosvg
       - run: pip install mkdocs-minify-plugin
       - run: pip install mkdocs-macros-plugin
+      - run: pip install ghp-import
 
-      - run: mkdocs gh-deploy --force
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+
+      - name: Setup gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Build web demo
+        run: ./gradlew :sample:web:wasmJsBrowserDistribution
+
+      - name: Build docs
+        run: mkdocs build
+
+      - name: Add web demo to site
+        run: cp -r sample/web/build/dist/wasmJs/productionExecutable site/demo
+
+      - name: Deploy to GitHub Pages
+        run: ghp-import --no-jekyll --push --force --no-history site

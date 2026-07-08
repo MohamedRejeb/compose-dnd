@@ -10,6 +10,8 @@ A library that allows you to easily add drag and drop functionality to your Jetp
 
 ![Compose DND sample](docs/images/hero.gif)
 
+**[Try the live demo](https://mohamedrejeb.github.io/compose-dnd/demo/)** · **[Documentation](https://mohamedrejeb.github.io/compose-dnd/)**
+
 ## Features
 
 - **Drag and Drop** -- Drag items from one location and drop them onto designated targets
