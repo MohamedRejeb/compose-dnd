@@ -137,6 +137,7 @@ internal fun <T> CoreDraggableItem(
     Box(
         modifier = modifier
             .onPlaced {
+                draggableItemState.layoutCoordinates = it
                 draggableItemState.positionInRoot = it.positionInRoot()
             }.onSizeChanged {
                 draggableItemState.size = it.toSize()

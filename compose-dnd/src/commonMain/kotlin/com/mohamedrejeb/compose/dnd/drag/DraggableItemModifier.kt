@@ -223,6 +223,7 @@ private class DraggableItemNode<T>(
 
         state.addDraggableItem(draggableItemState)
 
+        draggableItemState.layoutCoordinates = coordinates
         draggableItemState.positionInRoot = coordinates.positionInRoot()
         draggableItemState.size = coordinates.size.toSize()
     }
