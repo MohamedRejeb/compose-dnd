@@ -156,6 +156,7 @@ fun ReorderListExample() {
                 ItemCard(
                     text = item,
                     modifier = Modifier
+                        .animateItem()
                         .graphicsLayer { alpha = if (isDragging) 0f else 1f }
                         .reorderableItem(
                             key = item,
@@ -177,7 +178,6 @@ fun ReorderListExample() {
                                 )
                             },
                         )
-                        .animateItem()
                         .fillMaxWidth(),
                 )
             }
@@ -211,6 +211,8 @@ private fun ItemCard(
 
 !!! tip
     Use `graphicsLayer { alpha = if (isDragging) 0f else 1f }` to hide the original item while it is being dragged, so only the drag shadow is visible. Adding `Modifier.animateItem()` inside a `LazyColumn` animates the displacement of the other items.
+
+    Place `animateItem()` **before** `reorderableItem` in the modifier chain. This lets the library track the item's animated position, so dropping while items are still moving lands the drag shadow exactly where the item settles.
 
 ## Alternative: Wrapper Composables
 

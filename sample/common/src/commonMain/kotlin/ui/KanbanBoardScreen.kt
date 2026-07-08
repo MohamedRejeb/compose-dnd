@@ -339,6 +339,7 @@ private fun KanbanColumnUi(
                     card = card,
                     columnColor = column.color,
                     modifier = Modifier
+                        .animateItem()
                         .graphicsLayer { alpha = if (isDragging) 0f else 1f }
                         .reorderableItem(
                             key = card.id,
@@ -355,8 +356,8 @@ private fun KanbanColumnUi(
                                     modifier = Modifier.width(264.dp),
                                 )
                             },
-                        ).animateItem()
-                        .fillMaxWidth(),
+                        )
+                        .fillMaxWidth()
                 )
             }
 

@@ -96,6 +96,7 @@ fun ColumnUi(
             CardUi(
                 card = card,
                 modifier = Modifier
+                    .animateItem()
                     .graphicsLayer { alpha = if (isDragging) 0f else 1f }
                     .reorderableItem(
                         key = card.id,
@@ -108,7 +109,6 @@ fun ColumnUi(
                             CardUi(card = card, isDragShadow = true)
                         },
                     )
-                    .animateItem()
                     .fillMaxWidth(),
             )
         }

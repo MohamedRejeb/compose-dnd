@@ -227,6 +227,7 @@ private fun FormBuilderContent(
                             state = dndState,
                         ),
                         modifier = Modifier
+                            .animateItem()
                             .graphicsLayer { alpha = if (isDragging) 0f else 1f }
                             .reorderableItem(
                                 key = field.id,
@@ -243,8 +244,7 @@ private fun FormBuilderContent(
                                         isDragShadow = true,
                                     )
                                 },
-                            ).animateItem()
-                            .fillMaxWidth(),
+                            ).fillMaxWidth(),
                     )
                 }
 
