@@ -2,6 +2,8 @@
 
 When dragging items in a scrollable container, you often need the container to scroll automatically as the user drags near its edges. Compose DND provides the `dragAutoScroll` modifier for this purpose.
 
+<video src="../../videos/reorder.mp4" autoplay loop muted playsinline width="720"></video>
+
 !!! warning "Experimental API"
     The auto scroll API is annotated with `@ExperimentalDndApi`. This means it may change in future releases. You must opt in with `@OptIn(ExperimentalDndApi::class)` to use it.
 

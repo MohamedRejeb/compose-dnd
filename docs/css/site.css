@@ -1,0 +1,8 @@
+
+/* Demo videos */
+.md-content video {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}

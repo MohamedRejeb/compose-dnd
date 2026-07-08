@@ -2,6 +2,8 @@
 
 Reordering builds on the core drag and drop primitives: the `reorderableItem` modifier makes an item both draggable and a drop target at the same time, which is all a sortable list needs.
 
+<video src="../../videos/reorder.mp4" autoplay loop muted playsinline width="720"></video>
+
 ## Setting Up
 
 Reordering uses the standard `rememberDragAndDropState` and `DragAndDropContainer`:

@@ -2,6 +2,8 @@
 
 When a dragged item overlaps multiple drop targets, a **drop strategy** determines which target is considered "hovered." Compose DND provides several built-in strategies and allows you to create custom ones.
 
+<video src="../../videos/drop-strategies.mp4" autoplay loop muted playsinline width="720"></video>
+
 ## What Are Drop Strategies?
 
 During a drag operation, the dragged item may visually overlap more than one drop target at the same time. The drop strategy is the algorithm that decides which single drop target should receive the `onDragEnter`, `onDragExit`, and `onDrop` callbacks.

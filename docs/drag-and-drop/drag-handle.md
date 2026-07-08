@@ -2,6 +2,8 @@
 
 By default, dragging can be initiated from anywhere within a draggable item. A **drag handle** restricts the drag gesture to a specific area within the item, such as a grip icon. This is useful when your item contains interactive elements like buttons or text fields that should not trigger a drag.
 
+<video src="../../videos/drag-handle.mp4" autoplay loop muted playsinline width="720"></video>
+
 ## Overview
 
 Two pieces work together:

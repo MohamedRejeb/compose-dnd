@@ -8,7 +8,7 @@ A library that allows you to easily add drag and drop functionality to your Jetp
 [![BuildPassing](https://shields.io/badge/build-passing-brightgreen)](https://github.com/MohamedRejeb/compose-dnd/actions)
 [![Maven Central](https://img.shields.io/maven-central/v/com.mohamedrejeb.dnd/compose-dnd)](https://search.maven.org/search?q=g:%22com.mohamedrejeb.dnd%22%20AND%20a:%22compose-dnd%22)
 
-![Compose DND thumbnail](docs/images/thumbnail.png)
+![Compose DND sample](docs/images/hero.gif)
 
 ## Features
 
