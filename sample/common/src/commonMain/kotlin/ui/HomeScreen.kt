@@ -42,10 +42,9 @@ import androidx.compose.ui.unit.dp
 import components.DemoScreenScaffold
 import components.ExampleStatus
 import components.FeatureCard
-import components.FilesMiniScene
+import components.FormBuilderMiniScene
 import components.GradientHero
 import components.KanbanMiniScene
-import components.PlaylistMiniScene
 import components.RealExampleCard
 import components.SectionHeader
 import theme.SampleAccents
@@ -63,6 +62,7 @@ fun HomeScreen(
     onNavigateToConditionalDrop: () -> Unit,
     onNavigateToAutoScrollDemo: () -> Unit,
     onNavigateToKanbanBoard: () -> Unit,
+    onNavigateToFormBuilder: () -> Unit,
 ) {
     DemoScreenScaffold(
         title = "Compose DND",
@@ -229,7 +229,7 @@ fun HomeScreen(
             item {
                 SectionHeader(
                     title = "Real examples",
-                    count = 3,
+                    count = 2,
                     subtitle = "Production-style screens built entirely with Compose DND.",
                     accent = SampleAccents.Emerald,
                 )
@@ -238,7 +238,7 @@ fun HomeScreen(
             item {
                 RealExampleCard(
                     name = "Kanban Board",
-                    tagline = "Cross-column card transfer with nested auto-scroll and positional insert.",
+                    tagline = "Drag cards across columns and reorder the columns themselves.",
                     status = ExampleStatus.Live,
                     onClick = onNavigateToKanbanBoard,
                     preview = { KanbanMiniScene() },
@@ -247,21 +247,11 @@ fun HomeScreen(
 
             item {
                 RealExampleCard(
-                    name = "Playlist",
-                    tagline = "Reorder tracks with drag handles and queue-to-queue moves.",
-                    status = ExampleStatus.ComingSoon,
-                    onClick = {},
-                    preview = { PlaylistMiniScene() },
-                )
-            }
-
-            item {
-                RealExampleCard(
-                    name = "File Manager",
-                    tagline = "Drag files between folders with conditional drops and spring-loaded targets.",
-                    status = ExampleStatus.ComingSoon,
-                    onClick = {},
-                    preview = { FilesMiniScene() },
+                    name = "Form Builder",
+                    tagline = "Drag fields from a palette into the form - the source is never consumed.",
+                    status = ExampleStatus.Live,
+                    onClick = onNavigateToFormBuilder,
+                    preview = { FormBuilderMiniScene() },
                 )
             }
 

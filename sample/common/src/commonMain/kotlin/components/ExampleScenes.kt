@@ -18,6 +18,7 @@ package components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,7 +27,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -80,57 +80,42 @@ fun KanbanMiniScene(
 }
 
 @Composable
-fun PlaylistMiniScene(
+fun FormBuilderMiniScene(
     modifier: Modifier = Modifier,
 ) {
     SceneSurface(
-        brandColor = ExampleBrandColors.Playlist,
-        modifier = modifier,
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.width(150.dp),
-        ) {
-            MiniTrackRow()
-            // The track being dragged out of its slot
-            MiniTrackRow(
-                highlighted = true,
-                modifier = Modifier
-                    .offset(x = 12.dp)
-                    .graphicsLayer { rotationZ = -2f }
-                    .shadow(elevation = 8.dp, shape = RoundedCornerShape(6.dp)),
-            )
-            MiniTrackRow()
-        }
-    }
-}
-
-@Composable
-fun FilesMiniScene(
-    modifier: Modifier = Modifier,
-) {
-    SceneSurface(
-        brandColor = ExampleBrandColors.Files,
+        brandColor = ExampleBrandColors.FormBuilder,
         modifier = modifier,
     ) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(28.dp),
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            MiniFolder(dashed = false)
+            // The palette: a stack of field chips
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                MiniCard(width = 34.dp, color = Color.White.copy(alpha = 0.75f))
+                MiniCard(width = 34.dp, color = Color.White.copy(alpha = 0.75f))
+                MiniCard(width = 34.dp, color = Color.White.copy(alpha = 0.75f))
+            }
 
-            // A file caught mid-flight toward the target folder
-            MiniCard(
-                width = 26.dp,
-                color = Color.White,
-                modifier = Modifier
-                    .offset(y = (-10).dp)
-                    .graphicsLayer { rotationZ = 8f }
-                    .shadow(elevation = 8.dp, shape = RoundedCornerShape(4.dp)),
-            )
-
-            MiniFolder(dashed = true)
+            // The form: rows with a dashed insertion slot
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                MiniFormRow()
+                MiniInsertionSlot()
+                MiniFormRow()
+            }
         }
+
+        // A palette chip caught mid-flight toward the insertion slot
+        MiniCard(
+            width = 34.dp,
+            color = Color.White,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(x = (-6).dp, y = (-14).dp)
+                .graphicsLayer { rotationZ = 6f }
+                .shadow(elevation = 8.dp, shape = RoundedCornerShape(4.dp)),
+        )
     }
 }
 
@@ -138,7 +123,7 @@ fun FilesMiniScene(
 private fun SceneSurface(
     brandColor: Color,
     modifier: Modifier = Modifier,
-    content: @Composable androidx.compose.foundation.layout.BoxScope.() -> Unit,
+    content: @Composable BoxScope.() -> Unit,
 ) {
     Box(
         contentAlignment = Alignment.Center,
@@ -186,58 +171,45 @@ private fun MiniCard(
 }
 
 @Composable
-private fun MiniTrackRow(
-    highlighted: Boolean = false,
-    modifier: Modifier = Modifier,
-) {
+private fun MiniFormRow() {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = modifier
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = Modifier
             .clip(RoundedCornerShape(6.dp))
-            .background(Color.White.copy(alpha = if (highlighted) 0.9f else 0.22f))
-            .padding(horizontal = 8.dp, vertical = 5.dp),
+            .background(Color.White.copy(alpha = 0.22f))
+            .padding(horizontal = 8.dp, vertical = 6.dp),
     ) {
-        GripDots(
-            color = if (highlighted) ExampleBrandColors.Playlist else Color.White.copy(alpha = 0.7f),
-            dotSize = 2.dp,
-            spacing = 2.dp,
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(Color.White.copy(alpha = 0.7f)),
         )
         Box(
             modifier = Modifier
-                .size(width = 90.dp, height = 6.dp)
-                .clip(CircleShape)
-                .background(
-                    if (highlighted) ExampleBrandColors.Playlist.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.6f),
-                ),
+                .size(width = 64.dp, height = 6.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .background(Color.White.copy(alpha = 0.6f)),
         )
     }
 }
 
 @Composable
-private fun MiniFolder(
-    dashed: Boolean,
-) {
+private fun MiniInsertionSlot() {
     Box(
         modifier = Modifier
-            .size(width = 52.dp, height = 36.dp)
-            .then(
-                if (dashed) {
-                    Modifier.drawBehind {
-                        drawRoundRect(
-                            color = Color.White.copy(alpha = 0.9f),
-                            cornerRadius = CornerRadius(8.dp.toPx()),
-                            style = Stroke(
-                                width = 1.5.dp.toPx(),
-                                pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f)),
-                            ),
-                        )
-                    }
-                } else {
-                    Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.White.copy(alpha = 0.35f))
-                }
-            ),
+            .width(86.dp)
+            .height(18.dp)
+            .drawBehind {
+                drawRoundRect(
+                    color = Color.White.copy(alpha = 0.9f),
+                    cornerRadius = CornerRadius(6.dp.toPx()),
+                    style = Stroke(
+                        width = 1.5.dp.toPx(),
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 7f)),
+                    ),
+                )
+            },
     )
 }
