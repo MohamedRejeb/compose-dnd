@@ -51,16 +51,42 @@ jobs:
             - name: Gradle test
               run: ./gradlew allTests
 
+    # Runs on Linux: macOS runners are Apple Silicon without nested
+    # virtualization, so the emulator cannot boot there.
+    instrumented-tests:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  ref: ${{ github.head_ref }}
+
+            - name: Enable KVM group perms
+              run: |
+                  echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+                  sudo udevadm control --reload-rules
+                  sudo udevadm trigger --name-match=kvm
+
+            - name: Set up JDK 17
+              uses: actions/setup-java@v5
+              with:
+                  java-version: '17'
+                  distribution: 'zulu'
+
+            - name: Setup gradle
+              uses: gradle/actions/setup-gradle@v5
+
             - name: Android instrumented tests
               uses: reactivecircus/android-emulator-runner@v2
               with:
                   api-level: 34
                   arch: x86_64
+                  disable-animations: true
                   script: ./gradlew :compose-dnd:connectedDebugAndroidTest
 
     deploy:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        needs: build
+        needs: [ build, instrumented-tests ]
         runs-on: macos-latest
         steps:
             - uses: actions/checkout@v6
