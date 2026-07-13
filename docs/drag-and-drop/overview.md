@@ -86,7 +86,6 @@ Use `DragAndDropState.isDragging(key)` to check if a specific item is being drag
 | `dragAxis`                   | `DragAxis`                     | `DragAxis.Free`                | Constrain drag movement to one axis. See [Axis Lock](axis-lock.md). |
 | `hasDragHandle`              | `Boolean`                      | `false`                        | If `true`, drag is initiated from a `dragHandle` modifier instead of the whole item. See [Drag Handle](drag-handle.md). |
 | `dropAnimationSpec`          | `AnimationSpec<Offset>`        | `SpringSpec()`                 | Animation for position when dropping. |
-| `sizeDropAnimationSpec`      | `AnimationSpec<Size>`          | `SpringSpec()`                 | Animation for size when dropping. |
 | `draggableContent`           | `@Composable () -> Unit`       | Required                       | Content rendered as the drag shadow while dragging. |
 
 ## Drop Target

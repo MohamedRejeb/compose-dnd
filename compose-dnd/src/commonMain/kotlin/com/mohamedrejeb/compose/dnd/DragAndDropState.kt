@@ -154,6 +154,49 @@ class DragAndDropState<T>(
     var draggedItem by mutableStateOf<DraggedItemState<T>?>(null)
         internal set
 
+    /**
+     * Size of the item that is currently dragged, read live from the registered
+     * item state so mid-drag resizes (e.g. a card that collapses when picked up)
+     * are taken into account. Falls back to the size captured at drag start when
+     * the item has left the composition, or when it was recreated under the same
+     * key (e.g. moved to a sibling container) and hasn't been measured yet.
+     */
+    internal val draggedItemLiveSize: Size?
+        get() = currentDraggableItem?.let { item ->
+            draggableItemMap[item.key]
+                ?.size
+                ?.takeIf { it != Size.Zero }
+                ?: item.size
+        }
+
+    /**
+     * Measured size of the drag shadow's content, written by
+     * [com.mohamedrejeb.compose.dnd.drag.DraggedItemShadow].
+     */
+    internal var draggedItemShadowSize by mutableStateOf<Size?>(null)
+
+    /**
+     * Size of the ghost the user actually sees while dragging: the measured
+     * drag shadow content, falling back to the size captured at drag start
+     * until the shadow is first measured.
+     *
+     * Hover and drop-alignment math must use this instead of
+     * [draggedItemLiveSize]: apps may recreate the item at a different size in
+     * reaction to onDragEnter/onDragExit (e.g. moving it between differently
+     * sized containers), so feeding the live item size back into hover would
+     * oscillate. The shadow renders the draggableContent captured at drag
+     * start, which stops following the item once it moves to another call
+     * site, so its size stays stable across such enter/exit recreations.
+     * (A persistent draggableContent that resizes itself off hover state
+     * directly can still feed back — that is the app's choice.)
+     */
+    internal val draggedItemVisibleSize: Size?
+        get() = currentDraggableItem?.let { item ->
+            draggedItemShadowSize
+                ?.takeIf { it != Size.Zero }
+                ?: item.size
+        }
+
     internal var pointerId by mutableStateOf<PointerId?>(null)
 
     /**
@@ -196,7 +239,6 @@ class DragAndDropState<T>(
 
     internal val dragPosition: MutableState<Offset> = mutableStateOf(Offset.Zero)
     internal val dragPositionAnimatable: Animatable<Offset, AnimationVector2D> = Animatable(Offset.Zero, Offset.VectorConverter)
-    internal val dragSizeAnimatable: Animatable<Size, AnimationVector2D> = Animatable(Size.Zero, Size.VectorConverter)
 
     /**
      * Handle drag start method is called when drag starts
@@ -214,16 +256,13 @@ class DragAndDropState<T>(
             dragPositionAnimatable.snapTo(Offset.Zero)
         }
 
-        launch {
-            dragSizeAnimatable.snapTo(draggableItemState.size)
-        }
-
         dragPosition.value = draggableItemState.positionInRoot
 
         isActiveDrag = true
         dragStartPositionInRoot = draggableItemState.positionInRoot
         reorderHysteresis.reset()
         dragStartOffset = offset
+        draggedItemShadowSize = null
         currentDraggableItem = draggableItemState.copy()
         draggedItem = DraggedItemState(
             key = draggableItemState.key,
@@ -261,6 +300,7 @@ class DragAndDropState<T>(
         val rawDragAmount = offset - dragStartOffset
         val dragAmount = currentDraggableItem.dragAxis.applyConstraint(rawDragAmount)
         val newTopLeft = dragStartPositionInRoot + dragAmount
+        val draggedItemSize = draggedItemVisibleSize ?: currentDraggableItem.size
         val hysteresisExcludedKey = reorderHysteresis.excludedKey
         val hoveredDropTargets =
             dropTargetMap.values
@@ -268,7 +308,7 @@ class DragAndDropState<T>(
                     it.key != hysteresisExcludedKey &&
                         MathUtils.isRectangleIntersected(
                             topLeft1 = newTopLeft,
-                            size1 = currentDraggableItem.size,
+                            size1 = draggedItemSize,
                             topLeft2 = it.topLeft,
                             size2 = it.size,
                         ) &&
@@ -282,7 +322,7 @@ class DragAndDropState<T>(
         val hoveredDropTarget =
             currentDraggableItem.dropStrategy.getHoveredDropTarget(
                 draggedItemTopLeft = newTopLeft,
-                draggedItemSize = currentDraggableItem.size,
+                draggedItemSize = draggedItemSize,
                 dropTargets = hoveredDropTargets,
             )
 
@@ -336,53 +376,33 @@ class DragAndDropState<T>(
      * - It performs animation to the final position
      * - It calls [DropTargetState.onDrop] if the item is dropped on [DropTargetState]
      * - It clears the drag state
+     *
+     * The ghost keeps its visible size during the drop animation — only its
+     * position animates. Size differences between the ghost and the item that
+     * lands in the target are absorbed by the position anchor instead: the
+     * ghost is aligned within the target at its own size, so with the default
+     * [androidx.compose.ui.Alignment.Companion.Center] alignment its center
+     * travels to the target's center.
      */
-    internal suspend fun handleDragEnd() = coroutineScope {
+    internal suspend fun handleDragEnd() {
         isActiveDrag = false
-        val currentDraggableItem = currentDraggableItem ?: return@coroutineScope
+        val currentDraggableItem = currentDraggableItem ?: return
 
         val dropTarget = dropTargetMap.values.find { it.key == hoveredDropTargetKey }
 
         if (dropTarget == null || dropTarget.dropAnimationEnabled) {
             val draggedItem = draggableItemMap[currentDraggableItem.key]
 
-            val positionAnimation = launch {
-                val sizeDiff =
-                    if (draggedItem == null) {
-                        Size.Zero
-                    } else {
-                        Size(
-                            width = draggedItem.size.width - currentDraggableItem.size.width,
-                            height = draggedItem.size.height - currentDraggableItem.size.height,
-                        )
-                    }
-                val centerOffset = Offset(
-                    x = sizeDiff.width / 2,
-                    y = sizeDiff.height / 2,
-                )
-
-                animateDropPosition(currentDraggableItem.dropAnimationSpec) {
-                    val dropTopLeft = if (dropTarget != null) {
-                        dropTarget.layoutCoordinates
-                            ?.takeIf { it.isAttached }
-                            ?.let { dropTarget.topLeft = it.positionInRoot() }
-                        dropTarget.getDropTopLeft(currentDraggableItem.size)
-                    } else {
-                        liveItemPosition(draggedItem, currentDraggableItem.positionInRoot)
-                    }
-                    dropTopLeft - centerOffset
+            animateDropPosition(currentDraggableItem.dropAnimationSpec) {
+                if (dropTarget != null) {
+                    dropTarget.layoutCoordinates
+                        ?.takeIf { it.isAttached }
+                        ?.let { dropTarget.topLeft = it.positionInRoot() }
+                    dropTarget.getDropTopLeft(draggedItemVisibleSize ?: currentDraggableItem.size)
+                } else {
+                    ghostReturnTopLeft(draggedItem, currentDraggableItem)
                 }
             }
-
-            val sizeAnimation = launch {
-                dragSizeAnimatable.animateTo(
-                    targetValue = draggedItem?.size ?: return@launch,
-                    animationSpec = currentDraggableItem.sizeDropAnimationSpec,
-                )
-            }
-
-            positionAnimation.join()
-            sizeAnimation.join()
         }
 
         draggedItem?.let {
@@ -396,16 +416,14 @@ class DragAndDropState<T>(
      * - It performs animation to the dragged item original position
      * - It clears the drag state
      */
-    internal suspend fun handleDragCancel() = coroutineScope {
+    internal suspend fun handleDragCancel() {
         isActiveDrag = false
-        val currentDraggableItem = currentDraggableItem ?: return@coroutineScope
+        val currentDraggableItem = currentDraggableItem ?: return
         val draggedItem = draggableItemMap[currentDraggableItem.key]
 
-        launch {
-            animateDropPosition(currentDraggableItem.dropAnimationSpec) {
-                liveItemPosition(draggedItem, currentDraggableItem.positionInRoot)
-            }
-        }.join()
+        animateDropPosition(currentDraggableItem.dropAnimationSpec) {
+            ghostReturnTopLeft(draggedItem, currentDraggableItem)
+        }
 
         clearDragState()
     }
@@ -445,12 +463,32 @@ class DragAndDropState<T>(
         } ?: fallback
 
     /**
+     * Top-left the ghost should land on when it returns to the item itself
+     * (no drop target, or the drag was canceled): the ghost centered on the
+     * live item rect, so a size difference between the ghost and the item
+     * still reads as landing on the item.
+     */
+    private fun ghostReturnTopLeft(
+        itemState: DraggableItemState<T>?,
+        currentDraggableItem: DraggableItemState<T>,
+    ): Offset {
+        val itemTopLeft = liveItemPosition(itemState, currentDraggableItem.positionInRoot)
+        val itemSize = draggedItemLiveSize ?: currentDraggableItem.size
+        val ghostSize = draggedItemVisibleSize ?: currentDraggableItem.size
+        return Offset(
+            x = itemTopLeft.x + (itemSize.width - ghostSize.width) / 2f,
+            y = itemTopLeft.y + (itemSize.height - ghostSize.height) / 2f,
+        )
+    }
+
+    /**
      * Clear the drag state after drag is finished
      */
     private suspend fun clearDragState() {
         isActiveDrag = false
         currentDraggableItem = null
         draggedItem = null
+        draggedItemShadowSize = null
         hoveredDropTargetKey = null
         lastPointerOffset = Offset.Unspecified
         dragStartOffset = Offset.Zero

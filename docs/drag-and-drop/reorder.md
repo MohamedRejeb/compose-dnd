@@ -70,7 +70,6 @@ items(items, key = { it }) { item ->
 | `hasDragHandle`              | `Boolean`                                 | `false`                          | If `true`, drag is initiated from a `dragHandle` modifier. See [Drag Handle](drag-handle.md). |
 | `zIndex`                     | `Float`                                   | `0f`                             | Z-index for overlapping items. |
 | `dropAnimationSpec`          | `AnimationSpec<Offset>`                   | `SpringSpec()`                   | Animation for position when dropping. |
-| `sizeDropAnimationSpec`      | `AnimationSpec<Size>`                     | `SpringSpec()`                   | Animation for size when dropping. |
 | `dropAlignment`              | `Alignment`                               | `Alignment.Center`               | Alignment of the dropped item within the target. |
 | `dropOffset`                 | `Offset`                                  | `Offset.Zero`                    | Additional offset for the drop animation position. |
 | `dropAnimationEnabled`       | `Boolean`                                 | `true`                           | Whether to animate the drop. |

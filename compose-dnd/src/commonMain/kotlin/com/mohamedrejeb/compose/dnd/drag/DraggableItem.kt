@@ -18,11 +18,9 @@ package com.mohamedrejeb.compose.dnd.drag
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 
 /**
@@ -39,7 +37,6 @@ import com.mohamedrejeb.compose.dnd.DragAndDropState
  * @param dropStrategy - strategy to determine the drop target
  * @param dragAxis - axis constraint for drag movement
  * @param dropAnimationSpec - animation spec for the position drop animation
- * @param sizeDropAnimationSpec - animation spec for the size drop animation
  * @param draggableContent The content of the draggable item, if null, the content of the item will be used.
  * @param content - content that will be shown when item is not dragged
  */
@@ -56,7 +53,6 @@ fun <T> DraggableItem(
     dropStrategy: DropStrategy = DropStrategy.SurfacePercentage,
     dragAxis: DragAxis = DragAxis.Free,
     dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
-    sizeDropAnimationSpec: AnimationSpec<Size> = SpringSpec(),
     draggableContent: (@Composable () -> Unit)? = null,
     content: @Composable DraggableItemScope.() -> Unit,
 ) {
@@ -85,7 +81,6 @@ fun <T> DraggableItem(
         dropStrategy = dropStrategy,
         dragAxis = dragAxis,
         dropAnimationSpec = dropAnimationSpec,
-        sizeDropAnimationSpec = sizeDropAnimationSpec,
         draggableContent = draggableContent ?: {
             with(draggableItemScopeShadowImpl) {
                 content()

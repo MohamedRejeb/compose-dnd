@@ -31,7 +31,6 @@ internal class DraggableItemState<T>(
     var hasDragHandle: Boolean = false,
 
     var dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
-    var sizeDropAnimationSpec: AnimationSpec<Size> = SpringSpec(),
 
     var positionInRoot: Offset,
     var size: Size,
@@ -50,7 +49,6 @@ internal class DraggableItemState<T>(
             dragAxis = dragAxis,
             hasDragHandle = hasDragHandle,
             dropAnimationSpec = dropAnimationSpec,
-            sizeDropAnimationSpec = sizeDropAnimationSpec,
             positionInRoot = positionInRoot,
             size = size,
             content = content

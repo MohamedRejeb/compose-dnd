@@ -46,7 +46,6 @@ import com.mohamedrejeb.compose.dnd.gesture.detectDragStartGesture
  * @param dropStrategy - strategy to determine the drop target
  * @param dragAxis - axis constraint for drag movement
  * @param dropAnimationSpec - animation spec for the position drop animation
- * @param sizeDropAnimationSpec - animation spec for the size drop animation
  * @param draggableContent The content of the draggable item
  * @param content - content that will be shown when item is not dragged
  */
@@ -63,7 +62,6 @@ internal fun <T> CoreDraggableItem(
     dropStrategy: DropStrategy,
     dragAxis: DragAxis,
     dropAnimationSpec: AnimationSpec<Offset>,
-    sizeDropAnimationSpec: AnimationSpec<Size>,
     draggableContent: @Composable () -> Unit,
     hasDragHandle: Boolean = false,
     onDraggableItemStateCreated: ((DraggableItemState<T>) -> Unit)? = null,
@@ -91,7 +89,6 @@ internal fun <T> CoreDraggableItem(
             dropStrategy = dropStrategy,
             dragAxis = dragAxis,
             dropAnimationSpec = dropAnimationSpec,
-            sizeDropAnimationSpec = sizeDropAnimationSpec,
             content = draggableContent,
         )
     }
@@ -116,10 +113,6 @@ internal fun <T> CoreDraggableItem(
 
     LaunchedEffect(draggableItemState, dropAnimationSpec) {
         draggableItemState.dropAnimationSpec = dropAnimationSpec
-    }
-
-    LaunchedEffect(draggableItemState, sizeDropAnimationSpec) {
-        draggableItemState.sizeDropAnimationSpec = sizeDropAnimationSpec
     }
 
     LaunchedEffect(draggableItemState, draggableContent) {

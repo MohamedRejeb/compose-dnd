@@ -108,7 +108,7 @@ fun <T> Modifier.dragAutoScroll(
         snapshotFlow {
             if (!state.isActiveDrag) return@snapshotFlow null
             val dragPosition = state.dragPosition.value
-            val itemSize = state.currentDraggableItem?.size ?: return@snapshotFlow null
+            val itemSize = state.draggedItemVisibleSize ?: return@snapshotFlow null
             val orientation = lazyListState.layoutInfo.orientation
 
             // Don't scroll if the item isn't within this container on the cross axis
@@ -199,7 +199,7 @@ fun <T> Modifier.dragAutoScroll(
         snapshotFlow {
             if (!state.isActiveDrag) return@snapshotFlow null
             val dragPosition = state.dragPosition.value
-            val itemSize = state.currentDraggableItem?.size ?: return@snapshotFlow null
+            val itemSize = state.draggedItemVisibleSize ?: return@snapshotFlow null
             val orientation = lazyGridState.layoutInfo.orientation
 
             if (!hasCrossAxisOverlap(orientation, dragPosition, itemSize, containerTopLeft, containerSize)) {
@@ -312,7 +312,7 @@ fun <T> Modifier.dragAutoScroll(
                     lastFrameMs = currentFrameMs
 
                     val dragPosition = state.dragPosition.value
-                    val itemSize = state.currentDraggableItem?.size
+                    val itemSize = state.draggedItemVisibleSize
                         ?: continue
 
                     if (!hasCrossAxisOverlap(orientation, dragPosition, itemSize, containerTopLeft, containerSize)) {

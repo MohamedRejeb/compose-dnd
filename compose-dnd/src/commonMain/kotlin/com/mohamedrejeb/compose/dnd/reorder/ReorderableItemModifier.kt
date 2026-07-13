@@ -21,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 import com.mohamedrejeb.compose.dnd.drag.DragAxis
 import com.mohamedrejeb.compose.dnd.drag.DraggedItemState
@@ -52,7 +51,6 @@ import com.mohamedrejeb.compose.dnd.drop.dropTarget
  * @param hasDragHandle If true, drag is initiated from a drag handle modifier instead of the whole item.
  * @param zIndex Z-index of the drop target for overlap resolution.
  * @param dropAnimationSpec Animation spec for position on drop.
- * @param sizeDropAnimationSpec Animation spec for size on drop.
  * @param dropAlignment Alignment of the dropped item within the target.
  * @param dropOffset Offset applied to the dropped item position.
  * @param dropAnimationEnabled Whether the drop animation is enabled.
@@ -74,7 +72,6 @@ fun <T> Modifier.reorderableItem(
     hasDragHandle: Boolean = false,
     zIndex: Float = 0f,
     dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
-    sizeDropAnimationSpec: AnimationSpec<Size> = SpringSpec(),
     dropAlignment: Alignment = Alignment.Center,
     dropOffset: Offset = Offset.Zero,
     dropAnimationEnabled: Boolean = true,
@@ -96,7 +93,6 @@ fun <T> Modifier.reorderableItem(
             dragAxis = dragAxis,
             hasDragHandle = hasDragHandle,
             dropAnimationSpec = dropAnimationSpec,
-            sizeDropAnimationSpec = sizeDropAnimationSpec,
             draggableContent = draggableContent,
         ).dropTarget(
             key = key,

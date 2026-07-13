@@ -21,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 import com.mohamedrejeb.compose.dnd.drag.CoreDraggableItem
 import com.mohamedrejeb.compose.dnd.drag.DragAxis
@@ -50,7 +49,6 @@ import com.mohamedrejeb.compose.dnd.drop.dropTarget
  * @param onDragExit The action to perform when an item is dragged out of the target.
  * Accepts the dragged item state as a parameter.
  * @param dropAnimationSpec - animation spec for the drop animation
- * @param sizeDropAnimationSpec - animation spec for the size drop animation
  * @param draggableContent The content of the draggable item, if null, the content of the item will be used.
  * @param content The content of the item.
  */
@@ -72,7 +70,6 @@ fun <T> ReorderableItem(
     onDragEnter: (state: DraggedItemState<T>) -> Unit = {},
     onDragExit: (state: DraggedItemState<T>) -> Unit = {},
     dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
-    sizeDropAnimationSpec: AnimationSpec<Size> = SpringSpec(),
     draggableContent: (@Composable () -> Unit)? = null,
     content: @Composable ReorderableItemScope.() -> Unit,
 ) {
@@ -109,7 +106,6 @@ fun <T> ReorderableItem(
         dropStrategy = dropStrategy,
         dragAxis = dragAxis,
         dropAnimationSpec = dropAnimationSpec,
-        sizeDropAnimationSpec = sizeDropAnimationSpec,
         draggableContent = draggableContent ?: {
             with(reorderableItemScopeShadowImpl) {
                 content()

@@ -57,7 +57,6 @@ import com.mohamedrejeb.compose.dnd.gesture.detectDragStartGesture
  * @param dragAxis Constrain movement to [DragAxis.Free], [DragAxis.Horizontal], or [DragAxis.Vertical].
  * @param hasDragHandle If true, drag is initiated from a [dragHandle] modifier instead of the whole item.
  * @param dropAnimationSpec Animation spec for position on drop.
- * @param sizeDropAnimationSpec Animation spec for size on drop.
  * @param draggableContent Content rendered as the drag shadow/overlay while dragging.
  */
 fun <T> Modifier.draggableItem(
@@ -72,7 +71,6 @@ fun <T> Modifier.draggableItem(
     dragAxis: DragAxis = DragAxis.Free,
     hasDragHandle: Boolean = false,
     dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
-    sizeDropAnimationSpec: AnimationSpec<Size> = SpringSpec(),
     draggableContent: @Composable () -> Unit,
 ): Modifier =
     this
@@ -89,7 +87,6 @@ fun <T> Modifier.draggableItem(
                 dragAxis = dragAxis,
                 hasDragHandle = hasDragHandle,
                 dropAnimationSpec = dropAnimationSpec,
-                sizeDropAnimationSpec = sizeDropAnimationSpec,
                 draggableContent = draggableContent,
             )
         ).pointerInput(
@@ -132,7 +129,6 @@ private data class DraggableItemNodeElement<T>(
     val dragAxis: DragAxis,
     val hasDragHandle: Boolean,
     val dropAnimationSpec: AnimationSpec<Offset>,
-    val sizeDropAnimationSpec: AnimationSpec<Size>,
     val draggableContent: @Composable () -> Unit,
 ) : ModifierNodeElement<DraggableItemNode<T>>() {
 
@@ -148,7 +144,6 @@ private data class DraggableItemNodeElement<T>(
                 dragAxis = dragAxis,
                 hasDragHandle = hasDragHandle,
                 dropAnimationSpec = dropAnimationSpec,
-                sizeDropAnimationSpec = sizeDropAnimationSpec,
                 content = draggableContent,
             ),
             state = state,
@@ -173,7 +168,6 @@ private data class DraggableItemNodeElement<T>(
             draggableItemState.dragAxis = dragAxis
             draggableItemState.hasDragHandle = hasDragHandle
             draggableItemState.dropAnimationSpec = dropAnimationSpec
-            draggableItemState.sizeDropAnimationSpec = sizeDropAnimationSpec
             draggableItemState.content = draggableContent
 
             if (isKeyChanged) {

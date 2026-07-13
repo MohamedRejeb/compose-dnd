@@ -23,10 +23,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.toSize
 import com.mohamedrejeb.compose.dnd.DragAndDropInfoImpl
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 import com.mohamedrejeb.compose.dnd.LocalDragAndDropInfo
@@ -44,7 +47,7 @@ internal fun <T> DraggedItemShadow(
         modifier = Modifier
             .size(
                 with(density) {
-                    state.dragSizeAnimatable.value.toDpSize()
+                    (state.currentDraggableItem?.size ?: Size.Zero).toDpSize()
                 }
             ).onPlaced {
                 draggedItemPositionInRoot.value = it.positionInRoot()
@@ -55,10 +58,16 @@ internal fun <T> DraggedItemShadow(
                 translationY = dragPositionY - draggedItemPositionInRoot.value.y
             },
     ) {
-        CompositionLocalProvider(
-            LocalDragAndDropInfo provides DragAndDropInfoImpl(isShadow = true)
+        Box(
+            modifier = Modifier.onSizeChanged {
+                state.draggedItemShadowSize = it.toSize()
+            },
         ) {
-            state.currentDraggableItem?.content?.invoke()
+            CompositionLocalProvider(
+                LocalDragAndDropInfo provides DragAndDropInfoImpl(isShadow = true)
+            ) {
+                state.currentDraggableItem?.content?.invoke()
+            }
         }
     }
 }
