@@ -18,7 +18,6 @@ package com.mohamedrejeb.compose.dnd.reorder
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
-import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 
 /**
  * Container for reorder,
@@ -29,13 +28,19 @@ import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
  * @param enabled whether the reorder is enabled
  * @param content content of the container
  */
-@OptIn(ExperimentalDndApi::class)
+@Deprecated(
+    message = "ReorderState is deprecated, use DragAndDropContainer with a DragAndDropState.",
+    replaceWith = ReplaceWith(
+        "DragAndDropContainer(state = state.dndState, modifier = modifier, enabled = enabled, content = content)",
+        "com.mohamedrejeb.compose.dnd.DragAndDropContainer",
+    ),
+)
 @Composable
 fun <T> ReorderContainer(
     state: ReorderState<T>,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     DragAndDropContainer(
         state = state.dndState,

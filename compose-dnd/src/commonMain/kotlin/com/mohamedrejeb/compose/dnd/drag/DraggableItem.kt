@@ -17,6 +17,7 @@ package com.mohamedrejeb.compose.dnd.drag
 
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.SpringSpec
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -25,6 +26,10 @@ import com.mohamedrejeb.compose.dnd.DragAndDropState
 
 /**
  * Wrapper Composable for draggable item.
+ *
+ * Composable alternative to the [draggableItem] modifier: [content] gets a
+ * [DraggableItemScope] exposing [DraggableItemScope.isDragging] and a
+ * [DraggableItemScope.dragHandle] modifier that needs no key or state.
  *
  * @param modifier - modifier for the DraggableItem composable
  * @param key - unique key for this item
@@ -37,6 +42,8 @@ import com.mohamedrejeb.compose.dnd.DragAndDropState
  * @param dropStrategy - strategy to determine the drop target
  * @param dragAxis - axis constraint for drag movement
  * @param dropAnimationSpec - animation spec for the position drop animation
+ * @param onDragStart - called when a drag of this item starts
+ * @param onDragEnd - called once the drag of this item is over, after the drop or return animation
  * @param draggableContent The content of the draggable item, if null, the content of the item will be used.
  * @param content - content that will be shown when item is not dragged
  */
@@ -53,6 +60,8 @@ fun <T> DraggableItem(
     dropStrategy: DropStrategy = DropStrategy.SurfacePercentage,
     dragAxis: DragAxis = DragAxis.Free,
     dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
+    onDragStart: (state: DraggedItemState<T>) -> Unit = {},
+    onDragEnd: (state: DraggedItemState<T>) -> Unit = {},
     draggableContent: (@Composable () -> Unit)? = null,
     content: @Composable DraggableItemScope.() -> Unit,
 ) {
@@ -69,25 +78,28 @@ fun <T> DraggableItem(
         )
     }
 
-    CoreDraggableItem(
-        modifier = modifier,
-        key = key,
-        data = data,
-        state = state,
-        enabled = enabled,
-        dragAfterLongPress = dragAfterLongPress,
-        requireFirstDownUnconsumed = requireFirstDownUnconsumed,
-        dropTargets = dropTargets,
-        dropStrategy = dropStrategy,
-        dragAxis = dragAxis,
-        dropAnimationSpec = dropAnimationSpec,
-        draggableContent = draggableContent ?: {
-            with(draggableItemScopeShadowImpl) {
-                content()
-            }
-        },
-        hasDragHandle = draggableItemScopeImpl.hasDragHandle,
-        onDraggableItemStateCreated = { draggableItemScopeImpl.draggableItemState = it },
+    Box(
+        modifier = modifier.draggableItemImpl(
+            key = key,
+            data = data,
+            state = state,
+            enabled = enabled,
+            dragAfterLongPress = dragAfterLongPress,
+            requireFirstDownUnconsumed = requireFirstDownUnconsumed,
+            dropTargets = dropTargets,
+            dropStrategy = dropStrategy,
+            dragAxis = dragAxis,
+            hasDragHandle = false,
+            dragHandleOwner = draggableItemScopeImpl,
+            dropAnimationSpec = dropAnimationSpec,
+            onDragStart = onDragStart,
+            onDragEnd = onDragEnd,
+            draggableContent = draggableContent ?: {
+                with(draggableItemScopeShadowImpl) {
+                    content()
+                }
+            },
+        ),
     ) {
         with(draggableItemScopeImpl) {
             content()

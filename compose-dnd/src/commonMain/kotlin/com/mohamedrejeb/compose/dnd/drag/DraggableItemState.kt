@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.positionInRoot
 
 internal class DraggableItemState<T>(
     var key: Any,
@@ -35,22 +36,56 @@ internal class DraggableItemState<T>(
     var positionInRoot: Offset,
     var size: Size,
 
+    var dragHandleOwner: DragHandleOwner? = null,
+
+    var onDragStart: (DraggedItemState<T>) -> Unit = {},
+    var onDragEnd: (DraggedItemState<T>) -> Unit = {},
+
     var content: @Composable () -> Unit,
 ) {
+    /**
+     * True if only a drag handle starts the drag: either declared through
+     * [hasDragHandle], or a scoped `dragHandle()` was applied in the content.
+     */
+    fun usesDragHandle(): Boolean = hasDragHandle || dragHandleOwner?.hasDragHandle == true
+
     // Live coordinates, positionInRoot alone goes stale while animateItem
     // is gliding the item because layer frames do not trigger onPlaced
     var layoutCoordinates: LayoutCoordinates? = null
 
-    fun copy(): DraggableItemState<T> = DraggableItemState(
+    /**
+     * Current top-left in root coordinates, read from the live layout
+     * coordinates when attached so it is never stale after a reorder.
+     */
+    fun livePositionInRoot(): Offset =
+        layoutCoordinates
+            ?.takeIf { it.isAttached }
+            ?.positionInRoot()
+            ?: positionInRoot
+
+    fun copy(): DraggableItemState<T> =
+        DraggableItemState(
             key = key,
             data = data,
             dropTargets = dropTargets,
             dropStrategy = dropStrategy,
             dragAxis = dragAxis,
             hasDragHandle = hasDragHandle,
+            dragHandleOwner = dragHandleOwner,
             dropAnimationSpec = dropAnimationSpec,
             positionInRoot = positionInRoot,
             size = size,
-            content = content
+            onDragStart = onDragStart,
+            onDragEnd = onDragEnd,
+            content = content,
         )
+}
+
+/**
+ * Scope of a composable draggable item whose content may apply a scoped
+ * `dragHandle()` modifier. Read by the gesture detector at gesture time, since
+ * the content composes after the item's own modifier.
+ */
+internal interface DragHandleOwner {
+    val hasDragHandle: Boolean
 }

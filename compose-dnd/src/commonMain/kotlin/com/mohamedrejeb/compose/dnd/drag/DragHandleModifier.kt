@@ -23,7 +23,6 @@ import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInRoot
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 import com.mohamedrejeb.compose.dnd.gesture.detectDragStartGesture
-import kotlinx.coroutines.delay
 
 /**
  * Marks this composable as the drag handle for the draggable item identified by [key].
@@ -84,23 +83,15 @@ internal fun <T> DragHandleModifier(
             dragAfterLongPress,
             requireFirstDownUnconsumed,
         ) {
-            // Wait for the DraggableItemState to be registered by DisposableEffect
-            var draggableItemState: DraggableItemState<T>? = null
-            while (draggableItemState == null) {
-                draggableItemState = state.draggableItemMap[key]
-                if (draggableItemState == null) {
-                    delay(1)
-                }
-            }
-
+            // The dragged item is resolved from the registry when the drag
+            // starts, so the handle works even if its item registers later.
             detectDragStartGesture(
                 key = key,
                 state = state,
-                draggableItemState = draggableItemState,
+                draggableItemState = null,
                 enabled = enabled && state.enabled,
                 dragAfterLongPress = dragAfterLongPress,
                 requireFirstDownUnconsumed = requireFirstDownUnconsumed,
-                isHandle = true,
                 gestureSourcePositionInRoot = {
                     handleCoordinates
                         ?.takeIf { it.isAttached }

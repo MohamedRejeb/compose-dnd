@@ -17,11 +17,11 @@ package com.mohamedrejeb.compose.dnd.scroll
 
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import com.mohamedrejeb.compose.dnd.DragAndDropState
-import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 
 /**
  * Pins the scroll position of a [LazyListState] during an active drag.
@@ -38,30 +38,17 @@ import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
  * @param state The drag and drop state to observe.
  * @param lazyListState The lazy list state whose scroll position should be pinned.
  */
-@ExperimentalDndApi
 @Composable
 fun <T> Modifier.dragScrollPin(
     state: DragAndDropState<T>,
     lazyListState: LazyListState,
-): Modifier {
-    // Register a synchronous callback that fires BEFORE onDragEnter/onDragExit.
-    // requestScrollToItem tells LazyList to use this position for the next
-    // layout pass instead of key-based anchoring — no 1-frame jump.
-    DisposableEffect(state, lazyListState) {
-        val callback: () -> Unit = {
-            lazyListState.requestScrollToItem(
-                lazyListState.firstVisibleItemIndex,
-                lazyListState.firstVisibleItemScrollOffset,
-            )
-        }
-        state.onBeforeHoverTargetChange.add(callback)
-        onDispose {
-            state.onBeforeHoverTargetChange.remove(callback)
-        }
+): Modifier =
+    pinScrollBeforeHoverChange(state, lazyListState) {
+        lazyListState.requestScrollToItem(
+            lazyListState.firstVisibleItemIndex,
+            lazyListState.firstVisibleItemScrollOffset,
+        )
     }
-
-    return this
-}
 
 /**
  * Pins the scroll position of a [LazyGridState] during an active drag.
@@ -72,22 +59,54 @@ fun <T> Modifier.dragScrollPin(
  * @param state The drag and drop state to observe.
  * @param lazyGridState The lazy grid state whose scroll position should be pinned.
  */
-@ExperimentalDndApi
 @Composable
 fun <T> Modifier.dragScrollPin(
     state: DragAndDropState<T>,
     lazyGridState: LazyGridState,
+): Modifier =
+    pinScrollBeforeHoverChange(state, lazyGridState) {
+        lazyGridState.requestScrollToItem(
+            lazyGridState.firstVisibleItemIndex,
+            lazyGridState.firstVisibleItemScrollOffset,
+        )
+    }
+
+/**
+ * Pins the scroll position of a [LazyStaggeredGridState] during an active drag.
+ *
+ * Staggered grid equivalent of [dragScrollPin] for [LazyListState].
+ * [dragAutoScroll] already includes this behavior, so you do **not** need both.
+ *
+ * @param state The drag and drop state to observe.
+ * @param lazyStaggeredGridState The lazy staggered grid state whose scroll position should be pinned.
+ */
+@Composable
+fun <T> Modifier.dragScrollPin(
+    state: DragAndDropState<T>,
+    lazyStaggeredGridState: LazyStaggeredGridState,
+): Modifier =
+    pinScrollBeforeHoverChange(state, lazyStaggeredGridState) {
+        lazyStaggeredGridState.requestScrollToItem(
+            lazyStaggeredGridState.firstVisibleItemIndex,
+            lazyStaggeredGridState.firstVisibleItemScrollOffset,
+        )
+    }
+
+/**
+ * Register [pin] to run synchronously **before** onDragEnter/onDragExit fire, so
+ * the lazy layout uses the pinned position for the next layout pass instead of
+ * key-based anchoring — no 1-frame jump.
+ */
+@Composable
+private fun <T> Modifier.pinScrollBeforeHoverChange(
+    state: DragAndDropState<T>,
+    lazyState: Any,
+    pin: () -> Unit,
 ): Modifier {
-    DisposableEffect(state, lazyGridState) {
-        val callback: () -> Unit = {
-            lazyGridState.requestScrollToItem(
-                lazyGridState.firstVisibleItemIndex,
-                lazyGridState.firstVisibleItemScrollOffset,
-            )
-        }
-        state.onBeforeHoverTargetChange.add(callback)
+    DisposableEffect(state, lazyState) {
+        state.onBeforeHoverTargetChange.add(pin)
         onDispose {
-            state.onBeforeHoverTargetChange.remove(callback)
+            state.onBeforeHoverTargetChange.remove(pin)
         }
     }
 

@@ -138,7 +138,7 @@ class ReorderDropAnimationTest {
         var lastGhostY = Float.NaN
         var frames = 0
         while (dndState().draggedItem != null && frames < 1000) {
-            lastGhostY = dndState().dragPosition.value.y + dndState().dragPositionAnimatable.value.y
+            lastGhostY = dndState().dragPosition.value.y
             mainClock.advanceTimeBy(16)
             frames++
         }
@@ -286,7 +286,7 @@ class ReorderDropAnimationTest {
         var minGhostY = Float.MAX_VALUE
         var frames = 0
         while (dndState.draggedItem != null && frames < 1000) {
-            val ghostY = dndState.dragPosition.value.y + dndState.dragPositionAnimatable.value.y
+            val ghostY = dndState.dragPosition.value.y
             lastGhostY = ghostY
             minGhostY = min(minGhostY, ghostY)
             mainClock.advanceTimeBy(16)
@@ -378,7 +378,7 @@ class ReorderDropAnimationTest {
         var frames = 0
         var lastGhostY = Float.NaN
         while (dndState.draggedItem != null && frames < scrollFrames) {
-            lastGhostY = dndState.dragPosition.value.y + dndState.dragPositionAnimatable.value.y
+            lastGhostY = dndState.dragPosition.value.y
             runOnUiThread { listState.dispatchRawDelta(1f) }
             mainClock.advanceTimeBy(16)
             frames++

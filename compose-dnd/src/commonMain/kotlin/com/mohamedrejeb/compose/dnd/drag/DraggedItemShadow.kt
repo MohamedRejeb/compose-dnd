@@ -52,10 +52,9 @@ internal fun <T> DraggedItemShadow(
             ).onPlaced {
                 draggedItemPositionInRoot.value = it.positionInRoot()
             }.graphicsLayer {
-                val dragPositionX = state.dragPositionAnimatable.value.x + state.dragPosition.value.x
-                val dragPositionY = state.dragPositionAnimatable.value.y + state.dragPosition.value.y
-                translationX = dragPositionX - draggedItemPositionInRoot.value.x
-                translationY = dragPositionY - draggedItemPositionInRoot.value.y
+                val dragPosition = state.dragPosition.value
+                translationX = dragPosition.x - draggedItemPositionInRoot.value.x
+                translationY = dragPosition.y - draggedItemPositionInRoot.value.y
             },
     ) {
         Box(

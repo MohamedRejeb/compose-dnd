@@ -202,7 +202,7 @@ class DragResizedItemTest {
         var lastGhostHeight = Float.NaN
         var frames = 0
         while (dndState.draggedItem != null && frames < 1000) {
-            lastGhostY = dndState.dragPosition.value.y + dndState.dragPositionAnimatable.value.y
+            lastGhostY = dndState.dragPosition.value.y
             lastGhostHeight = dndState.draggedItemVisibleSize?.height ?: lastGhostHeight
             mainClock.advanceTimeBy(16)
             frames++
@@ -338,7 +338,7 @@ class DragResizedItemTest {
         var lastGhostSize = Size.Zero
         var frames = 0
         while (dndState.draggedItem != null && frames < 1000) {
-            lastGhost = dndState.dragPosition.value + dndState.dragPositionAnimatable.value
+            lastGhost = dndState.dragPosition.value
             lastGhostSize = dndState.draggedItemVisibleSize ?: lastGhostSize
             mainClock.advanceTimeBy(16)
             frames++
@@ -444,7 +444,7 @@ class DragResizedItemTest {
         var lastGhostY = Float.NaN
         var frames = 0
         while (dndState.draggedItem != null && frames < 1000) {
-            lastGhostY = dndState.dragPosition.value.y + dndState.dragPositionAnimatable.value.y
+            lastGhostY = dndState.dragPosition.value.y
             mainClock.advanceTimeBy(16)
             frames++
         }

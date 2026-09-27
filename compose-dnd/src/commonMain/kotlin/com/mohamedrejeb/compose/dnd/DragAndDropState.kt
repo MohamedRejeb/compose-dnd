@@ -15,10 +15,6 @@
  */
 package com.mohamedrejeb.compose.dnd
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.AnimationVector2D
-import androidx.compose.animation.core.VectorConverter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
@@ -26,13 +22,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.input.pointer.PointerId
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -42,7 +36,9 @@ import com.mohamedrejeb.compose.dnd.drag.DraggedItemState
 import com.mohamedrejeb.compose.dnd.drag.applyConstraint
 import com.mohamedrejeb.compose.dnd.drop.DropTargetState
 import com.mohamedrejeb.compose.dnd.utils.MathUtils
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.launch
 
 /**
@@ -53,27 +49,6 @@ import kotlinx.coroutines.launch
  * undone. This prevents a slow drag from triggering the same swap repeatedly.
  */
 val DefaultReorderHysteresisDistance: Dp = 8.dp
-
-/**
- * Minimum displacement of the dragged item relative to the hovered sibling
- * slot, in px, that identifies a hover reorder during the drop animation.
- */
-private const val REORDER_DETECTION_DISTANCE = 1f
-
-/**
- * Frames granted after the drop animation for a pending reorder
- * recomposition to surface before concluding nothing moved.
- */
-private const val REORDER_DETECTION_EXTRA_FRAMES = 2
-
-/** Per-frame movement below which the dragged item counts as settled, in px. */
-private const val SETTLE_DISTANCE = 0.5f
-
-/** Consecutive settled frames required before the final landing animation. */
-private const val SETTLED_FRAME_COUNT = 2
-
-/** Upper bound on frames spent waiting for the dragged item to settle. */
-private const val MAX_SETTLE_FRAMES = 120
 
 /**
  * Remember [DragAndDropState]
@@ -125,13 +100,58 @@ class DragAndDropState<T>(
     /**
      * Map of [DropTargetState] by key
      */
-    private val dropTargetMap = mutableMapOf<Any, DropTargetState<T>>()
+    internal val dropTargetMap = mutableMapOf<Any, DropTargetState<T>>()
 
     /**
-     * Key of the [DropTargetState] that is currently hovered
+     * Key of the drop target the dragged item is currently hovering, or null
+     * when no drag is in progress or no target is hovered.
      */
     var hoveredDropTargetKey by mutableStateOf<Any?>(null)
         internal set
+
+    /**
+     * Returns true if the item with the given [key] is currently being dragged.
+     *
+     * Reads snapshot state, so a composable or `graphicsLayer` block calling it
+     * is updated when a drag starts or ends:
+     * ```
+     * Modifier.graphicsLayer { alpha = if (state.isDragging(item.id)) 0f else 1f }
+     * ```
+     */
+    fun isDragging(key: Any): Boolean = draggedItem?.key == key
+
+    /**
+     * Returns true if the drop target with the given [key] is currently hovered
+     * by the dragged item — handy for highlighting the target that will receive
+     * the drop.
+     */
+    fun isDropTargetHovered(key: Any): Boolean = hoveredDropTargetKey == key
+
+    /**
+     * Cancel the drag in progress, if any: the drag shadow animates back to the
+     * dragged item, no drop target receives `onDrop`, and the item's
+     * `onDragEnd` fires once the animation ends. Useful to abort a drag on a
+     * back press, an Escape key or when the dragged data goes away.
+     *
+     * Does nothing when no drag is in progress or once the item was released.
+     */
+    fun cancelDrag() {
+        if (!isActiveDrag) return
+        pointerId = null
+        val scope = containerScope
+        if (scope == null) {
+            isActiveDrag = false
+            clearDragState()
+        } else {
+            scope.launch { handleDragCancel() }
+        }
+    }
+
+    /**
+     * Scope of the [DragAndDropContainer] hosting this state, used to run the
+     * cancel animation of [cancelDrag].
+     */
+    internal var containerScope: CoroutineScope? = null
 
     /**
      * Listeners invoked synchronously **before** [hoveredDropTargetKey] changes
@@ -153,8 +173,15 @@ class DragAndDropState<T>(
         dropTargetMap[dropTargetState.key] = dropTargetState
     }
 
-    internal fun removeDropTarget(key: Any) {
-        dropTargetMap.remove(key)
+    /**
+     * Remove [dropTargetState] from [dropTargetMap], unless another target has
+     * registered under the same key in the meantime (e.g. an item recreated in
+     * another list is attached before the old one is detached).
+     */
+    internal fun removeDropTarget(key: Any, dropTargetState: DropTargetState<T>) {
+        if (dropTargetMap[key] === dropTargetState) {
+            dropTargetMap.remove(key)
+        }
     }
 
     // Draggable Item
@@ -242,8 +269,14 @@ class DragAndDropState<T>(
         draggableItemMap[state.key] = state
     }
 
-    internal fun removeDraggableItem(key: Any) {
-        draggableItemMap.remove(key)
+    /**
+     * Remove [state] from [draggableItemMap], unless another item has
+     * registered under the same key in the meantime.
+     */
+    internal fun removeDraggableItem(key: Any, state: DraggableItemState<T>) {
+        if (draggableItemMap[key] === state) {
+            draggableItemMap.remove(key)
+        }
     }
 
     private var dragStartPositionInRoot: Offset = Offset.Zero
@@ -258,38 +291,63 @@ class DragAndDropState<T>(
             reorderHysteresis.reverseDistancePx = value
         }
 
+    /**
+     * Top-left of the drag shadow (ghost) in root coordinates.
+     */
     internal val dragPosition: MutableState<Offset> = mutableStateOf(Offset.Zero)
-    internal val dragPositionAnimatable: Animatable<Offset, AnimationVector2D> = Animatable(Offset.Zero, Offset.VectorConverter)
 
     /**
-     * Handle drag start method is called when drag starts
-     * - It updates [DragAndDropState.currentDraggableItem]
-     * - It updates [DragAndDropState.draggedItem]
-     * @param offset - offset of the drag start position
+     * Coroutine running the current drop (or cancel) animation, null when idle.
      */
-    internal suspend fun handleDragStart(
+    private var dropJob: Job? = null
+
+    /**
+     * Completes the in-flight drop immediately: fires its callbacks and clears
+     * the drag state. Null when no drop animation is running.
+     */
+    private var finishDrop: (() -> Unit)? = null
+
+    /**
+     * Returns true if a new drag may start: no other pointer is dragging.
+     * A drop animation still in flight doesn't block a new drag — it is
+     * completed instantly by [handleDragStart].
+     */
+    internal fun canStartDrag(): Boolean = pointerId == null && !isActiveDrag
+
+    /**
+     * Start dragging the item registered under [key].
+     * - Completes any drop animation still running from the previous drag
+     * - Updates [currentDraggableItem] and [draggedItem]
+     * @param offset pointer position in root coordinates
+     * @return false if no item is registered under [key]
+     */
+    internal fun handleDragStart(
         key: Any,
         offset: Offset,
-    ) = coroutineScope {
-        val draggableItemState = draggableItemMap[key] ?: return@coroutineScope
+    ): Boolean {
+        val draggableItemState = draggableItemMap[key] ?: return false
 
-        launch {
-            dragPositionAnimatable.snapTo(Offset.Zero)
-        }
+        finishPendingDrop()
 
-        dragPosition.value = draggableItemState.positionInRoot
+        val positionInRoot = draggableItemState.livePositionInRoot()
+        dragPosition.value = positionInRoot
 
         isActiveDrag = true
-        dragStartPositionInRoot = draggableItemState.positionInRoot
+        dragStartPositionInRoot = positionInRoot
         reorderHysteresis.reset()
         dragStartOffset = offset
+        lastPointerOffset = Offset.Unspecified
         draggedItemShadowSize = null
         currentDraggableItem = draggableItemState.copy()
-        draggedItem = DraggedItemState(
+
+        val newDraggedItem = DraggedItemState(
             key = draggableItemState.key,
             data = draggableItemState.data,
             dragAmount = Offset.Zero,
         )
+        draggedItem = newDraggedItem
+        draggableItemState.onDragStart(newDraggedItem)
+        return true
     }
 
     /**
@@ -299,11 +357,13 @@ class DragAndDropState<T>(
      * - It calls [DropTargetState.onDragEnter] and [DropTargetState.onDragExit] if needed
      * @param offset - offset of the drag position
      */
-    internal suspend fun handleDrag(
+    internal fun handleDrag(
         offset: Offset,
-    ) = coroutineScope {
+    ) {
+        // Events can still arrive after release, while the drop animates
+        if (!isActiveDrag) return
         // reevaluateDropTargets can fire before any real pointer event arrived
-        if (offset.isUnspecified) return@coroutineScope
+        if (offset.isUnspecified) return
 
         val movementDelta = if (lastPointerOffset.isSpecified) {
             offset - lastPointerOffset
@@ -313,7 +373,7 @@ class DragAndDropState<T>(
         lastPointerOffset = offset
         reorderHysteresis.trackMovement(movementDelta)
 
-        val currentDraggableItem = currentDraggableItem ?: return@coroutineScope
+        val currentDraggableItem = currentDraggableItem ?: return
         val dropTargetIds = currentDraggableItem.dropTargets
 
         reorderHysteresis.liftIfReversed(offset)
@@ -387,8 +447,7 @@ class DragAndDropState<T>(
      * Called by auto-scroll to update hover state when the list scrolls
      * but the pointer hasn't moved.
      */
-    internal suspend fun reevaluateDropTargets() {
-        if (draggedItem == null) return
+    internal fun reevaluateDropTargets() {
         handleDrag(lastPointerOffset)
     }
 
@@ -408,146 +467,24 @@ class DragAndDropState<T>(
     internal suspend fun handleDragEnd() {
         isActiveDrag = false
         val currentDraggableItem = currentDraggableItem ?: return
+        val draggedItem = draggedItem ?: return
 
-        val dropTarget = dropTargetMap.values.find { it.key == hoveredDropTargetKey }
+        val dropTarget = hoveredDropTargetKey?.let { dropTargetMap[it] }
 
-        if (dropTarget == null) {
-            animateDropPosition(currentDraggableItem.dropAnimationSpec) {
-                ghostReturnTopLeft(currentDraggableItem)
-            }
-        } else if (dropTarget.dropAnimationEnabled) {
-            animateDropOnTarget(dropTarget, currentDraggableItem)
-        }
-
-        draggedItem?.let {
-            dropTarget?.onDrop?.invoke(it)
-        }
-        clearDragState()
-    }
-
-    /**
-     * Animate the ghost onto the hovered drop target.
-     *
-     * Dropping onto another draggable item's slot (a reorder sibling) is
-     * special-cased: when the app reorders the list in onDragEnter, the
-     * sibling that triggered the reorder glides away from the slot the user
-     * dropped on while the dragged item takes its place, so following the
-     * sibling's live bounds would land the ghost one slot off. The reorder is
-     * detected as the dragged item moving *relative* to the sibling
-     * (scrolling moves both together and doesn't trigger it). Once detected,
-     * the ghost settles on the slot bounds captured at release, waits for the
-     * dragged item's placement animation (e.g. animateItem) to finish
-     * underneath it, and finally lands exactly on the item.
-     *
-     * When no reorder is detected — plain container targets, or apps that
-     * only reorder in onDrop — the ghost follows the target's live bounds as
-     * before.
-     */
-    private suspend fun animateDropOnTarget(
-        dropTarget: DropTargetState<T>,
-        currentDraggableItem: DraggableItemState<T>,
-    ) {
-        val ghostSize = draggedItemVisibleSize ?: currentDraggableItem.size
-        val isSiblingItemSlot =
-            dropTarget.key != currentDraggableItem.key && dropTarget.key in draggableItemMap
-
-        if (
-            isSiblingItemSlot &&
-            ownItemBeatsTargetOverlap(dropTarget, currentDraggableItem, ghostSize)
+        runDrop(
+            onFinish = {
+                dropTarget?.onDrop?.invoke(draggedItem)
+                dispatchDragEnd(currentDraggableItem, draggedItem)
+            },
         ) {
-            // The hover reorder already played out before the release: the
-            // dragged item, not the hovered sibling, occupies the slot under
-            // the ghost — settle on the item directly.
-            settleOnOwnItem(dropTarget, currentDraggableItem)
-            return
-        }
-
-        // Slot bounds as the user saw them on release: after a hover reorder
-        // the sibling glides away from them, but the dragged item glides in.
-        val releaseAnchor = dropTarget.getDropTopLeft(ghostSize)
-        val ownStart = ownItemTopLeft(currentDraggableItem)
-        val targetStart = liveTargetTopLeft(dropTarget)
-        var reorderedOnHover = false
-
-        fun detectHoverReorder() {
-            if (!isSiblingItemSlot || reorderedOnHover) return
-            val ownMotion = ownItemTopLeft(currentDraggableItem) - ownStart
-            val targetMotion = liveTargetTopLeft(dropTarget) - targetStart
-            reorderedOnHover =
-                (ownMotion - targetMotion).getDistance() > REORDER_DETECTION_DISTANCE
-        }
-
-        animateDropPosition(currentDraggableItem.dropAnimationSpec) {
-            detectHoverReorder()
-            if (reorderedOnHover) {
-                releaseAnchor
-            } else {
-                dropTarget.layoutCoordinates
-                    ?.takeIf { it.isAttached }
-                    ?.let { dropTarget.topLeft = it.positionInRoot() }
-                dropTarget.getDropTopLeft(ghostSize)
+            if (dropTarget == null) {
+                animateDropPosition(currentDraggableItem.dropAnimationSpec) {
+                    ghostReturnTopLeft(currentDraggableItem)
+                }
+            } else if (dropTarget.dropAnimationEnabled) {
+                animateDropOnTarget(dropTarget, currentDraggableItem)
             }
         }
-
-        if (!isSiblingItemSlot) return
-
-        // The release can come before the reorder's recomposition has run at
-        // all — give it a couple of frames before concluding nothing moved.
-        repeat(REORDER_DETECTION_EXTRA_FRAMES) {
-            withFrameNanos { }
-            detectHoverReorder()
-        }
-        if (!reorderedOnHover) return
-
-        awaitDraggedItemSettled(currentDraggableItem, dropTarget)
-        animateDropPosition(currentDraggableItem.dropAnimationSpec) {
-            ghostReturnTopLeft(currentDraggableItem)
-        }
-    }
-
-    /**
-     * Settle the ghost on the dragged item itself: follow its live rect,
-     * wait out any placement animation still running, then land exactly.
-     */
-    private suspend fun settleOnOwnItem(
-        dropTarget: DropTargetState<T>,
-        currentDraggableItem: DraggableItemState<T>,
-    ) {
-        animateDropPosition(currentDraggableItem.dropAnimationSpec) {
-            ghostReturnTopLeft(currentDraggableItem)
-        }
-        awaitDraggedItemSettled(currentDraggableItem, dropTarget)
-        animateDropPosition(currentDraggableItem.dropAnimationSpec) {
-            ghostReturnTopLeft(currentDraggableItem)
-        }
-    }
-
-    /**
-     * True when the dragged item's own rect overlaps the released ghost more
-     * than the hovered target does — the released slot already belongs to the
-     * dragged item, so the hover reorder has already (at least partly) played
-     * out. The target wins ties, keeping reorder-on-drop apps on the
-     * follow-the-target behavior.
-     */
-    private fun ownItemBeatsTargetOverlap(
-        dropTarget: DropTargetState<T>,
-        currentDraggableItem: DraggableItemState<T>,
-        ghostSize: Size,
-    ): Boolean {
-        val releaseTopLeft = dragPosition.value
-        val ownOverlap = MathUtils.overlappingArea(
-            topLeft1 = releaseTopLeft,
-            size1 = ghostSize,
-            topLeft2 = ownItemTopLeft(currentDraggableItem),
-            size2 = draggedItemLiveSize ?: currentDraggableItem.size,
-        )
-        val targetOverlap = MathUtils.overlappingArea(
-            topLeft1 = releaseTopLeft,
-            size1 = ghostSize,
-            topLeft2 = liveTargetTopLeft(dropTarget),
-            size2 = dropTarget.size,
-        )
-        return ownOverlap > targetOverlap
     }
 
     /**
@@ -558,110 +495,78 @@ class DragAndDropState<T>(
     internal suspend fun handleDragCancel() {
         isActiveDrag = false
         val currentDraggableItem = currentDraggableItem ?: return
+        val draggedItem = draggedItem ?: return
 
-        animateDropPosition(currentDraggableItem.dropAnimationSpec) {
-            ghostReturnTopLeft(currentDraggableItem)
+        runDrop(
+            onFinish = { dispatchDragEnd(currentDraggableItem, draggedItem) },
+        ) {
+            animateDropPosition(currentDraggableItem.dropAnimationSpec) {
+                ghostReturnTopLeft(currentDraggableItem)
+            }
         }
-
-        clearDragState()
     }
 
     /**
-     * Animate the ghost onto a target that can keep moving while the
-     * animation runs, e.g. items still gliding under animateItem after a
-     * reorder. The offset between the ghost and the target is animated to
-     * zero in a single uninterrupted animation while the target is re-read
-     * every frame, so the ghost follows a moving target smoothly and lands
-     * exactly on it. (Cancel-and-restart retargeting would cancel the
-     * animation every frame while the target moves, before it can make any
-     * progress — freezing the ghost mid-air.)
+     * Run a drop (or cancel) [animation], then [onFinish] and clear the drag
+     * state. A drag starting before the animation ends calls
+     * [finishPendingDrop], which runs [onFinish] right away and cancels the
+     * animation, so the new drag never sees stale state.
      */
-    private suspend fun animateDropPosition(
-        animationSpec: AnimationSpec<Offset>,
-        targetTopLeft: () -> Offset,
+    private suspend fun runDrop(
+        onFinish: () -> Unit,
+        animation: suspend () -> Unit,
     ) {
-        val startGhost = dragPosition.value + dragPositionAnimatable.value
-        val delta = Animatable(startGhost - targetTopLeft(), Offset.VectorConverter)
-        delta.animateTo(Offset.Zero, animationSpec) {
-            dragPosition.value = targetTopLeft() + value
+        val job = currentCoroutineContext()[Job]
+        var finished = false
+        val finish = {
+            if (!finished) {
+                finished = true
+                onFinish()
+                clearDragState()
+            }
         }
-        dragPosition.value = targetTopLeft()
+        dropJob = job
+        finishDrop = finish
+        try {
+            animation()
+        } finally {
+            if (dropJob === job) {
+                dropJob = null
+                finishDrop = null
+            }
+            finish()
+        }
     }
 
     /**
-     * Wait until the dragged item's post-reorder placement animation has
-     * finished, so the final landing animation targets a settled position.
-     *
-     * Motion is measured relative to the hovered sibling: the reorder's
-     * placement animations move the two apart, while scrolling moves both
-     * together. Waiting for absolute stillness would stall the drop for as
-     * long as the user keeps scrolling. Bounded so a drop can never hang on
-     * an app that keeps the item moving.
+     * Complete the drop animation still running from the previous drag, if
+     * any: its callbacks fire immediately and the animation is canceled.
      */
-    private suspend fun awaitDraggedItemSettled(
+    private fun finishPendingDrop() {
+        val finish = finishDrop ?: return
+        val job = dropJob
+        dropJob = null
+        finishDrop = null
+        finish()
+        job?.cancel()
+    }
+
+    /**
+     * Invoke the dragged item's onDragEnd, preferring the live registration
+     * so the latest lambda runs even if the item recomposed during the drag.
+     */
+    private fun dispatchDragEnd(
         currentDraggableItem: DraggableItemState<T>,
-        dropTarget: DropTargetState<T>,
+        draggedItem: DraggedItemState<T>,
     ) {
-        fun relativeTopLeft() = ownItemTopLeft(currentDraggableItem) - liveTargetTopLeft(dropTarget)
-
-        var previous = relativeTopLeft()
-        var settledFrames = 0
-        var frames = 0
-        while (frames < MAX_SETTLE_FRAMES && settledFrames < SETTLED_FRAME_COUNT) {
-            withFrameNanos { }
-            frames++
-            val current = relativeTopLeft()
-            settledFrames =
-                if ((current - previous).getDistance() < SETTLE_DISTANCE) settledFrames + 1 else 0
-            previous = current
-        }
-    }
-
-    private fun liveItemPosition(itemState: DraggableItemState<T>?, fallback: Offset): Offset =
-        itemState?.let { item ->
-            item.layoutCoordinates
-                ?.takeIf { it.isAttached }
-                ?.positionInRoot()
-                ?: item.positionInRoot
-        } ?: fallback
-
-    /**
-     * Live top-left of the dragged item's own composable, re-read from the
-     * registry so an item recreated under the same key mid-animation is
-     * still tracked.
-     */
-    private fun ownItemTopLeft(currentDraggableItem: DraggableItemState<T>): Offset =
-        liveItemPosition(
-            itemState = draggableItemMap[currentDraggableItem.key],
-            fallback = currentDraggableItem.positionInRoot,
-        )
-
-    private fun liveTargetTopLeft(dropTarget: DropTargetState<T>): Offset =
-        dropTarget.layoutCoordinates
-            ?.takeIf { it.isAttached }
-            ?.positionInRoot()
-            ?: dropTarget.topLeft
-
-    /**
-     * Top-left the ghost should land on when it settles on the item itself
-     * (no drop target, canceled drag, or a hover reorder): the ghost centered
-     * on the live item rect, so a size difference between the ghost and the
-     * item still reads as landing on the item.
-     */
-    private fun ghostReturnTopLeft(currentDraggableItem: DraggableItemState<T>): Offset {
-        val itemTopLeft = ownItemTopLeft(currentDraggableItem)
-        val itemSize = draggedItemLiveSize ?: currentDraggableItem.size
-        val ghostSize = draggedItemVisibleSize ?: currentDraggableItem.size
-        return Offset(
-            x = itemTopLeft.x + (itemSize.width - ghostSize.width) / 2f,
-            y = itemTopLeft.y + (itemSize.height - ghostSize.height) / 2f,
-        )
+        val itemState = draggableItemMap[currentDraggableItem.key] ?: currentDraggableItem
+        itemState.onDragEnd(draggedItem)
     }
 
     /**
      * Clear the drag state after drag is finished
      */
-    private suspend fun clearDragState() {
+    private fun clearDragState() {
         isActiveDrag = false
         currentDraggableItem = null
         draggedItem = null
@@ -672,6 +577,5 @@ class DragAndDropState<T>(
         dragStartPositionInRoot = Offset.Zero
         reorderHysteresis.reset()
         dragPosition.value = Offset.Zero
-        dragPositionAnimatable.snapTo(Offset.Zero)
     }
 }

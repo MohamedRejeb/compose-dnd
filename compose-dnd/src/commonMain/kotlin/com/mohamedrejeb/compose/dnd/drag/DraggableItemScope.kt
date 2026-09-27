@@ -15,9 +15,6 @@
  */
 package com.mohamedrejeb.compose.dnd.drag
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 
@@ -50,12 +47,13 @@ interface DraggableItemScope {
 internal class DraggableItemScopeImpl<T>(
     val state: DragAndDropState<T>,
     override val key: Any,
-) : DraggableItemScope {
+) : DraggableItemScope,
+    DragHandleOwner {
     override val isDragging: Boolean
         get() = state.draggedItem?.key == key
 
-    internal var hasDragHandle by mutableStateOf(false)
-    internal var draggableItemState: DraggableItemState<T>? = null
+    override var hasDragHandle: Boolean = false
+        private set
 
     override fun Modifier.dragHandle(
         enabled: Boolean,
@@ -63,7 +61,6 @@ internal class DraggableItemScopeImpl<T>(
         requireFirstDownUnconsumed: Boolean,
     ): Modifier {
         hasDragHandle = true
-        draggableItemState?.hasDragHandle = true
         return DragHandleModifier(
             key = key,
             state = state,

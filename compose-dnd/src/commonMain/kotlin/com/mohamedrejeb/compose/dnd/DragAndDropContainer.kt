@@ -19,7 +19,8 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -34,12 +35,16 @@ import com.mohamedrejeb.compose.dnd.utils.fastForEach
 import kotlinx.coroutines.launch
 
 /**
- * Container for drag and drop,
- * All draggable items and drop targets should be inside this container
+ * Container for drag and drop.
+ *
+ * All draggable items and drop targets sharing [state] must be placed inside
+ * this container: it tracks the drag gesture once an item starts it, and draws
+ * the drag shadow on top of its content.
  *
  * @param state The state of the drag and drop
  * @param modifier [Modifier]
- * @param enabled whether the drag and drop is enabled
+ * @param enabled Whether drag and drop is enabled. Disabling the container
+ * while a drag is in progress cancels that drag.
  * @param content content of the container
  */
 @Composable
@@ -55,8 +60,17 @@ fun <T> DragAndDropContainer(
         mutableStateOf(Offset.Zero)
     }
 
-    LaunchedEffect(enabled) {
+    DisposableEffect(state, scope) {
+        state.containerScope = scope
+        onDispose {
+            if (state.containerScope === scope) state.containerScope = null
+        }
+    }
+
+    SideEffect {
         state.enabled = enabled
+        // Disabled mid-drag: end the drag instead of leaving it stuck
+        if (!enabled) state.cancelDrag()
     }
 
     Box(
@@ -74,9 +88,7 @@ fun <T> DragAndDropContainer(
                     state.pointerId?.let { pointerId ->
                         if (
                             drag(pointerId) {
-                                scope.launch {
-                                    state.handleDrag(it.position + positionInRoot.value)
-                                }
+                                state.handleDrag(it.position + positionInRoot.value)
                                 it.consume()
                             }
                         ) {

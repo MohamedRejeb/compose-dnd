@@ -17,14 +17,17 @@ package com.mohamedrejeb.compose.dnd.scroll
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameMillis
@@ -34,31 +37,10 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.toSize
 import com.mohamedrejeb.compose.dnd.DragAndDropState
-import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
-
-/**
- * Configuration for auto-scroll behavior during drag.
- *
- * @param minScrollThreshold Minimum distance from the edge of the scrollable container
- *   within which auto-scroll activates. The actual threshold is the larger of this value
- *   and the size of the first/last visible item (when available), capped by [maxScrollThreshold].
- * @param maxScrollThreshold Maximum distance from the edge for auto-scroll activation.
- *   Prevents the threshold from becoming too large for tall items or containers.
- *   The effective threshold is: `clamp(itemSize, minScrollThreshold, maxScrollThreshold)`.
- * @param maxScrollSpeed Maximum scroll speed in pixels per second when the
- *   dragged item is at the very edge.
- */
-data class DragAutoScrollConfig(
-    val minScrollThreshold: Dp = 48.dp,
-    val maxScrollThreshold: Dp = 160.dp,
-    val maxScrollSpeed: Float = 1500f,
-)
 
 /**
  * Enables automatic scrolling of a [LazyListState] when a dragged item approaches
@@ -68,9 +50,11 @@ data class DragAutoScrollConfig(
  * [LazyRow][androidx.compose.foundation.lazy.LazyRow] — the scroll axis is
  * determined automatically from [LazyListState.layoutInfo].
  *
+ * Also pins the scroll position while items swap, like [dragScrollPin].
+ *
  * @param state The drag and drop state to observe.
  * @param lazyListState The lazy list state to scroll.
- * @param config Auto-scroll configuration (threshold, speed, interval).
+ * @param config Auto-scroll configuration (threshold and speed).
  *
  * Example:
  * ```
@@ -84,84 +68,24 @@ data class DragAutoScrollConfig(
  * )
  * ```
  */
-@ExperimentalDndApi
 @Composable
 fun <T> Modifier.dragAutoScroll(
     state: DragAndDropState<T>,
     lazyListState: LazyListState,
     config: DragAutoScrollConfig = DragAutoScrollConfig(),
-): Modifier {
-    val density = LocalDensity.current
-    val minThresholdPx = with(density) { config.minScrollThreshold.toPx() }
-    val maxThresholdPx = with(density) { config.maxScrollThreshold.toPx() }
-
-    var containerTopLeft by remember { mutableStateOf(Offset.Zero) }
-    var containerSize by remember { mutableStateOf(Size.Zero) }
-
-    LaunchedEffect(
-        state,
-        lazyListState,
-        minThresholdPx,
-        maxThresholdPx,
-        config.maxScrollSpeed,
-    ) {
-        snapshotFlow {
-            if (!state.isActiveDrag) return@snapshotFlow null
-            val dragPosition = state.dragPosition.value
-            val itemSize = state.draggedItemVisibleSize ?: return@snapshotFlow null
-            val orientation = lazyListState.layoutInfo.orientation
-
-            // Don't scroll if the item isn't within this container on the cross axis
-            if (!hasCrossAxisOverlap(orientation, dragPosition, itemSize, containerTopLeft, containerSize)) {
-                return@snapshotFlow null
-            }
-
-            val (itemStart, itemEnd, containerStart, containerEnd) = resolveScrollAxis(
-                orientation = orientation,
-                dragPosition = dragPosition,
-                itemSize = itemSize,
-                containerTopLeft = containerTopLeft,
-                containerSize = containerSize,
-            )
-
-            // Dynamic threshold: clamp(itemSize, min, max)
-            val visibleItems = lazyListState.layoutInfo.visibleItemsInfo
-            val startThresholdPx = (visibleItems.firstOrNull()?.size?.toFloat() ?: minThresholdPx)
-                .coerceIn(minThresholdPx, maxThresholdPx)
-            val endThresholdPx = (visibleItems.lastOrNull()?.size?.toFloat() ?: minThresholdPx)
-                .coerceIn(minThresholdPx, maxThresholdPx)
-
-            computeScrollSpeed(
-                itemStart = itemStart,
-                itemEnd = itemEnd,
-                containerStart = containerStart,
-                containerEnd = containerEnd,
-                startThresholdPx = startThresholdPx,
-                endThresholdPx = endThresholdPx,
-                maxScrollSpeed = config.maxScrollSpeed,
-            )
-        }.collectLatest { scrollSpeed ->
-            if (scrollSpeed == null || scrollSpeed == 0f) return@collectLatest
-
-            var lastFrameMs = withFrameMillis { it }
-            while (true) {
-                val currentFrameMs = withFrameMillis { it }
-                val deltaMs = currentFrameMs - lastFrameMs
-                lastFrameMs = currentFrameMs
-                val scrollAmount = scrollSpeed * deltaMs / 1000f
-                lazyListState.scrollBy(scrollAmount)
-                state.reevaluateDropTargets()
-            }
-        }
-    }
-
-    return this
+): Modifier =
+    this
         .dragScrollPin(state = state, lazyListState = lazyListState)
-        .onPlaced { coordinates ->
-            containerTopLeft = coordinates.positionInRoot()
-            containerSize = coordinates.size.toSize()
-        }
-}
+        .lazyLayoutDragAutoScroll(
+            state = state,
+            scrollableState = lazyListState,
+            config = config,
+            orientation = { lazyListState.layoutInfo.orientation },
+            edgeItemSizes = {
+                val items = lazyListState.layoutInfo.visibleItemsInfo
+                EdgeItemSizes(first = items.firstOrNull()?.size, last = items.lastOrNull()?.size)
+            },
+        )
 
 /**
  * Enables automatic scrolling of a [LazyGridState] when a dragged item approaches
@@ -171,94 +95,73 @@ fun <T> Modifier.dragAutoScroll(
  * [LazyHorizontalGrid][androidx.compose.foundation.lazy.grid.LazyHorizontalGrid] — the scroll
  * axis is determined automatically from [LazyGridState.layoutInfo].
  *
+ * Also pins the scroll position while items swap, like [dragScrollPin].
+ *
  * @param state The drag and drop state to observe.
  * @param lazyGridState The lazy grid state to scroll.
- * @param config Auto-scroll configuration (threshold, speed, interval).
+ * @param config Auto-scroll configuration (threshold and speed).
  */
-@ExperimentalDndApi
 @Composable
 fun <T> Modifier.dragAutoScroll(
     state: DragAndDropState<T>,
     lazyGridState: LazyGridState,
     config: DragAutoScrollConfig = DragAutoScrollConfig(),
-): Modifier {
-    val density = LocalDensity.current
-    val minThresholdPx = with(density) { config.minScrollThreshold.toPx() }
-    val maxThresholdPx = with(density) { config.maxScrollThreshold.toPx() }
-
-    var containerTopLeft by remember { mutableStateOf(Offset.Zero) }
-    var containerSize by remember { mutableStateOf(Size.Zero) }
-
-    LaunchedEffect(
-        state,
-        lazyGridState,
-        minThresholdPx,
-        maxThresholdPx,
-        config.maxScrollSpeed,
-    ) {
-        snapshotFlow {
-            if (!state.isActiveDrag) return@snapshotFlow null
-            val dragPosition = state.dragPosition.value
-            val itemSize = state.draggedItemVisibleSize ?: return@snapshotFlow null
-            val orientation = lazyGridState.layoutInfo.orientation
-
-            if (!hasCrossAxisOverlap(orientation, dragPosition, itemSize, containerTopLeft, containerSize)) {
-                return@snapshotFlow null
-            }
-
-            val (itemStart, itemEnd, containerStart, containerEnd) = resolveScrollAxis(
-                orientation = orientation,
-                dragPosition = dragPosition,
-                itemSize = itemSize,
-                containerTopLeft = containerTopLeft,
-                containerSize = containerSize,
-            )
-
-            // Dynamic threshold: clamp(itemSize, min, max)
-            val visibleItems = lazyGridState.layoutInfo.visibleItemsInfo
-            val firstItemMainAxisSize = visibleItems.firstOrNull()?.let {
-                if (orientation == Orientation.Vertical) it.size.height else it.size.width
-            }
-            val lastItemMainAxisSize = visibleItems.lastOrNull()?.let {
-                if (orientation == Orientation.Vertical) it.size.height else it.size.width
-            }
-
-            val startThresholdPx = (firstItemMainAxisSize?.toFloat() ?: minThresholdPx)
-                .coerceIn(minThresholdPx, maxThresholdPx)
-            val endThresholdPx = (lastItemMainAxisSize?.toFloat() ?: minThresholdPx)
-                .coerceIn(minThresholdPx, maxThresholdPx)
-
-            computeScrollSpeed(
-                itemStart = itemStart,
-                itemEnd = itemEnd,
-                containerStart = containerStart,
-                containerEnd = containerEnd,
-                startThresholdPx = startThresholdPx,
-                endThresholdPx = endThresholdPx,
-                maxScrollSpeed = config.maxScrollSpeed,
-            )
-        }.collectLatest { scrollSpeed ->
-            if (scrollSpeed == null || scrollSpeed == 0f) return@collectLatest
-
-            var lastFrameMs = withFrameMillis { it }
-            while (true) {
-                val currentFrameMs = withFrameMillis { it }
-                val deltaMs = currentFrameMs - lastFrameMs
-                lastFrameMs = currentFrameMs
-                val scrollAmount = scrollSpeed * deltaMs / 1000f
-                lazyGridState.scrollBy(scrollAmount)
-                state.reevaluateDropTargets()
-            }
-        }
-    }
-
-    return this
+): Modifier =
+    this
         .dragScrollPin(state = state, lazyGridState = lazyGridState)
-        .onPlaced { coordinates ->
-            containerTopLeft = coordinates.positionInRoot()
-            containerSize = coordinates.size.toSize()
-        }
-}
+        .lazyLayoutDragAutoScroll(
+            state = state,
+            scrollableState = lazyGridState,
+            config = config,
+            orientation = { lazyGridState.layoutInfo.orientation },
+            edgeItemSizes = {
+                val layoutInfo = lazyGridState.layoutInfo
+                val items = layoutInfo.visibleItemsInfo
+                EdgeItemSizes(
+                    first = items.firstOrNull()?.size?.mainAxis(layoutInfo.orientation),
+                    last = items.lastOrNull()?.size?.mainAxis(layoutInfo.orientation),
+                )
+            },
+        )
+
+/**
+ * Enables automatic scrolling of a [LazyStaggeredGridState] when a dragged item approaches
+ * the edges of the scrollable container.
+ *
+ * Supports both
+ * [LazyVerticalStaggeredGrid][androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid]
+ * and
+ * [LazyHorizontalStaggeredGrid][androidx.compose.foundation.lazy.staggeredgrid.LazyHorizontalStaggeredGrid]
+ * — the scroll axis is determined automatically from [LazyStaggeredGridState.layoutInfo].
+ *
+ * Also pins the scroll position while items swap, like [dragScrollPin].
+ *
+ * @param state The drag and drop state to observe.
+ * @param lazyStaggeredGridState The lazy staggered grid state to scroll.
+ * @param config Auto-scroll configuration (threshold and speed).
+ */
+@Composable
+fun <T> Modifier.dragAutoScroll(
+    state: DragAndDropState<T>,
+    lazyStaggeredGridState: LazyStaggeredGridState,
+    config: DragAutoScrollConfig = DragAutoScrollConfig(),
+): Modifier =
+    this
+        .dragScrollPin(state = state, lazyStaggeredGridState = lazyStaggeredGridState)
+        .lazyLayoutDragAutoScroll(
+            state = state,
+            scrollableState = lazyStaggeredGridState,
+            config = config,
+            orientation = { lazyStaggeredGridState.layoutInfo.orientation },
+            edgeItemSizes = {
+                val layoutInfo = lazyStaggeredGridState.layoutInfo
+                val items = layoutInfo.visibleItemsInfo
+                EdgeItemSizes(
+                    first = items.firstOrNull()?.size?.mainAxis(layoutInfo.orientation),
+                    last = items.lastOrNull()?.size?.mainAxis(layoutInfo.orientation),
+                )
+            },
+        )
 
 /**
  * Enables automatic scrolling of a [ScrollState] when a dragged item approaches
@@ -269,9 +172,8 @@ fun <T> Modifier.dragAutoScroll(
  * @param state The drag and drop state to observe.
  * @param scrollState The scroll state to scroll.
  * @param orientation The scroll orientation ([Orientation.Vertical] or [Orientation.Horizontal]).
- * @param config Auto-scroll configuration (threshold, speed, interval).
+ * @param config Auto-scroll configuration (threshold and speed).
  */
-@ExperimentalDndApi
 @Composable
 fun <T> Modifier.dragAutoScroll(
     state: DragAndDropState<T>,
@@ -282,6 +184,7 @@ fun <T> Modifier.dragAutoScroll(
     val density = LocalDensity.current
     val minThresholdPx = with(density) { config.minScrollThreshold.toPx() }
     val maxThresholdPx = with(density) { config.maxScrollThreshold.toPx() }
+    val maxScrollSpeedPx = config.maxScrollSpeedPx(density)
 
     var containerTopLeft by remember { mutableStateOf(Offset.Zero) }
     var containerSize by remember { mutableStateOf(Size.Zero) }
@@ -292,7 +195,7 @@ fun <T> Modifier.dragAutoScroll(
         orientation,
         minThresholdPx,
         maxThresholdPx,
-        config.maxScrollSpeed,
+        maxScrollSpeedPx,
     ) {
         // Unlike LazyList/Grid where containerTopLeft is stable during scroll,
         // ScrollState's onPlaced position shifts with every scroll when this modifier
@@ -357,7 +260,7 @@ fun <T> Modifier.dragAutoScroll(
                         containerEnd = containerEnd,
                         startThresholdPx = thresholdPx,
                         endThresholdPx = thresholdPx,
-                        maxScrollSpeed = config.maxScrollSpeed,
+                        maxScrollSpeed = maxScrollSpeedPx,
                     )
 
                     if (scrollSpeed != 0f) {
@@ -376,6 +279,101 @@ fun <T> Modifier.dragAutoScroll(
 }
 
 // -- Internal helpers --
+
+/** Main-axis sizes of the first and last visible items of a lazy layout, in px. */
+private class EdgeItemSizes(
+    val first: Int?,
+    val last: Int?,
+)
+
+private fun IntSize.mainAxis(orientation: Orientation): Int =
+    if (orientation == Orientation.Vertical) height else width
+
+/**
+ * Shared auto-scroll for lazy layouts: the container keeps its position while
+ * it scrolls, so the scroll speed can be derived from a snapshot of the drag
+ * position and re-emitted only when it changes.
+ */
+@Composable
+private fun <T> Modifier.lazyLayoutDragAutoScroll(
+    state: DragAndDropState<T>,
+    scrollableState: ScrollableState,
+    config: DragAutoScrollConfig,
+    orientation: () -> Orientation,
+    edgeItemSizes: () -> EdgeItemSizes,
+): Modifier {
+    val density = LocalDensity.current
+    val minThresholdPx = with(density) { config.minScrollThreshold.toPx() }
+    val maxThresholdPx = with(density) { config.maxScrollThreshold.toPx() }
+    val maxScrollSpeedPx = config.maxScrollSpeedPx(density)
+    val currentOrientation by rememberUpdatedState(orientation)
+    val currentEdgeItemSizes by rememberUpdatedState(edgeItemSizes)
+
+    var containerTopLeft by remember { mutableStateOf(Offset.Zero) }
+    var containerSize by remember { mutableStateOf(Size.Zero) }
+
+    LaunchedEffect(
+        state,
+        scrollableState,
+        minThresholdPx,
+        maxThresholdPx,
+        maxScrollSpeedPx,
+    ) {
+        snapshotFlow {
+            if (!state.isActiveDrag) return@snapshotFlow null
+            val dragPosition = state.dragPosition.value
+            val itemSize = state.draggedItemVisibleSize ?: return@snapshotFlow null
+            val axis = currentOrientation()
+
+            // Don't scroll if the item isn't within this container on the cross axis
+            if (!hasCrossAxisOverlap(axis, dragPosition, itemSize, containerTopLeft, containerSize)) {
+                return@snapshotFlow null
+            }
+
+            val (itemStart, itemEnd, containerStart, containerEnd) = resolveScrollAxis(
+                orientation = axis,
+                dragPosition = dragPosition,
+                itemSize = itemSize,
+                containerTopLeft = containerTopLeft,
+                containerSize = containerSize,
+            )
+
+            // Dynamic threshold: clamp(itemSize, min, max)
+            val edgeSizes = currentEdgeItemSizes()
+            val startThresholdPx = (edgeSizes.first?.toFloat() ?: minThresholdPx)
+                .coerceIn(minThresholdPx, maxThresholdPx)
+            val endThresholdPx = (edgeSizes.last?.toFloat() ?: minThresholdPx)
+                .coerceIn(minThresholdPx, maxThresholdPx)
+
+            computeScrollSpeed(
+                itemStart = itemStart,
+                itemEnd = itemEnd,
+                containerStart = containerStart,
+                containerEnd = containerEnd,
+                startThresholdPx = startThresholdPx,
+                endThresholdPx = endThresholdPx,
+                maxScrollSpeed = maxScrollSpeedPx,
+            )
+        }.collectLatest { scrollSpeed ->
+            if (scrollSpeed == null || scrollSpeed == 0f) return@collectLatest
+
+            var lastFrameMs = withFrameMillis { it }
+            while (true) {
+                val currentFrameMs = withFrameMillis { it }
+                val deltaMs = currentFrameMs - lastFrameMs
+                lastFrameMs = currentFrameMs
+                val scrollAmount = scrollSpeed * deltaMs / 1000f
+                scrollableState.scrollBy(scrollAmount)
+                state.reevaluateDropTargets()
+            }
+        }
+    }
+
+    return this.onPlaced { coordinates ->
+        containerTopLeft = coordinates.positionInRoot()
+        containerSize = coordinates.size.toSize()
+    }
+}
 
 /**
  * Resolves the dragged item and container positions along the scroll axis.

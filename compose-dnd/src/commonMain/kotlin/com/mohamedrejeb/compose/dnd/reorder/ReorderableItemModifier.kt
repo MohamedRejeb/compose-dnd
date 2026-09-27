@@ -34,6 +34,10 @@ import com.mohamedrejeb.compose.dnd.drop.dropTarget
  * This is a modifier-based alternative to [ReorderableItem] that reduces boilerplate.
  * It combines [draggableItem] and [dropTarget] into a single modifier.
  *
+ * Reorder the backing list in [onDragEnter]: the dragged item then takes the
+ * hovered item's slot while the drag continues. Add `Modifier.animateItem()`
+ * *before* this modifier in lazy layouts for smooth displacement and drops.
+ *
  * To check if the item is currently being dragged, use [DragAndDropState.isDragging]:
  * ```
  * val isDragging = state.isDragging(key)
@@ -54,9 +58,15 @@ import com.mohamedrejeb.compose.dnd.drop.dropTarget
  * @param dropAlignment Alignment of the dropped item within the target.
  * @param dropOffset Offset applied to the dropped item position.
  * @param dropAnimationEnabled Whether the drop animation is enabled.
+ * @param canDrop Whether this item currently accepts other items as a drop target. When false,
+ * dragged items pass over it without hovering it, so it is never swapped — useful for pinned
+ * or locked items (combine with `enabled = false` to also prevent dragging it).
  * @param onDrop Called when an item is dropped onto this target.
- * @param onDragEnter Called when an item is dragged over this target.
+ * @param onDragEnter Called when an item is dragged over this target. Reorder the list here.
  * @param onDragExit Called when an item is dragged out of this target.
+ * @param onDragStart Called when a drag of this item starts.
+ * @param onDragEnd Called once the drag of this item is over, after the drop or return
+ * animation. A good place to persist the new order.
  * @param draggableContent Content rendered as the drag shadow/overlay while dragging.
  */
 fun <T> Modifier.reorderableItem(
@@ -75,9 +85,12 @@ fun <T> Modifier.reorderableItem(
     dropAlignment: Alignment = Alignment.Center,
     dropOffset: Offset = Offset.Zero,
     dropAnimationEnabled: Boolean = true,
+    canDrop: Boolean = true,
     onDrop: (state: DraggedItemState<T>) -> Unit = {},
     onDragEnter: (state: DraggedItemState<T>) -> Unit = {},
     onDragExit: (state: DraggedItemState<T>) -> Unit = {},
+    onDragStart: (state: DraggedItemState<T>) -> Unit = {},
+    onDragEnd: (state: DraggedItemState<T>) -> Unit = {},
     draggableContent: @Composable () -> Unit,
 ): Modifier =
     this
@@ -93,6 +106,8 @@ fun <T> Modifier.reorderableItem(
             dragAxis = dragAxis,
             hasDragHandle = hasDragHandle,
             dropAnimationSpec = dropAnimationSpec,
+            onDragStart = onDragStart,
+            onDragEnd = onDragEnd,
             draggableContent = draggableContent,
         ).dropTarget(
             key = key,
@@ -101,6 +116,7 @@ fun <T> Modifier.reorderableItem(
             dropAlignment = dropAlignment,
             dropOffset = dropOffset,
             dropAnimationEnabled = dropAnimationEnabled,
+            canDrop = canDrop,
             onDrop = onDrop,
             onDragEnter = onDragEnter,
             onDragExit = onDragExit,

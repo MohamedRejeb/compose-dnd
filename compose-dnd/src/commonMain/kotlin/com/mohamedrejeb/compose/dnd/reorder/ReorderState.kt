@@ -22,7 +22,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import com.mohamedrejeb.compose.dnd.DefaultReorderHysteresisDistance
 import com.mohamedrejeb.compose.dnd.DragAndDropState
-import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 
 /**
  * Remember [ReorderState]
@@ -33,7 +32,13 @@ import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
  * before a just-swapped reorder target can be re-entered. `0.dp` disables it.
  * @return [ReorderState]
  */
-@OptIn(ExperimentalDndApi::class)
+@Deprecated(
+    message = "ReorderState is deprecated, reorder with a DragAndDropState instead.",
+    replaceWith = ReplaceWith(
+        "rememberDragAndDropState<T>(dragAfterLongPress, requireFirstDownUnconsumed, reorderHysteresisDistance)",
+        "com.mohamedrejeb.compose.dnd.rememberDragAndDropState",
+    ),
+)
 @Composable
 fun <T> rememberReorderState(
     dragAfterLongPress: Boolean = false,
@@ -58,6 +63,15 @@ fun <T> rememberReorderState(
  * @param requireFirstDownUnconsumed if true, the first down event must be unconsumed to start the drag
  * This parameter is applied to all [ReorderableItem]s. If you want to change it for a specific item, use [ReorderableItem] parameter.
  */
+@Deprecated(
+    message = "ReorderState is deprecated, reorder with a DragAndDropState instead: " +
+        "rememberDragAndDropState, DragAndDropContainer and the reorderableItem modifier " +
+        "or ReorderableItem composable.",
+    replaceWith = ReplaceWith(
+        "DragAndDropState<T>",
+        "com.mohamedrejeb.compose.dnd.DragAndDropState",
+    ),
+)
 @Stable
 class ReorderState<T>(
     dragAfterLongPress: Boolean = false,
@@ -66,15 +80,12 @@ class ReorderState<T>(
     /**
      * State of the drag and drop
      */
-    @ExperimentalDndApi
     val dndState = DragAndDropState<T>(
         dragAfterLongPress = dragAfterLongPress,
         requireFirstDownUnconsumed = requireFirstDownUnconsumed,
     )
 
-    @OptIn(ExperimentalDndApi::class)
     val draggedItem get() = dndState.draggedItem
 
-    @OptIn(ExperimentalDndApi::class)
     val hoveredDropTargetKey get() = dndState.hoveredDropTargetKey
 }
