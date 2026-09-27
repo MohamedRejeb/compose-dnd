@@ -16,7 +16,6 @@
 package com.mohamedrejeb.compose.dnd
 
 import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -26,12 +25,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.pointer.changedToUp
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.util.fastAll
+import androidx.compose.ui.util.fastFirstOrNull
 import com.mohamedrejeb.compose.dnd.drag.DraggedItemShadow
-import com.mohamedrejeb.compose.dnd.utils.fastForEach
 import kotlinx.coroutines.launch
 
 /**
@@ -77,36 +79,16 @@ fun <T> DragAndDropContainer(
         modifier = modifier
             .onPlaced {
                 positionInRoot.value = it.positionInRoot()
-            }.pointerInput(enabled, state, state.pointerId) {
+            }.pointerInput(enabled, state) {
                 if (!enabled) return@pointerInput
 
                 awaitEachGesture {
-                    if (state.pointerId == null) {
-                        awaitPointerEvent()
-                    }
-
-                    state.pointerId?.let { pointerId ->
-                        if (
-                            drag(pointerId) {
-                                state.handleDrag(it.position + positionInRoot.value)
-                                it.consume()
-                            }
-                        ) {
-                            // consume up if we quit drag gracefully with the up
-                            currentEvent.changes.fastForEach {
-                                if (it.changedToUp()) it.consume()
-                            }
-                            scope.launch {
-                                state.handleDragEnd()
-                            }
-                            state.pointerId = null
-                        } else {
-                            scope.launch {
-                                state.handleDragCancel()
-                            }
-                            state.pointerId = null
-                        }
-                    }
+                    trackDrag(
+                        state = state,
+                        containerPositionInRoot = { positionInRoot.value },
+                        onDragEnd = { scope.launch { state.handleDragEnd() } },
+                        onDragCancel = { scope.launch { state.handleDragCancel() } },
+                    )
                 }
             },
     ) {
@@ -115,5 +97,66 @@ fun <T> DragAndDropContainer(
         DraggedItemShadow(
             state = state,
         )
+    }
+}
+
+/**
+ * Follow the pointer that started a drag until it is released.
+ *
+ * A draggable item publishes its pointer id in [DragAndDropState.pointerId]
+ * while handling an event of the Main pass, which reaches children before
+ * this container: so the container notices the drag on that very event, with
+ * no restart of its pointer input and no event lost in between.
+ */
+private suspend fun <T> AwaitPointerEventScope.trackDrag(
+    state: DragAndDropState<T>,
+    containerPositionInRoot: () -> Offset,
+    onDragEnd: () -> Unit,
+    onDragCancel: () -> Unit,
+) {
+    // Wait for a drag to start, or for the gesture to end without one
+    var event = currentEvent
+    while (state.pointerId == null) {
+        event = awaitPointerEvent()
+        if (state.pointerId == null && event.changes.fastAll { !it.pressed }) return
+    }
+    val pointerId = state.pointerId ?: return
+    // The item consumed the event that started the drag itself
+    var isStartEvent = true
+
+    while (true) {
+        // canceled programmatically: stop following this pointer
+        if (state.pointerId != pointerId) return
+
+        val change = event.changes.fastFirstOrNull { it.id == pointerId }
+        when {
+            change == null -> {
+                state.pointerId = null
+                onDragCancel()
+                return
+            }
+
+            change.changedToUpIgnoreConsumed() -> {
+                // consume the up so a clickable under the pointer doesn't fire
+                change.consume()
+                state.pointerId = null
+                onDragEnd()
+                return
+            }
+
+            change.isConsumed && !isStartEvent -> {
+                state.pointerId = null
+                onDragCancel()
+                return
+            }
+
+            change.positionChanged() -> {
+                state.handleDrag(change.position + containerPositionInRoot())
+                change.consume()
+            }
+        }
+
+        isStartEvent = false
+        event = awaitPointerEvent()
     }
 }
