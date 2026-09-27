@@ -41,6 +41,8 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.toSize
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
 
 /**
  * Enables automatic scrolling of a [LazyListState] when a dragged item approaches
@@ -201,8 +203,9 @@ fun <T> Modifier.dragAutoScroll(
         // ScrollState's onPlaced position shifts with every scroll when this modifier
         // is inside the scroll container. Using snapshotFlow + collectLatest would
         // cause re-emission on every scroll frame, cancelling the delay and making
-        // scroll run at unlimited speed. Instead, we poll: wait for drag to start,
-        // then compute speed fresh each frame inside the loop.
+        // scroll run at unlimited speed. Instead, while a drag is active we compute
+        // the speed fresh each frame as long as it scrolls, and otherwise suspend
+        // until the drag position, the container or the scroll bounds change.
         snapshotFlow { state.isActiveDrag }
             .collectLatest { isActive ->
                 if (!isActive) return@collectLatest
@@ -210,64 +213,38 @@ fun <T> Modifier.dragAutoScroll(
                 var lastFrameMs = withFrameMillis { it }
 
                 while (state.isActiveDrag) {
+                    val scrollSpeed = scrollStateSpeed(
+                        state = state,
+                        scrollState = scrollState,
+                        orientation = orientation,
+                        containerTopLeft = containerTopLeft,
+                        containerSize = containerSize,
+                        minThresholdPx = minThresholdPx,
+                        maxThresholdPx = maxThresholdPx,
+                        maxScrollSpeedPx = maxScrollSpeedPx,
+                    )
+
+                    if (scrollSpeed == 0f) {
+                        // Idle until the drag, the container or the scroll bounds change
+                        snapshotFlow {
+                            listOf(
+                                state.dragPosition.value,
+                                containerTopLeft,
+                                containerSize,
+                                scrollState.canScrollBackward,
+                                scrollState.canScrollForward,
+                            )
+                        }.drop(1).first()
+                        lastFrameMs = withFrameMillis { it }
+                        continue
+                    }
+
                     val currentFrameMs = withFrameMillis { it }
                     val deltaMs = currentFrameMs - lastFrameMs
                     lastFrameMs = currentFrameMs
 
-                    val dragPosition = state.dragPosition.value
-                    val itemSize = state.draggedItemVisibleSize
-                        ?: continue
-
-                    if (!hasCrossAxisOverlap(orientation, dragPosition, itemSize, containerTopLeft, containerSize)) {
-                        continue
-                    }
-
-                    val viewportPx = scrollState.viewportSize.toFloat()
-                    val isVertical = orientation == Orientation.Vertical
-                    val reportedAxisSize =
-                        if (isVertical) containerSize.height else containerSize.width
-                    val scrollCompensation =
-                        if (reportedAxisSize > viewportPx + 1f) scrollState.value.toFloat() else 0f
-
-                    val viewportTopLeft = if (isVertical) {
-                        Offset(containerTopLeft.x, containerTopLeft.y + scrollCompensation)
-                    } else {
-                        Offset(containerTopLeft.x + scrollCompensation, containerTopLeft.y)
-                    }
-                    val viewportSize = if (isVertical) {
-                        Size(containerSize.width, viewportPx)
-                    } else {
-                        Size(viewportPx, containerSize.height)
-                    }
-
-                    val (itemStart, itemEnd, containerStart, containerEnd) = resolveScrollAxis(
-                        orientation = orientation,
-                        dragPosition = dragPosition,
-                        itemSize = itemSize,
-                        containerTopLeft = viewportTopLeft,
-                        containerSize = viewportSize,
-                    )
-
-                    // ScrollState has no visible items — use 20% of viewport,
-                    // clamped between min and max threshold
-                    val thresholdPx = (viewportPx * 0.2f)
-                        .coerceIn(minThresholdPx, maxThresholdPx)
-
-                    val scrollSpeed = computeScrollSpeed(
-                        itemStart = itemStart,
-                        itemEnd = itemEnd,
-                        containerStart = containerStart,
-                        containerEnd = containerEnd,
-                        startThresholdPx = thresholdPx,
-                        endThresholdPx = thresholdPx,
-                        maxScrollSpeed = maxScrollSpeedPx,
-                    )
-
-                    if (scrollSpeed != 0f) {
-                        val scrollAmount = scrollSpeed * deltaMs / 1000f
-                        scrollState.scrollBy(scrollAmount)
-                        state.reevaluateDropTargets()
-                    }
+                    scrollState.scrollBy(scrollSpeed * deltaMs / 1000f)
+                    state.reevaluateDropTargets()
                 }
             }
     }
@@ -279,6 +256,75 @@ fun <T> Modifier.dragAutoScroll(
 }
 
 // -- Internal helpers --
+
+/**
+ * Scroll speed for a [ScrollState] container, or 0 when the dragged item is
+ * outside the container's edge zones or there is nothing left to scroll.
+ */
+private fun <T> scrollStateSpeed(
+    state: DragAndDropState<T>,
+    scrollState: ScrollState,
+    orientation: Orientation,
+    containerTopLeft: Offset,
+    containerSize: Size,
+    minThresholdPx: Float,
+    maxThresholdPx: Float,
+    maxScrollSpeedPx: Float,
+): Float {
+    val dragPosition = state.dragPosition.value
+    val itemSize = state.draggedItemVisibleSize ?: return 0f
+
+    if (!hasCrossAxisOverlap(orientation, dragPosition, itemSize, containerTopLeft, containerSize)) {
+        return 0f
+    }
+
+    // Unlike lazy layouts, this modifier may sit inside the scrolled content,
+    // whose reported bounds then span the whole content: derive the viewport
+    val viewportPx = scrollState.viewportSize.toFloat()
+    val isVertical = orientation == Orientation.Vertical
+    val reportedAxisSize = if (isVertical) containerSize.height else containerSize.width
+    val scrollCompensation =
+        if (reportedAxisSize > viewportPx + 1f) scrollState.value.toFloat() else 0f
+
+    val viewportTopLeft = if (isVertical) {
+        Offset(containerTopLeft.x, containerTopLeft.y + scrollCompensation)
+    } else {
+        Offset(containerTopLeft.x + scrollCompensation, containerTopLeft.y)
+    }
+    val viewportSize = if (isVertical) {
+        Size(containerSize.width, viewportPx)
+    } else {
+        Size(viewportPx, containerSize.height)
+    }
+
+    val (itemStart, itemEnd, containerStart, containerEnd) = resolveScrollAxis(
+        orientation = orientation,
+        dragPosition = dragPosition,
+        itemSize = itemSize,
+        containerTopLeft = viewportTopLeft,
+        containerSize = viewportSize,
+    )
+
+    // ScrollState has no visible items — use 20% of viewport,
+    // clamped between min and max threshold
+    val thresholdPx = (viewportPx * 0.2f).coerceIn(minThresholdPx, maxThresholdPx)
+
+    val speed = computeScrollSpeed(
+        itemStart = itemStart,
+        itemEnd = itemEnd,
+        containerStart = containerStart,
+        containerEnd = containerEnd,
+        startThresholdPx = thresholdPx,
+        endThresholdPx = thresholdPx,
+        maxScrollSpeed = maxScrollSpeedPx,
+    )
+
+    return when {
+        speed < 0f && !scrollState.canScrollBackward -> 0f
+        speed > 0f && !scrollState.canScrollForward -> 0f
+        else -> speed
+    }
+}
 
 /** Main-axis sizes of the first and last visible items of a lazy layout, in px. */
 private class EdgeItemSizes(
@@ -345,7 +391,7 @@ private fun <T> Modifier.lazyLayoutDragAutoScroll(
             val endThresholdPx = (edgeSizes.last?.toFloat() ?: minThresholdPx)
                 .coerceIn(minThresholdPx, maxThresholdPx)
 
-            computeScrollSpeed(
+            val speed = computeScrollSpeed(
                 itemStart = itemStart,
                 itemEnd = itemEnd,
                 containerStart = containerStart,
@@ -354,6 +400,14 @@ private fun <T> Modifier.lazyLayoutDragAutoScroll(
                 endThresholdPx = endThresholdPx,
                 maxScrollSpeed = maxScrollSpeedPx,
             )
+
+            // Nothing left to scroll that way: stay idle instead of spinning
+            // frames until the item leaves the edge zone
+            when {
+                speed < 0f && !scrollableState.canScrollBackward -> 0f
+                speed > 0f && !scrollableState.canScrollForward -> 0f
+                else -> speed
+            }
         }.collectLatest { scrollSpeed ->
             if (scrollSpeed == null || scrollSpeed == 0f) return@collectLatest
 

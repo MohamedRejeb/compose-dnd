@@ -100,9 +100,10 @@ class DragLifecycleTest {
 
         mainClock.autoAdvance = false
 
-        // Drag A onto the target and release: the drop animation starts
+        // Drag A onto the target, off its landing spot (y=250), and release:
+        // the drop animation starts
         onNodeWithTag("container").performTouchInput { down(Offset(200f, 50f)) }
-        repeat(10) {
+        repeat(9) {
             onNodeWithTag("container").performTouchInput {
                 advanceEventTime(16)
                 moveBy(Offset(0f, 25f))
@@ -207,5 +208,31 @@ class DragLifecycleTest {
         assertEquals(setOf<Any>("b"), state.draggableItemMap.keys)
         assertEquals(setOf<Any>("b"), state.dropTargetMap.keys)
         assertEquals("b", state.draggableItemMap["b"]?.key)
+    }
+
+    @Test
+    fun dragShadow_keepsTheGrabbedPointUnderThePointer() = runComposeUiTest {
+        lateinit var state: DragAndDropState<String>
+
+        setContent {
+            state = rememberDragAndDropState()
+            TwoItemsAndTarget(state, mutableListOf())
+        }
+        waitForIdle()
+
+        // Slop is crossed partway: the shadow must still follow the full
+        // pointer movement from the down position, not trail it by the slop
+        onNodeWithTag("container").performTouchInput {
+            down(Offset(200f, 150f))
+            repeat(10) {
+                advanceEventTime(16)
+                moveBy(Offset(3f, 4f))
+            }
+        }
+        waitForIdle()
+
+        assertEquals("B", state.draggedItem?.key)
+        assertEquals(Offset(30f, 140f), state.dragPosition.value, "Shadow should move with the pointer")
+        assertEquals(Offset(30f, 40f), state.draggedItem?.dragAmount)
     }
 }

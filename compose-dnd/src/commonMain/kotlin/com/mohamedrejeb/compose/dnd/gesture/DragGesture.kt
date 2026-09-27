@@ -82,9 +82,12 @@ internal suspend fun <T> PointerInputScope.detectDragStartGesture(
         val sourcePositionInRoot = gestureSourcePositionInRoot?.invoke()
             ?: itemState.livePositionInRoot()
 
+        // Anchor the drag at the down position, not where the touch slop was
+        // crossed, so the grabbed point stays under the pointer: the shadow
+        // catches up with the slop on the first move instead of trailing it.
         val started = state.handleDragStart(
             key = key,
-            offset = drag.position + sourcePositionInRoot,
+            offset = down.position + sourcePositionInRoot,
         )
 
         if (started) {
