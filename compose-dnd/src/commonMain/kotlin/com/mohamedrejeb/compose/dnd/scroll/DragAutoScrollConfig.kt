@@ -19,6 +19,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isUnspecified
 
 /**
  * Configuration for auto-scroll behavior during drag.
@@ -53,7 +54,10 @@ class DragAutoScrollConfig(
             minScrollThreshold = minScrollThreshold,
             maxScrollThreshold = maxScrollThreshold,
             maxScrollSpeed = maxScrollSpeed,
-        )
+        ).also {
+            // Keep a px speed from the deprecated factory unless a Dp speed replaces it
+            if (maxScrollSpeed.isUnspecified) it.maxScrollSpeedPxOverride = maxScrollSpeedPxOverride
+        }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

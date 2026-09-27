@@ -251,4 +251,30 @@ class DragCallbacksTest {
         onAllNodesWithTag("handle").onFirst().performTouchInput { up() }
         waitForIdle()
     }
+
+    @Test
+    fun cancelDrag_calledTwice_endsTheDragOnce() = runComposeUiTest {
+        val events = mutableListOf<String>()
+        lateinit var state: DragAndDropState<String>
+        setContent {
+            state = rememberDragAndDropState()
+            ItemAndTarget(state, events)
+        }
+
+        onNodeWithTag("container").performTouchInput {
+            dragBy(Offset(200f, 50f), Offset(0f, 200f), release = false)
+        }
+        waitForIdle()
+
+        runOnUiThread {
+            state.cancelDrag()
+            state.cancelDrag()
+        }
+        waitForIdle()
+        onNodeWithTag("container").performTouchInput { up() }
+        waitForIdle()
+
+        assertNull(state.draggedItem)
+        assertEquals(listOf("start:item", "enter", "end:item"), events)
+    }
 }

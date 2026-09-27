@@ -136,7 +136,8 @@ class DragAndDropState<T>(
      * Does nothing when no drag is in progress or once the item was released.
      */
     fun cancelDrag() {
-        if (!isActiveDrag) return
+        if (!isActiveDrag || isCancelRequested) return
+        isCancelRequested = true
         pointerId = null
         val scope = containerScope
         if (scope == null) {
@@ -152,6 +153,13 @@ class DragAndDropState<T>(
      * cancel animation of [cancelDrag].
      */
     internal var containerScope: CoroutineScope? = null
+
+    /**
+     * True between [cancelDrag] and the cancel animation starting: the drag
+     * is still active (so no new drag can start and clobber it), but it no
+     * longer reacts to hover and a second [cancelDrag] is ignored.
+     */
+    private var isCancelRequested = false
 
     /**
      * Listeners invoked synchronously **before** [hoveredDropTargetKey] changes
@@ -361,7 +369,7 @@ class DragAndDropState<T>(
         offset: Offset,
     ) {
         // Events can still arrive after release, while the drop animates
-        if (!isActiveDrag) return
+        if (!isActiveDrag || isCancelRequested) return
         // reevaluateDropTargets can fire before any real pointer event arrived
         if (offset.isUnspecified) return
 
@@ -568,6 +576,7 @@ class DragAndDropState<T>(
      */
     private fun clearDragState() {
         isActiveDrag = false
+        isCancelRequested = false
         currentDraggableItem = null
         draggedItem = null
         draggedItemShadowSize = null
