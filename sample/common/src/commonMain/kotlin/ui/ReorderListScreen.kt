@@ -32,8 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
-import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
-import com.mohamedrejeb.compose.dnd.drag.isDragging
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import com.mohamedrejeb.compose.dnd.reorder.reorderableItem
 import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
@@ -57,7 +55,6 @@ fun ReorderListScreen(
     }
 }
 
-@OptIn(ExperimentalDndApi::class)
 @Composable
 private fun ReorderScreenContent(
     modifier: Modifier = Modifier,

@@ -36,6 +36,10 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -59,8 +63,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
-import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
-import com.mohamedrejeb.compose.dnd.drag.isDragging
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import com.mohamedrejeb.compose.dnd.reorder.reorderableItem
 import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
@@ -72,7 +74,7 @@ fun AutoScrollDemoScreen(
     onBack: () -> Unit,
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("LazyRow", "Grid", "Scroll")
+    val tabs = listOf("LazyRow", "Grid", "Masonry", "Scroll")
 
     DemoScreenScaffold(
         title = "Auto-Scroll Demo",
@@ -106,7 +108,13 @@ fun AutoScrollDemoScreen(
                         .padding(16.dp),
                 )
 
-                2 -> ScrollStateReorderContent(
+                2 -> StaggeredGridReorderContent(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                )
+
+                3 -> ScrollStateReorderContent(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp),
@@ -118,7 +126,6 @@ fun AutoScrollDemoScreen(
 
 // -- LazyRow --
 
-@OptIn(ExperimentalDndApi::class)
 @Composable
 private fun LazyRowReorderContent(modifier: Modifier = Modifier) {
     val dndState = rememberDragAndDropState<String>()
@@ -184,9 +191,76 @@ private fun LazyRowReorderContent(modifier: Modifier = Modifier) {
     }
 }
 
+// -- LazyStaggeredGrid --
+
+@Composable
+private fun StaggeredGridReorderContent(modifier: Modifier = Modifier) {
+    val dndState = rememberDragAndDropState<String>()
+    var items by remember { mutableStateOf((1..40).map { "item$it" }) }
+    val staggeredGridState = rememberLazyStaggeredGridState()
+
+    DragAndDropContainer(
+        state = dndState,
+        modifier = modifier,
+    ) {
+        LazyVerticalStaggeredGrid(
+            columns = StaggeredGridCells.Fixed(2),
+            verticalItemSpacing = 12.dp,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            state = staggeredGridState,
+            modifier = Modifier
+                .fillMaxSize()
+                .dragAutoScroll(
+                    state = dndState,
+                    lazyStaggeredGridState = staggeredGridState,
+                ),
+        ) {
+            items(items, key = { it }) { item ->
+                val number = item.removePrefix("item")
+                // Varied heights make the masonry layout
+                val height = (72 + (number.toInt() * 37 % 5) * 28).dp
+                val isDragging = dndState.isDragging(item)
+
+                AutoScrollItem(
+                    number = number,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    contentColor = MaterialTheme.colorScheme.onTertiary,
+                    modifier = Modifier
+                        .animateItem()
+                        .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+                        .reorderableItem(
+                            key = item,
+                            data = item,
+                            state = dndState,
+                            onDragEnter = { state ->
+                                items = items.toMutableList().apply {
+                                    val index = indexOf(item)
+                                    if (index == -1) return@reorderableItem
+                                    remove(state.data)
+                                    add(index, state.data)
+                                }
+                            },
+                            draggableContent = {
+                                AutoScrollItem(
+                                    number = number,
+                                    isDragShadow = true,
+                                    color = MaterialTheme.colorScheme.tertiary,
+                                    contentColor = MaterialTheme.colorScheme.onTertiary,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(height),
+                                )
+                            },
+                        ).fillMaxWidth()
+                        .height(height),
+                )
+            }
+        }
+    }
+}
+
 // -- LazyGrid --
 
-@OptIn(ExperimentalDndApi::class)
 @Composable
 private fun LazyGridReorderContent(modifier: Modifier = Modifier) {
     val dndState = rememberDragAndDropState<String>()
@@ -254,7 +328,6 @@ private fun LazyGridReorderContent(modifier: Modifier = Modifier) {
 
 // -- ScrollState --
 
-@OptIn(ExperimentalDndApi::class)
 @Composable
 private fun ScrollStateReorderContent(modifier: Modifier = Modifier) {
     val dndState = rememberDragAndDropState<String>()

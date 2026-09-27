@@ -37,4 +37,6 @@ object SampleAccents {
 object ExampleBrandColors {
     val Kanban = Color(0xFF0079BF)
     val FormBuilder = Color(0xFF5E6AD2)
+    val PhotoGallery = Color(0xFF00897B)
+    val StickyNotes = Color(0xFFE08E0B)
 }

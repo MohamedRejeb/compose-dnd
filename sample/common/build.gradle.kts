@@ -69,6 +69,12 @@ kotlin {
 
         implementation(libs.jetbrains.navigation.compose)
     }
+
+    sourceSets.named("desktopTest").dependencies {
+        implementation(kotlin("test"))
+        implementation(libs.compose.ui.test)
+        implementation(compose.desktop.currentOs)
+    }
 }
 
 android {

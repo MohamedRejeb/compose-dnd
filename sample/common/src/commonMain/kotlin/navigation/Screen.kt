@@ -55,3 +55,12 @@ data object KanbanBoardRoute
 
 @Serializable
 data object FormBuilderRoute
+
+@Serializable
+data object PinnedChatsRoute
+
+@Serializable
+data object PhotoGalleryRoute
+
+@Serializable
+data object StickyNotesBoardRoute

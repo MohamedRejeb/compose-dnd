@@ -68,11 +68,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.DragAndDropState
-import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 import com.mohamedrejeb.compose.dnd.drag.DropStrategy
 import com.mohamedrejeb.compose.dnd.drag.dragHandle
 import com.mohamedrejeb.compose.dnd.drag.draggableItem
-import com.mohamedrejeb.compose.dnd.drag.isDragging
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import com.mohamedrejeb.compose.dnd.reorder.reorderableItem
@@ -131,7 +129,6 @@ fun FormBuilderScreen(
     }
 }
 
-@OptIn(ExperimentalDndApi::class)
 @Composable
 private fun FormBuilderContent(
     paddingValues: PaddingValues,

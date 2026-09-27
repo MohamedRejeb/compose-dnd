@@ -32,7 +32,10 @@ import navigation.ItemToItemTwoDirectionsRoute
 import navigation.KanbanBoardRoute
 import navigation.ListToListWithReorderRoute
 import navigation.ListToListWithoutReorderRoute
+import navigation.PhotoGalleryRoute
+import navigation.PinnedChatsRoute
 import navigation.ReorderListRoute
+import navigation.StickyNotesBoardRoute
 import theme.AppTheme
 import ui.AutoScrollDemoScreen
 import ui.AxisLockedDragScreen
@@ -46,7 +49,10 @@ import ui.ItemToItemTwoDirectionsScreen
 import ui.KanbanBoardScreen
 import ui.ListToListWithReorderScreen
 import ui.ListToListWithoutReorderScreen
+import ui.PhotoGalleryScreen
+import ui.PinnedChatsScreen
 import ui.ReorderListScreen
+import ui.StickyNotesBoardScreen
 
 @Composable
 fun App() {
@@ -98,6 +104,15 @@ fun App() {
                         },
                         onNavigateToFormBuilder = {
                             navController.navigate(FormBuilderRoute)
+                        },
+                        onNavigateToPinnedChats = {
+                            navController.navigate(PinnedChatsRoute)
+                        },
+                        onNavigateToPhotoGallery = {
+                            navController.navigate(PhotoGalleryRoute)
+                        },
+                        onNavigateToStickyNotesBoard = {
+                            navController.navigate(StickyNotesBoardRoute)
                         },
                     )
                 }
@@ -158,6 +173,21 @@ fun App() {
                 }
                 composable<FormBuilderRoute> {
                     FormBuilderScreen(
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable<PinnedChatsRoute> {
+                    PinnedChatsScreen(
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable<PhotoGalleryRoute> {
+                    PhotoGalleryScreen(
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable<StickyNotesBoardRoute> {
+                    StickyNotesBoardScreen(
                         onBack = { navController.popBackStack() },
                     )
                 }

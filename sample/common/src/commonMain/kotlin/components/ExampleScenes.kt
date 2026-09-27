@@ -120,6 +120,88 @@ fun FormBuilderMiniScene(
 }
 
 @Composable
+fun PhotoGalleryMiniScene(
+    modifier: Modifier = Modifier,
+) {
+    SceneSurface(
+        brandColor = ExampleBrandColors.PhotoGallery,
+        modifier = modifier,
+    ) {
+        // A grid of photos with a selected run
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            repeat(3) { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    repeat(6) { column ->
+                        val isSelected = row == 1 && column in 1..3
+                        Box(
+                            modifier = Modifier
+                                .size(18.dp)
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(Color.White.copy(alpha = if (isSelected) 0.95f else 0.45f)),
+                        )
+                    }
+                }
+            }
+        }
+
+        // The selection carried as a stack
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(x = 62.dp, y = (-18).dp),
+        ) {
+            repeat(3) { index ->
+                Box(
+                    modifier = Modifier
+                        .size(22.dp)
+                        .graphicsLayer { rotationZ = (index - 1) * 10f }
+                        .shadow(elevation = 4.dp, shape = RoundedCornerShape(3.dp))
+                        .background(Color.White, RoundedCornerShape(3.dp)),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun StickyNotesMiniScene(
+    modifier: Modifier = Modifier,
+) {
+    SceneSurface(
+        brandColor = ExampleBrandColors.StickyNotes,
+        modifier = modifier,
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            MiniNote(color = Color(0xFFFFF59D))
+            MiniNote(color = Color(0xFFA5D6A7), modifier = Modifier.offset(y = 10.dp))
+            MiniNote(color = Color(0xFF90CAF9))
+        }
+
+        // A note lifted off the board
+        MiniNote(
+            color = Color(0xFFF48FB1),
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(x = 56.dp, y = (-14).dp)
+                .graphicsLayer { rotationZ = -8f }
+                .shadow(elevation = 8.dp, shape = RoundedCornerShape(2.dp)),
+        )
+    }
+}
+
+@Composable
+private fun MiniNote(
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .size(30.dp)
+            .background(color, RoundedCornerShape(2.dp)),
+    )
+}
+
+@Composable
 private fun SceneSurface(
     brandColor: Color,
     modifier: Modifier = Modifier,

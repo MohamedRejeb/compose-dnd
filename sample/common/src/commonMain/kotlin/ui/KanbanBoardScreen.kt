@@ -57,11 +57,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.DragAndDropState
-import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 import com.mohamedrejeb.compose.dnd.drag.DragAxis
 import com.mohamedrejeb.compose.dnd.drag.DropStrategy
 import com.mohamedrejeb.compose.dnd.drag.dragHandle
-import com.mohamedrejeb.compose.dnd.drag.isDragging
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import com.mohamedrejeb.compose.dnd.reorder.reorderableItem
@@ -165,7 +163,6 @@ fun KanbanBoardScreen(
     }
 }
 
-@OptIn(ExperimentalDndApi::class)
 @Composable
 private fun KanbanBoardContent(
     modifier: Modifier = Modifier,
@@ -245,7 +242,6 @@ private fun KanbanBoardContent(
     }
 }
 
-@OptIn(ExperimentalDndApi::class)
 @Composable
 private fun KanbanColumnUi(
     column: KanbanColumn,

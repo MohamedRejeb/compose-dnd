@@ -29,6 +29,7 @@ import androidx.compose.material.icons.rounded.DragHandle
 import androidx.compose.material.icons.rounded.FilterNone
 import androidx.compose.material.icons.rounded.Height
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.Reorder
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.SwapVert
@@ -45,8 +46,10 @@ import components.FeatureCard
 import components.FormBuilderMiniScene
 import components.GradientHero
 import components.KanbanMiniScene
+import components.PhotoGalleryMiniScene
 import components.RealExampleCard
 import components.SectionHeader
+import components.StickyNotesMiniScene
 import theme.SampleAccents
 
 @Composable
@@ -63,6 +66,9 @@ fun HomeScreen(
     onNavigateToAutoScrollDemo: () -> Unit,
     onNavigateToKanbanBoard: () -> Unit,
     onNavigateToFormBuilder: () -> Unit,
+    onNavigateToPinnedChats: () -> Unit,
+    onNavigateToPhotoGallery: () -> Unit,
+    onNavigateToStickyNotesBoard: () -> Unit,
 ) {
     DemoScreenScaffold(
         title = "Compose DND",
@@ -116,7 +122,7 @@ fun HomeScreen(
             item {
                 SectionHeader(
                     title = "Reorder",
-                    count = 3,
+                    count = 4,
                     subtitle = "The reorderableItem modifier turns any lazy list into a sortable one.",
                     accent = SampleAccents.Indigo,
                 )
@@ -144,8 +150,18 @@ fun HomeScreen(
 
             item {
                 FeatureCard(
+                    title = "Pinned Items",
+                    description = "Lock some items in place while the others reorder, and save the order on drag end.",
+                    icon = Icons.Rounded.PushPin,
+                    accent = SampleAccents.Indigo,
+                    onClick = onNavigateToPinnedChats,
+                )
+            }
+
+            item {
+                FeatureCard(
                     title = "Auto Scroll",
-                    description = "Lists, grids, and scrollable columns scroll on their own near the edges.",
+                    description = "Lists, grids, masonry grids and scrollable columns scroll on their own near the edges.",
                     icon = Icons.Rounded.Height,
                     accent = SampleAccents.Teal,
                     onClick = onNavigateToAutoScrollDemo,
@@ -229,7 +245,7 @@ fun HomeScreen(
             item {
                 SectionHeader(
                     title = "Real examples",
-                    count = 2,
+                    count = 4,
                     subtitle = "Production-style screens built entirely with Compose DND.",
                     accent = SampleAccents.Emerald,
                 )
@@ -252,6 +268,26 @@ fun HomeScreen(
                     status = ExampleStatus.Live,
                     onClick = onNavigateToFormBuilder,
                     preview = { FormBuilderMiniScene() },
+                )
+            }
+
+            item {
+                RealExampleCard(
+                    name = "Photo Gallery",
+                    tagline = "Drag to select a range, then drag the whole selection onto an album.",
+                    status = ExampleStatus.Live,
+                    onClick = onNavigateToPhotoGallery,
+                    preview = { PhotoGalleryMiniScene() },
+                )
+            }
+
+            item {
+                RealExampleCard(
+                    name = "Sticky Notes Board",
+                    tagline = "Place notes anywhere on a free-form board, snap them to a grid, drag them to the trash.",
+                    status = ExampleStatus.Live,
+                    onClick = onNavigateToStickyNotesBoard,
+                    preview = { StickyNotesMiniScene() },
                 )
             }
 
