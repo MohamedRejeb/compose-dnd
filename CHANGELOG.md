@@ -1,0 +1,53 @@
+# Changelog
+
+All notable changes to Compose DND are documented in this file.
+
+## 1.0.0-alpha01
+
+The first 1.0 alpha. It unifies the API around `DragAndDropState`, removes the last experimental opt-ins, and fixes several drag lifecycle races. See the [migration guide](https://mohamedrejeb.github.io/compose-dnd/migration-1.0/) if you're upgrading from `0.5.0`.
+
+### Added
+
+- `DragAndDropState.isDropTargetHovered(key)`, equivalent to `hoveredDropTargetKey == key`.
+- `DragAndDropState.cancelDrag()` to abort the active drag programmatically: the ghost animates back, no drop target receives `onDrop`, and the item's `onDragEnd` fires.
+- `onDragStart` and `onDragEnd` callbacks, both `(DraggedItemState<T>) -> Unit`, on `Modifier.draggableItem`, `Modifier.reorderableItem`, `DraggableItem`, and `ReorderableItem`. `onDragEnd` fires once per drag, after the drop target's `onDrop` and the drop animation (or after the return animation on cancel/release outside a target) -- the recommended place to persist a reordered list.
+- `canDrop: Boolean = true` on `Modifier.reorderableItem` and `ReorderableItem`, so a pinned or locked item's slot can opt out of reorder swaps. Combine with `enabled = false` to also stop the item itself from being dragged.
+- `dropAlignment`, `dropOffset`, and `dropAnimationEnabled` on the `ReorderableItem` composable, for parity with the `reorderableItem` modifier.
+- A new `ReorderableItem(state: DragAndDropState<T>, ...)` overload.
+- `dragAutoScroll` and `dragScrollPin` overloads for `LazyStaggeredGridState`.
+- `DragAutoScrollConfig.DefaultMinScrollThreshold` (`48.dp`), `DefaultMaxScrollThreshold` (`160.dp`), and `DefaultMaxScrollSpeed` (`600.dp`).
+- New sample screens: drag-to-select and multi-select group drag (`PhotoGalleryScreen`), free-form placement with grid snapping (`StickyNotesBoardScreen`), pinned-item reordering (`PinnedChatsScreen`), and a staggered-grid ("Masonry") auto-scroll demo.
+- New docs pages: [Drag to Select and Multi-Select](https://mohamedrejeb.github.io/compose-dnd/drag-and-drop/multi-select/), [Free-Form Placement](https://mohamedrejeb.github.io/compose-dnd/drag-and-drop/free-form/), and a [migration guide](https://mohamedrejeb.github.io/compose-dnd/migration-1.0/).
+- The public API is now tracked with Kotlin's binary compatibility validator (`api/` dumps, `./gradlew :compose-dnd:checkKotlinAbi`).
+
+### Changed
+
+- `dragAutoScroll` and `dragScrollPin` are no longer annotated `@ExperimentalDndApi` and no longer require `@OptIn`. Axis lock (`dragAxis`) and `canDrop` were already stable; their docs incorrectly asked for opt-in and have been corrected. Nothing in the public API currently requires `@OptIn(ExperimentalDndApi::class)`.
+- `DragAutoScrollConfig.maxScrollSpeed` is now a `Dp` distance scrolled per second instead of a raw pixel-per-second `Float`, so auto-scroll feels the same on every screen density. The default is `600.dp`.
+- `DragAutoScrollConfig` is a regular class instead of a `data class`. It still exposes `copy()`, but no longer supports `componentN()` destructuring.
+- Auto-scroll now stays idle once the container can't scroll further in a direction, instead of spinning frames against the end of the list.
+- A draggable item's configuration (`dropTargets`, `dropStrategy`, `dragAxis`, `dropAnimationSpec`, `draggableContent`) is now captured when a drag starts and applies for the whole drag.
+- The drag is anchored at the point where the pointer went down instead of where the touch slop was crossed, so the grabbed point stays under the pointer and `DraggedItemState.dragAmount` matches the pointer movement exactly.
+
+### Deprecated
+
+- `ReorderState`, `rememberReorderState`, `ReorderContainer`, and the `ReorderableItem(state: ReorderState, ...)` overload. Use `rememberDragAndDropState`, `DragAndDropContainer`, and `ReorderableItem(state: DragAndDropState, ...)` instead -- one state type for both plain drag and drop and reordering.
+- The top-level `com.mohamedrejeb.compose.dnd.drag.isDragging(key)` extension function. `DragAndDropState.isDragging(key)` is now a member function and needs no import.
+- The `DragAutoScrollConfig(minScrollThreshold, maxScrollThreshold, maxScrollSpeed: Float)` factory. Use the `Dp`-based constructor instead; the deprecated factory is kept only for migration.
+
+### Fixed
+
+- The drop animation after a fast reorder no longer lands the ghost on the neighboring slot before jumping to the final target; scrolling during the settle animation no longer stalls it (#73).
+- Starting a new drag while the previous drop animation is still running no longer clears that drop's state -- the previous drop now completes instantly, including its `onDrop` callback, before the new drag starts.
+- A second pointer can no longer start a concurrent drag.
+- Disabling a `DragAndDropContainer` (`enabled = false`) mid-drag now cancels the drag instead of leaving it stuck.
+- Changing an item's key (for example on lazy layout node reuse) no longer leaves a stale registration behind.
+- Drag handles no longer poll for their item every millisecond while waiting for it to register.
+- The drag start position now uses live coordinates, so it is never stale after a reorder.
+- The container no longer misses the start of a drag when several pointer events are dispatched before the next recomposition (seen on Android as drags that never hovered any target).
+- `dragAutoScroll` for `ScrollState` no longer polls every frame during a drag when there is nothing to scroll.
+
+### Documentation
+
+- `onDrop` timing is now documented: it is called once the drop animation has landed the drag shadow on the target, right before the dragged item's `onDragEnd`, or on release with `dropAnimationEnabled = false`.
+- The conditional drop docs showed `canDrop` as a lambda; it is a `Boolean`.

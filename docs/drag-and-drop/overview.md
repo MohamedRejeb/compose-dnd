@@ -71,6 +71,8 @@ Text(
 
 Use `DragAndDropState.isDragging(key)` to check if a specific item is being dragged - hiding the original with `graphicsLayer { alpha = ... }` while the shadow follows the pointer is the usual pattern.
 
+The item's configuration (`dropTargets`, `dropStrategy`, `dragAxis`, `dropAnimationSpec`, `draggableContent`) is captured when a drag starts and applies for that whole drag, even if the composable recomposes with different values while dragging.
+
 ### Parameters
 
 | Parameter                    | Type                           | Default                        | Description |
@@ -86,7 +88,32 @@ Use `DragAndDropState.isDragging(key)` to check if a specific item is being drag
 | `dragAxis`                   | `DragAxis`                     | `DragAxis.Free`                | Constrain drag movement to one axis. See [Axis Lock](axis-lock.md). |
 | `hasDragHandle`              | `Boolean`                      | `false`                        | If `true`, drag is initiated from a `dragHandle` modifier instead of the whole item. See [Drag Handle](drag-handle.md). |
 | `dropAnimationSpec`          | `AnimationSpec<Offset>`        | `SpringSpec()`                 | Animation for position when dropping. |
+| `onDragStart`                | `(DraggedItemState<T>) -> Unit` | `{}`                           | Called when a drag of this item starts. |
+| `onDragEnd`                  | `(DraggedItemState<T>) -> Unit` | `{}`                           | Called once the drag of this item is over. See [Drag Lifecycle](#drag-lifecycle-ondragstart-and-ondragend). |
 | `draggableContent`           | `@Composable () -> Unit`       | Required                       | Content rendered as the drag shadow while dragging. |
+
+## Drag Lifecycle: onDragStart and onDragEnd
+
+`draggableItem`, `reorderableItem`, `DraggableItem` and `ReorderableItem` all accept `onDragStart` and `onDragEnd` callbacks, both `(DraggedItemState<T>) -> Unit`:
+
+```kotlin
+Text(
+    text = "Drag me",
+    modifier = Modifier.draggableItem(
+        key = "item-1",
+        data = "Hello",
+        state = dragAndDropState,
+        onDragStart = { state -> println("Started dragging ${state.data}") },
+        onDragEnd = { state -> println("Drag of ${state.data} is over") },
+        draggableContent = {
+            Text("Drag me")
+        },
+    ),
+)
+```
+
+- `onDragStart` fires once, when the drag begins.
+- `onDragEnd` fires once per drag, after the drag is fully over: for a successful drop, that's after the drop target's `onDrop` and once the drop animation lands on the target; for a cancelled drag (see [cancelDrag](#cancelling-a-drag-programmatically)) or a release outside any target, it's after the return animation. This makes it a reliable place to persist state -- it runs exactly once per drag, unlike `onDragEnter` which can fire many times. See [Reorder List: Persisting the new order](reorder.md#persisting-the-new-order) for an example.
 
 ## Drop Target
 
@@ -125,9 +152,15 @@ Box(
 | `dropOffset`          | `Offset`                               | `Offset.Zero`      | Additional offset for the drop animation position. |
 | `dropAnimationEnabled`| `Boolean`                              | `true`             | Whether to animate the drop. If `false`, the drop callback fires immediately. |
 | `canDrop`             | `Boolean`                              | `true`             | Whether this target accepts drops. When `false`, dragged items cannot hover over or be dropped on this target. Can read `state.draggedItem?.data` to validate dynamically. |
-| `onDrop`              | `(DraggedItemState<T>) -> Unit`        | `{}`               | Called when an item is dropped on this target. |
+| `onDrop`              | `(DraggedItemState<T>) -> Unit`        | `{}`               | Called when an item is dropped on this target. See [onDrop timing](#ondrop-timing) below. |
 | `onDragEnter`         | `(DraggedItemState<T>) -> Unit`        | `{}`               | Called when a dragged item enters this target. |
 | `onDragExit`          | `(DraggedItemState<T>) -> Unit`        | `{}`               | Called when a dragged item exits this target. |
+
+### onDrop Timing
+
+`onDrop` is called once the drop animation has landed the drag shadow on the target, right before the dragged item's `onDragEnd`. With `dropAnimationEnabled = false` it is called immediately, as soon as the item is released -- there is no animation to wait for.
+
+If you mutate your list inside `onDrop`, keep that in mind when the animation is enabled: the visual drop and the state change happen together, which is usually what you want. For a callback that always fires exactly once per drag regardless of where it landed, use the item's `onDragEnd` instead (see [Drag Lifecycle](#drag-lifecycle-ondragstart-and-ondragend) above).
 
 ### DraggedItemState
 
@@ -171,10 +204,10 @@ Text(
 
 ## Observing Drag State
 
-You can observe which drop target is currently hovered using `DragAndDropState.hoveredDropTargetKey`:
+Use `DragAndDropState.isDropTargetHovered(key)` to check whether a specific drop target is currently hovered by the dragged item:
 
 ```kotlin
-val isHovered = dragAndDropState.hoveredDropTargetKey == "target-1"
+val isHovered = dragAndDropState.isDropTargetHovered("target-1")
 
 Box(
     modifier = Modifier
@@ -192,11 +225,27 @@ Box(
 }
 ```
 
+`isDropTargetHovered(key)` is equivalent to `hoveredDropTargetKey == key`; `hoveredDropTargetKey` is still there directly on the state if you need the raw key, for example to look it up in a map.
+
 You can also check if any item is being dragged using `DragAndDropState.draggedItem`:
 
 ```kotlin
 val isDragging = dragAndDropState.draggedItem != null
 ```
+
+## Cancelling a Drag Programmatically
+
+`DragAndDropState.cancelDrag()` aborts the drag in progress, if any: the drag shadow animates back to the dragged item, no drop target receives `onDrop`, and the item's `onDragEnd` fires once the return animation ends. It does nothing when no drag is in progress or the item was already released.
+
+This is useful to abort a drag on a back press, an Escape key, or when the dragged data becomes invalid mid-drag:
+
+```kotlin
+BackHandler(enabled = dragAndDropState.draggedItem != null) {
+    dragAndDropState.cancelDrag()
+}
+```
+
+Disabling a `DragAndDropContainer` (`enabled = false`) while a drag is in progress also calls `cancelDrag()` internally, so the drag never gets stuck.
 
 ## Full Working Example
 
@@ -244,7 +293,7 @@ fun DragAndDropExample() {
             }
 
             // Target area
-            val isHovered = dragAndDropState.hoveredDropTargetKey == "target"
+            val isHovered = dragAndDropState.isDropTargetHovered("target")
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier

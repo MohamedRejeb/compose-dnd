@@ -13,7 +13,10 @@ A library that allows you to easily add drag and drop functionality to your Jetp
 
 - **Drag and Drop** -- Drag items from one location and drop them onto designated targets.
 - **Reorder Lists** -- Reorder items within a list using drag and drop gestures.
-- **Auto Scroll** -- Automatically scroll containers when dragging items near edges.
+- **Drag Lifecycle Callbacks** -- `onDragStart` and `onDragEnd` on every draggable item, a good place to persist state once per drag.
+- **Drag to Select / Multi-Select** -- Extend a selection by dragging across items, then drag the whole selection as a group.
+- **Free-Form Placement** -- Drop items anywhere on a board, with the drop animation landing exactly where they snap.
+- **Auto Scroll** -- Automatically scroll containers, including staggered grids, when dragging items near edges.
 - **Drop Strategies** -- Choose from multiple built-in strategies to determine which drop target receives the dragged item.
 - **Drag Handle** -- Restrict the drag gesture to a specific handle area within the item.
 - **Axis Lock** -- Constrain dragging to the horizontal or vertical axis.
@@ -80,6 +83,9 @@ DragAndDropContainer(
 ```
 
 For more details, see the [Drag and Drop Overview](drag-and-drop/overview.md) or check out the [sample project](https://github.com/MohamedRejeb/compose-dnd/tree/main/sample/common/src/commonMain/kotlin).
+
+!!! info "Upgrading from 0.5.0?"
+    `{{ compose_dnd_version }}` deprecates `ReorderState`, `rememberReorderState`, and `ReorderContainer` in favor of `DragAndDropState` everywhere. See the [migration guide](migration-1.0.md).
 
 ## Contribution
 

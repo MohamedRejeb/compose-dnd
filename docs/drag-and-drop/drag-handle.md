@@ -118,7 +118,7 @@ fun DragHandleExample() {
 Inside `DraggableItem` or `ReorderableItem` content, the scope provides a `Modifier.dragHandle()` overload that needs no `key` or `state` - and no `hasDragHandle` flag, since calling it marks the item automatically:
 
 ```kotlin
-ReorderableItem(state = reorderState, key = item, data = item) {
+ReorderableItem(state = dndState, key = item, data = item) {
     Row {
         Icon(
             imageVector = Icons.Rounded.DragHandle,

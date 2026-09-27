@@ -73,9 +73,12 @@ items(items, key = { it }) { item ->
 | `dropAlignment`              | `Alignment`                               | `Alignment.Center`               | Alignment of the dropped item within the target. |
 | `dropOffset`                 | `Offset`                                  | `Offset.Zero`                    | Additional offset for the drop animation position. |
 | `dropAnimationEnabled`       | `Boolean`                                 | `true`                           | Whether to animate the drop. |
+| `canDrop`                    | `Boolean`                                 | `true`                           | Whether this item currently accepts other items as a drop target. See [Pinned or Locked Items](#pinned-or-locked-items-candrop). |
 | `onDrop`                     | `(DraggedItemState<T>) -> Unit`           | `{}`                             | Called when an item is dropped on this target. |
 | `onDragEnter`                | `(DraggedItemState<T>) -> Unit`           | `{}`                             | Called when a dragged item enters this target. |
 | `onDragExit`                 | `(DraggedItemState<T>) -> Unit`           | `{}`                             | Called when a dragged item exits this target. |
+| `onDragStart`                | `(DraggedItemState<T>) -> Unit`           | `{}`                             | Called when a drag of this item starts. |
+| `onDragEnd`                  | `(DraggedItemState<T>) -> Unit`           | `{}`                             | Called once the drag of this item is over. See [Persisting the New Order](#persisting-the-new-order). |
 | `draggableContent`           | `@Composable () -> Unit`                  | Required                         | Content rendered as the drag shadow. |
 
 ## Reorder Logic with onDragEnter
@@ -97,20 +100,68 @@ onDragEnter = { state ->
 !!! note
     The `onDragEnter` callback receives the `DraggedItemState` of the item being dragged. Use `state.data` to identify the dragged item and reposition it in your list.
 
+## Persisting the New Order
+
+`onDragEnter` fires on every swap, which makes it the wrong place to write to a database or a `ViewModel` -- a drag across ten items fires it ten times. Use `onDragEnd` instead: it fires exactly once per drag, after the drop or return animation finishes, regardless of how many swaps happened along the way.
+
+```kotlin
+.reorderableItem(
+    key = item,
+    data = item,
+    state = dndState,
+    onDragEnter = { state ->
+        // Update the in-memory list order live, for visual feedback
+        items = items.toMutableList().apply {
+            val index = indexOf(item)
+            if (index != -1) {
+                remove(state.data)
+                add(index, state.data)
+            }
+        }
+    },
+    onDragEnd = {
+        // The drag is over -- persist the final order once
+        saveOrderToDatabase(items)
+    },
+    draggableContent = {
+        ItemCard(text = item, isDragShadow = true)
+    },
+)
+```
+
+This also runs when the drag is cancelled or released outside any target, so it is a safe single place to sync state, log analytics, or re-enable UI that was disabled during the drag.
+
+## Pinned or Locked Items (canDrop)
+
+Pass `canDrop = false` to keep an item's slot out of reordering: dragged items pass over it without hovering it, so it is never swapped. Combine it with `enabled = false` to also stop the item itself from being dragged -- the usual combination for a pinned or locked row:
+
+```kotlin
+ItemCard(
+    text = item.text,
+    modifier = Modifier
+        .reorderableItem(
+            key = item.id,
+            data = item,
+            state = dndState,
+            enabled = item.isPinned,   // locked items can't be dragged
+            canDrop = item.isPinned,   // locked items can't be swapped into either
+            onDragEnter = { state -> /* reorder logic */ },
+            draggableContent = { ItemCard(text = item.text, isDragShadow = true) },
+        ),
+)
+```
+
+See [Conditional Drop](conditional-drop.md) for the equivalent `canDrop` on a plain `dropTarget`.
+
 ## Reorder Hysteresis
 
 When two items of different sizes swap, the swap itself can move the target back under the cursor and immediately trigger the reverse swap, causing the two items to oscillate during a slow drag. Compose DND prevents this with a built-in hysteresis: after a swap, the cursor has to travel a minimum distance in the opposite direction before the just-swapped target can be re-entered.
 
-The default distance is `8.dp` and works out of the box. You can tune it on either state:
+The default distance is `8.dp` and works out of the box. You can tune it when creating the state:
 
 ```kotlin
 val dndState = rememberDragAndDropState<String>(
     reorderHysteresisDistance = 16.dp, // 0.dp disables hysteresis
-)
-
-// or with the wrapper API state
-val reorderState = rememberReorderState<String>(
-    reorderHysteresisDistance = 16.dp,
 )
 ```
 
@@ -213,23 +264,22 @@ private fun ItemCard(
 
     Place `animateItem()` **before** `reorderableItem` in the modifier chain. This lets the library track the item's animated position, so dropping while items are still moving lands the drag shadow exactly where the item settles.
 
-## Alternative: Wrapper Composables
+## Alternative: ReorderableItem Wrapper Composable
 
-If you prefer wrapping composables over modifier chains, the reorder API is also available as `ReorderContainer` + `ReorderableItem` with a dedicated `ReorderState`:
+If you prefer wrapping composables over modifier chains, `ReorderableItem` offers the same features as the `reorderableItem` modifier, built on the same `DragAndDropState` and `DragAndDropContainer` as everything else:
 
 ```kotlin
-val reorderState = rememberReorderState<String>()
+val dndState = rememberDragAndDropState<String>()
 
-ReorderContainer(
-    state = reorderState,
+DragAndDropContainer(
+    state = dndState,
 ) {
     LazyColumn {
         items(items, key = { it }) { item ->
             ReorderableItem(
-                state = reorderState,
+                state = dndState,
                 key = item,
                 data = item,
-                onDrop = {},
                 onDragEnter = { state ->
                     items = items.toMutableList().apply {
                         val index = indexOf(item)
@@ -237,6 +287,9 @@ ReorderContainer(
                         remove(state.data)
                         add(index, state.data)
                     }
+                },
+                onDragEnd = {
+                    saveOrderToDatabase(items)
                 },
             ) {
                 // isDragging is available in this scope
@@ -253,8 +306,10 @@ ReorderContainer(
 }
 ```
 
-Differences from the modifier API:
+Differences from the `reorderableItem` modifier:
 
-- `rememberReorderState` creates a `ReorderState`, a thin wrapper that exposes the underlying `DragAndDropState` as `reorderState.dndState` (needed for modifiers like `dragAutoScroll`). It accepts the same `dragAfterLongPress`, `requireFirstDownUnconsumed`, and `reorderHysteresisDistance` parameters.
-- `ReorderableItem` accepts the same parameters as the `reorderableItem` modifier, but `draggableContent` is optional -- when `null`, the item content is used as the drag shadow.
+- `ReorderableItem` accepts the same parameters, including `canDrop`, `onDragStart`, and `onDragEnd`, but `draggableContent` is optional -- when `null`, the item content is used as the drag shadow.
 - The `content` lambda runs in a `ReorderableItemScope` providing `key`, `isDragging`, and a scope-based `Modifier.dragHandle()` that doesn't need `key`/`state` arguments.
+
+!!! warning "ReorderState is deprecated"
+    `ReorderState`, `rememberReorderState`, `ReorderContainer`, and the `ReorderableItem(state: ReorderState, ...)` overload shown in older versions of this guide are deprecated. Use `rememberDragAndDropState`, `DragAndDropContainer`, and `ReorderableItem(state: DragAndDropState, ...)` as above -- one state type for both plain drag and drop and reordering. See the [migration guide](../migration-1.0.md#reorderstate-to-draganddropstate) for a before/after comparison.

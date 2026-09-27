@@ -85,11 +85,11 @@ Rows drag by a grip handle (`hasDragHandle = true` plus `Modifier.dragHandle(key
 
 ## Showing Where the Field Will Land
 
-Palette drops insert *above* the hovered row, so mark that edge while a palette item is in the air. `hoveredDropTargetKey` plus a type check on `draggedItem` is all it takes:
+Palette drops insert *above* the hovered row, so mark that edge while a palette item is in the air. `isDropTargetHovered` plus a type check on `draggedItem` is all it takes:
 
 ```kotlin
 val isPaletteItemHovering = dndState.draggedItem?.data is FormDragData.PaletteItem &&
-    dndState.hoveredDropTargetKey == field.id
+    dndState.isDropTargetHovered(field.id)
 ```
 
 The sample tints the hovered row and draws an accent bar across its top edge:

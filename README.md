@@ -16,7 +16,10 @@ A library that allows you to easily add drag and drop functionality to your Jetp
 
 - **Drag and Drop** -- Drag items from one location and drop them onto designated targets
 - **Reorder Lists** -- Reorder items within a list using drag and drop gestures
-- **Auto Scroll** -- Automatically scroll containers when dragging items near edges
+- **Drag Lifecycle Callbacks** -- `onDragStart` and `onDragEnd` on every draggable item, so you can persist state once per drag
+- **Drag to Select / Multi-Select** -- Extend a selection by dragging across items, then drag the whole selection as a group
+- **Free-Form Placement** -- Drop items anywhere on a board, with the drop animation landing exactly where they snap
+- **Auto Scroll** -- Automatically scroll containers, including staggered grids, when dragging items near edges
 - **Drop Strategies** -- Choose from multiple built-in strategies to determine which drop target receives the dragged item
 - **Drag Handle** -- Restrict the drag gesture to a specific handle area within the item
 - **Axis Lock** -- Constrain dragging to the horizontal or vertical axis
@@ -42,12 +45,12 @@ A library that allows you to easily add drag and drop functionality to your Jetp
 
 | Kotlin version | Compose version | Compose DND version |
 |----------------|-----------------|---------------------|
-| 2.3.20         | 1.10.3          | 0.5.0               |
+| 2.3.20         | 1.10.3          | 1.0.0-alpha01       |
 
 Add the following dependency to your module `build.gradle.kts` file:
 
 ```kotlin
-implementation("com.mohamedrejeb.dnd:compose-dnd:0.5.0")
+implementation("com.mohamedrejeb.dnd:compose-dnd:1.0.0-alpha01")
 ```
 
 For Kotlin Multiplatform projects, add the dependency to your `commonMain` source set:
@@ -56,11 +59,13 @@ For Kotlin Multiplatform projects, add the dependency to your `commonMain` sourc
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("com.mohamedrejeb.dnd:compose-dnd:0.5.0")
+            implementation("com.mohamedrejeb.dnd:compose-dnd:1.0.0-alpha01")
         }
     }
 }
 ```
+
+> `1.0.0-alpha01` is the first 1.0 alpha. It deprecates `ReorderState`, `rememberReorderState`, and `ReorderContainer` in favor of `DragAndDropState` everywhere -- see the [migration guide](https://mohamedrejeb.github.io/compose-dnd/migration-1.0/) if you're upgrading from `0.5.0`.
 
 ## Usage
 

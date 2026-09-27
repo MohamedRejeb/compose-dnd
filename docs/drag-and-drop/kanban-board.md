@@ -30,7 +30,6 @@ var columns by remember { mutableStateOf(initialColumns()) }
 Wrap the board in one `DragAndDropContainer`. The outer `LazyRow` scrolls horizontally between columns while a card is dragged toward the screen edge; each column's `LazyColumn` scrolls vertically:
 
 ```kotlin
-@OptIn(ExperimentalDndApi::class)
 @Composable
 fun KanbanBoard() {
     val dndState = rememberDragAndDropState<Card>()
@@ -70,7 +69,6 @@ fun KanbanBoard() {
 Each card uses the `reorderableItem` modifier. Because every card in every column shares the same state, dragging a card over a card in *another* column fires `onDragEnter` there — cross-column transfer works with the same callback as same-column reorder:
 
 ```kotlin
-@OptIn(ExperimentalDndApi::class)
 @Composable
 fun ColumnUi(
     column: Column,

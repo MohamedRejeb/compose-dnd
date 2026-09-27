@@ -4,15 +4,11 @@ When dragging items in a scrollable container, you often need the container to s
 
 <video src="../../videos/reorder.mp4" autoplay loop muted playsinline width="720"></video>
 
-!!! warning "Experimental API"
-    The auto scroll API is annotated with `@ExperimentalDndApi`. This means it may change in future releases. You must opt in with `@OptIn(ExperimentalDndApi::class)` to use it.
-
 ## LazyColumn / LazyRow
 
 Use the `dragAutoScroll` modifier on a `LazyColumn` or `LazyRow` to enable automatic scrolling during drag operations:
 
 ```kotlin
-@OptIn(ExperimentalDndApi::class)
 @Composable
 fun AutoScrollLazyColumnExample() {
     val dndState = rememberDragAndDropState<String>()
@@ -41,7 +37,6 @@ fun AutoScrollLazyColumnExample() {
 For `LazyVerticalGrid` or `LazyHorizontalGrid`, use the grid variant:
 
 ```kotlin
-@OptIn(ExperimentalDndApi::class)
 @Composable
 fun AutoScrollLazyGridExample() {
     val dndState = rememberDragAndDropState<String>()
@@ -66,12 +61,40 @@ fun AutoScrollLazyGridExample() {
 }
 ```
 
+## LazyVerticalStaggeredGrid / LazyHorizontalStaggeredGrid
+
+For a masonry-style staggered grid, use the `lazyStaggeredGridState` overload:
+
+```kotlin
+@Composable
+fun AutoScrollStaggeredGridExample() {
+    val dndState = rememberDragAndDropState<String>()
+    val staggeredGridState = rememberLazyStaggeredGridState()
+
+    DragAndDropContainer(
+        state = dndState,
+    ) {
+        LazyVerticalStaggeredGrid(
+            columns = StaggeredGridCells.Fixed(2),
+            state = staggeredGridState,
+            modifier = Modifier
+                .fillMaxSize()
+                .dragAutoScroll(
+                    state = dndState,
+                    lazyStaggeredGridState = staggeredGridState,
+                ),
+        ) {
+            // items...
+        }
+    }
+}
+```
+
 ## ScrollState (Column / Row)
 
 For regular scrollable containers using `ScrollState`, pass the orientation parameter:
 
 ```kotlin
-@OptIn(ExperimentalDndApi::class)
 @Composable
 fun AutoScrollColumnExample() {
     val dndState = rememberDragAndDropState<String>()
@@ -101,11 +124,10 @@ fun AutoScrollColumnExample() {
 You can customize the auto scroll behavior using `DragAutoScrollConfig`:
 
 ```kotlin
-@OptIn(ExperimentalDndApi::class)
 val config = DragAutoScrollConfig(
     minScrollThreshold = 48.dp,
     maxScrollThreshold = 160.dp,
-    maxScrollSpeed = 1500f,
+    maxScrollSpeed = 600.dp,
 )
 
 LazyColumn(
@@ -122,11 +144,20 @@ LazyColumn(
 
 ### Configuration Options
 
-| Parameter            | Type   | Default  | Description                                                               |
-|----------------------|--------|----------|---------------------------------------------------------------------------|
-| `minScrollThreshold` | `Dp`   | `48.dp`  | Minimum distance from the edge where scrolling begins. The effective threshold adapts to the first/last visible item size: `clamp(itemSize, minScrollThreshold, maxScrollThreshold)`. |
-| `maxScrollThreshold` | `Dp`   | `160.dp` | Maximum distance from the edge for auto-scroll activation. Prevents the adaptive threshold from growing too large with tall items or containers. |
-| `maxScrollSpeed`     | `Float`| `1500f`  | The maximum scroll speed in pixels per second at the very edge.           |
+| Parameter            | Type | Default  | Description                                                               |
+|----------------------|------|----------|---------------------------------------------------------------------------|
+| `minScrollThreshold` | `Dp` | `DragAutoScrollConfig.DefaultMinScrollThreshold` (`48.dp`)  | Minimum distance from the edge where scrolling begins. The effective threshold adapts to the first/last visible item size: `clamp(itemSize, minScrollThreshold, maxScrollThreshold)`. |
+| `maxScrollThreshold` | `Dp` | `DragAutoScrollConfig.DefaultMaxScrollThreshold` (`160.dp`) | Maximum distance from the edge for auto-scroll activation. Prevents the adaptive threshold from growing too large with tall items or containers. |
+| `maxScrollSpeed`     | `Dp` | `DragAutoScrollConfig.DefaultMaxScrollSpeed` (`600.dp`)     | The maximum scroll speed, as a distance scrolled per second at the very edge. Being a `Dp`, the scroll feels the same on every screen density. |
+
+`DragAutoScrollConfig` is a regular class, not a `data class`, but it still exposes `copy()`:
+
+```kotlin
+val fasterConfig = DragAutoScrollConfig().copy(maxScrollSpeed = 900.dp)
+```
+
+!!! warning "maxScrollSpeed used to be a Float"
+    Before `1.0.0-alpha01`, `maxScrollSpeed` was a `Float` in pixels per second, which scrolled at different physical speeds on different screen densities. It is now a `Dp`. A deprecated factory taking `maxScrollSpeed: Float` is kept for migration -- see the [migration guide](../migration-1.0.md#dragautoscrollconfig-maxscrollspeed-is-now-a-dp).
 
 ## How It Works
 
@@ -136,6 +167,7 @@ The auto scroll mechanism uses a dynamic threshold approach:
 2. **Quadratic Easing** -- Scroll speed increases quadratically as the dragged item moves closer to the edge. This provides a natural feel where small movements near the threshold produce slow scrolling, while pushing toward the edge accelerates.
 3. **Frame-Synced** -- Scroll operations are synchronized with the frame rate for smooth, jank-free scrolling.
 4. **Bidirectional** -- Scrolling works in both directions: toward the start and toward the end of the container.
+5. **Bounded** -- Auto-scroll stays idle once the container can't scroll further in that direction, instead of spinning frames against the end of the list.
 
 ## Scroll Pinning (dragScrollPin)
 
@@ -144,7 +176,6 @@ When reorderable items have **different sizes**, swapping two items changes the 
 The `dragScrollPin` modifier fixes this by pinning the scroll position right before each reorder swap, so the viewport stays stable:
 
 ```kotlin
-@OptIn(ExperimentalDndApi::class)
 @Composable
 fun ScrollPinExample() {
     val dndState = rememberDragAndDropState<String>()
@@ -168,7 +199,7 @@ fun ScrollPinExample() {
 }
 ```
 
-A `lazyGridState` overload is available for `LazyVerticalGrid` / `LazyHorizontalGrid`.
+`lazyGridState` and `lazyStaggeredGridState` overloads are available for `LazyVerticalGrid` / `LazyHorizontalGrid` and `LazyVerticalStaggeredGrid` / `LazyHorizontalStaggeredGrid`.
 
 !!! note
     `dragAutoScroll` already includes the scroll pinning behavior, so you do **not** need both. Use `dragScrollPin` on its own only when you want jump-free reordering without automatic edge scrolling.
@@ -176,7 +207,6 @@ A `lazyGridState` overload is available for `LazyVerticalGrid` / `LazyHorizontal
 ## Full Working Example
 
 ```kotlin
-@OptIn(ExperimentalDndApi::class)
 @Composable
 fun ReorderWithAutoScroll() {
     val dndState = rememberDragAndDropState<String>()
