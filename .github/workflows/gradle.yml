@@ -51,6 +51,9 @@ jobs:
             - name: Gradle test
               run: ./gradlew allTests
 
+            - name: Public API check
+              run: ./gradlew :compose-dnd:checkKotlinAbi
+
     # Runs on Linux: macOS runners are Apple Silicon without nested
     # virtualization, so the emulator cannot boot there.
     instrumented-tests:
