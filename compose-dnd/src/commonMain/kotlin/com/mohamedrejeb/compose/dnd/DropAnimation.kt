@@ -41,7 +41,7 @@ private const val REORDER_DETECTION_DISTANCE = 1f
  */
 private const val REORDER_DETECTION_EXTRA_FRAMES = 2
 
-/** Per-frame movement below which the dragged item counts as settled, in px. */
+/** Distance from its final place below which the dragged item counts as settled, in px. */
 private const val SETTLE_DISTANCE = 0.5f
 
 /** Consecutive settled frames required before the final landing animation. */
@@ -83,7 +83,7 @@ internal suspend fun <T> DragAndDropState<T>.animateDropOnTarget(
         // The hover reorder already played out before the release: the
         // dragged item, not the hovered sibling, occupies the slot under
         // the ghost — settle on the item directly.
-        settleOnOwnItem(dropTarget, currentDraggableItem)
+        settleOnOwnItem(currentDraggableItem)
         return
     }
 
@@ -124,7 +124,7 @@ internal suspend fun <T> DragAndDropState<T>.animateDropOnTarget(
     }
     if (!reorderedOnHover) return
 
-    awaitDraggedItemSettled(currentDraggableItem, dropTarget)
+    awaitDraggedItemSettled(currentDraggableItem)
     animateDropPosition(currentDraggableItem.dropAnimationSpec) {
         ghostReturnTopLeft(currentDraggableItem)
     }
@@ -135,13 +135,12 @@ internal suspend fun <T> DragAndDropState<T>.animateDropOnTarget(
  * wait out any placement animation still running, then land exactly.
  */
 internal suspend fun <T> DragAndDropState<T>.settleOnOwnItem(
-    dropTarget: DropTargetState<T>,
     currentDraggableItem: DraggableItemState<T>,
 ) {
     animateDropPosition(currentDraggableItem.dropAnimationSpec) {
         ghostReturnTopLeft(currentDraggableItem)
     }
-    awaitDraggedItemSettled(currentDraggableItem, dropTarget)
+    awaitDraggedItemSettled(currentDraggableItem)
     animateDropPosition(currentDraggableItem.dropAnimationSpec) {
         ghostReturnTopLeft(currentDraggableItem)
     }
@@ -201,28 +200,28 @@ internal suspend fun <T> DragAndDropState<T>.animateDropPosition(
  * Wait until the dragged item's post-reorder placement animation has
  * finished, so the final landing animation targets a settled position.
  *
- * Motion is measured relative to the hovered sibling: the reorder's
- * placement animations move the two apart, while scrolling moves both
- * together. Waiting for absolute stillness would stall the drop for as
- * long as the user keeps scrolling. Bounded so a drop can never hang on
- * an app that keeps the item moving.
+ * What is left of that animation is the distance between where the item
+ * is and where the layout settles it. Scrolling moves both together, so
+ * the drop doesn't stall for as long as the list keeps scrolling. Bounded
+ * so a drop can never hang on an app that keeps the item moving.
  */
 internal suspend fun <T> DragAndDropState<T>.awaitDraggedItemSettled(
     currentDraggableItem: DraggableItemState<T>,
-    dropTarget: DropTargetState<T>,
 ) {
-    fun relativeTopLeft() = ownItemTopLeft(currentDraggableItem) - liveTargetTopLeft(dropTarget)
+    fun distanceToSettled(): Float {
+        val coordinates = draggableItemMap[currentDraggableItem.key]
+            ?.layoutCoordinates
+            ?.takeIf { it.isAttached }
+            ?: return 0f
+        return (coordinates.positionInRoot() - positionOf(coordinates)).getDistance()
+    }
 
-    var previous = relativeTopLeft()
     var settledFrames = 0
     var frames = 0
     while (frames < MAX_SETTLE_FRAMES && settledFrames < SETTLED_FRAME_COUNT) {
         withFrameNanos { }
         frames++
-        val current = relativeTopLeft()
-        settledFrames =
-            if ((current - previous).getDistance() < SETTLE_DISTANCE) settledFrames + 1 else 0
-        previous = current
+        settledFrames = if (distanceToSettled() < SETTLE_DISTANCE) settledFrames + 1 else 0
     }
 }
 

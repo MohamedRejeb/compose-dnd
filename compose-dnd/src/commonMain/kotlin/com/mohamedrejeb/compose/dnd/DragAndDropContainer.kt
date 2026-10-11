@@ -29,6 +29,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
+import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.util.fastFirstOrNull
@@ -78,32 +79,43 @@ fun <T> DragAndDropContainer(
         if (!enabled) state.cancelDrag()
     }
 
-    Box(
-        modifier = modifier
-            .onPlaced {
-                positionInRoot.value = it.positionInRoot()
-            }.pointerInput(enabled, state) {
-                if (!enabled) return@pointerInput
+    // Lays the content out a second time, ahead of its animations: that is how the
+    // state knows where an item animating to a new slot is going to settle
+    LookaheadScope {
+        DisposableEffect(state) {
+            onDispose { state.settledPositionInRoot = null }
+        }
 
-                awaitPointerEventScope {
-                    // Not awaitEachGesture: that waits for every pointer to lift between
-                    // drags, so a finger resting on the container would block the next one
-                    while (true) {
-                        trackDrag(
-                            state = state,
-                            containerPositionInRoot = { positionInRoot.value },
-                            onDragEnd = { scope.launch { state.handleDragEnd() } },
-                            onDragCancel = { scope.launch { state.handleDragCancel() } },
-                        )
+        Box(
+            modifier = modifier
+                .onPlaced { container ->
+                    positionInRoot.value = container.positionInRoot()
+                    state.settledPositionInRoot = { coordinates ->
+                        container.positionInRoot() + container.localLookaheadPositionOf(coordinates)
                     }
-                }
-            },
-    ) {
-        content()
+                }.pointerInput(enabled, state) {
+                    if (!enabled) return@pointerInput
 
-        DraggedItemShadow(
-            state = state,
-        )
+                    awaitPointerEventScope {
+                        // Not awaitEachGesture: that waits for every pointer to lift between
+                        // drags, so a finger resting on the container would block the next one
+                        while (true) {
+                            trackDrag(
+                                state = state,
+                                containerPositionInRoot = { positionInRoot.value },
+                                onDragEnd = { scope.launch { state.handleDragEnd() } },
+                                onDragCancel = { scope.launch { state.handleDragCancel() } },
+                            )
+                        }
+                    }
+                },
+        ) {
+            content()
+
+            DraggedItemShadow(
+                state = state,
+            )
+        }
     }
 }
 

@@ -120,7 +120,7 @@ fun ColumnUi(
 
 Two choices matter here:
 
-- `dropStrategy = DropStrategy.CenterDistance` picks the hovered card by center proximity, which behaves better than surface overlap when cards have very different heights. See [Drop Strategies](drop-strategies.md).
+- `dropStrategy = DropStrategy.CenterDistance` picks the closest card when the dragged card reaches several at once, e.g. on its way into another column. See [Drop Strategies](drop-strategies.md).
 - `dragAfterLongPress = true` keeps normal touch scrolling working — a plain swipe scrolls the column, a long press picks up the card.
 
 ## Cross-Column Move Logic
@@ -240,6 +240,6 @@ Useful details:
 - `draggableContent` renders a simplified preview (header plus the first few cards) instead of the full live column, keeping the drag shadow cheap.
 
 !!! tip
-    Cards with different heights can oscillate when swapped during a slow drag. The library prevents this with built-in reorder hysteresis — see [Reorder List](reorder.md#reorder-hysteresis).
+    Cards of different heights swap without bouncing: a card takes the slot of another one when its leading edge passes the middle of that card, whatever their sizes — see [Reorder List](reorder.md#how-a-swap-is-decided).
 
 The complete implementation, including priorities, tags, and assignees on the cards, is in the sample app: [KanbanBoardScreen.kt](https://github.com/MohamedRejeb/compose-dnd/blob/main/sample/common/src/commonMain/kotlin/ui/KanbanBoardScreen.kt).

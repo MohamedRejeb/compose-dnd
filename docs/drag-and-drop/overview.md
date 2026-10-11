@@ -24,7 +24,7 @@ val dragAndDropState = rememberDragAndDropState<String>()
 |------------------------------|-----------|---------|-----------------------------------------------------------------------------|
 | `dragAfterLongPress`         | `Boolean` | `false` | If `true`, drag starts after a long press. If `false`, drag starts on touch move. Applied to all items unless overridden per item. |
 | `requireFirstDownUnconsumed` | `Boolean` | `false` | If `true`, the first down pointer event must be unconsumed to initiate drag. |
-| `reorderHysteresisDistance`  | `Dp`      | `DefaultReorderHysteresisDistance` (`8.dp`) | How far the cursor must move back, opposite the swap direction, before a just-swapped reorder target can be re-entered. Prevents swap oscillation during slow drags. `0.dp` disables it. |
+| `reorderHysteresisDistance`  | `Dp`      | `DefaultReorderHysteresisDistance` (`8.dp`) | How far the drag must come back after a reorder swap before that swap is undone. See [Reorder List](reorder.md#how-a-swap-is-decided). |
 
 ## DragAndDropContainer
 

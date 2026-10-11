@@ -28,9 +28,8 @@ import com.mohamedrejeb.compose.dnd.DragAndDropState
  * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press.
  * This parameter is applied to all [ReorderableItem]s. If you want to change it for a specific item, use [ReorderableItem] parameter.
  * @param requireFirstDownUnconsumed if true, the first down event must be unconsumed to start the drag.
- * @param reorderHysteresisDistance how far the cursor must move back, opposite the swap direction,
- * before a just-swapped reorder target can be re-entered. `0.dp` disables it.
- * @return [ReorderState]
+ * @param reorderHysteresisDistance how far the drag must come back after a reorder swap
+ * before that swap is undone. `0.dp` leaves only the spacing between the items as play.
  */
 @Deprecated(
     message = "ReorderState is deprecated, reorder with a DragAndDropState instead.",

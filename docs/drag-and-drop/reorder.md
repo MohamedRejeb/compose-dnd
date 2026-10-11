@@ -155,17 +155,22 @@ ItemCard(
 
 See [Conditional Drop](conditional-drop.md) for the equivalent `canDrop` on a plain `dropTarget`.
 
-## Reorder Hysteresis
+## How a Swap Is Decided
 
-When two items of different sizes swap, the swap itself can move the target back under the cursor and immediately trigger the reverse swap, causing the two items to oscillate during a slow drag. Compose DND prevents this with a built-in hysteresis: after a swap, the cursor has to travel a minimum distance in the opposite direction before the just-swapped target can be re-entered.
+A dragged item takes the slot of another item when its **leading edge passes the middle of that item**: dragging down, the bottom edge of the dragged item has to get past the middle of the item below; dragging up, its top edge past the middle of the item above. Between rows, columns or lists, the edge is measured along the line between the two slots.
 
-The guard also lifts on its own once the drag has moved that distance away from the swap point and the just-swapped target is no longer the one the drop strategy would pick. So an item inserted into another list (a Kanban card entering a column) can go on to swap with the item it pushed along, without reversing first.
+This holds whatever the sizes of the two items. Right after the swap the other item lies on the other side, and its middle is out of reach again, so holding still at the swap point never flips the two back and forth -- also when a short item passes a tall one.
 
-The default distance is `8.dp` and works out of the box. You can tune it when creating the state:
+Two more things keep the order under the pointer predictable:
+
+- Items animated with `animateItem()` take a few frames to reach their new slot. Slots are compared at the place where the layout settles them, not where the items are passing through, so the animation does not change what the dragged item hovers.
+- The `dropStrategy` of the item only picks among the slots it has reached, which matters when it reaches several at once (a fast drag, or a card entering another list).
+
+A small distance is added around the swap point so that a shaky hold right on it does not swap either: after a swap, the drag has to come back by that distance, plus the spacing between the items, to undo it. The default is `8.dp`. You can tune it when creating the state:
 
 ```kotlin
 val dndState = rememberDragAndDropState<String>(
-    reorderHysteresisDistance = 16.dp, // 0.dp disables hysteresis
+    reorderHysteresisDistance = 16.dp, // 0.dp leaves only the spacing between items
 )
 ```
 

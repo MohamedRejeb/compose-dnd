@@ -191,7 +191,7 @@ private class DropTargetNode<T>(
         state.addDropTarget(dropTargetState)
 
         val size = coordinates.size.toSize()
-        val topLeft = coordinates.positionInRoot()
+        val topLeft = state.positionOf(coordinates)
 
         dropTargetState.layoutCoordinates = coordinates
         dropTargetState.size = size
@@ -205,7 +205,7 @@ private class DropTargetNode<T>(
         }
 
         dropTargetState.layoutCoordinates = coordinates
-        dropTargetState.topLeft = coordinates.positionInRoot()
+        dropTargetState.topLeft = state.positionOf(coordinates)
     }
 
     override fun onRemeasured(size: IntSize) {
