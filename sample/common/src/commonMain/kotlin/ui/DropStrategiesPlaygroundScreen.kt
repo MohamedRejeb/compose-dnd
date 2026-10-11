@@ -85,7 +85,7 @@ private val DropStrategiesCode = """
 fun DropStrategiesPlaygroundScreen(
     onBack: () -> Unit,
 ) {
-    DropStrategiesPlayground(initialOption = StrategyOption.Percentage, onBack = onBack)
+    DropStrategiesPlayground(initialOption = StrategyOption.Surface, onBack = onBack)
 }
 
 /** The screen with a chosen starting strategy, for previews and snapshots. */

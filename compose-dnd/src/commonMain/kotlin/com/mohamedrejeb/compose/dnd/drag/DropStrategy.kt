@@ -25,8 +25,8 @@ import com.mohamedrejeb.compose.dnd.utils.MathUtils
  * multiple targets overlap.
  *
  * Built-in strategies:
- * - [Surface] — Largest absolute overlap area wins.
- * - [SurfacePercentage] — Largest overlap as a percentage of the dragged item wins. (Default)
+ * - [Surface] — Largest absolute overlap area wins. (Default)
+ * - [SurfacePercentage] — The target covered the most, as a share of its own area, wins.
  * - [CenterDistance] — Closest center-to-center distance wins.
  */
 interface DropStrategy {
@@ -46,7 +46,7 @@ interface DropStrategy {
     ): DropTargetState<T>?
 
     /**
-     * Selects the target with the largest absolute overlap area.
+     * Selects the target with the largest absolute overlap area. This is the default strategy.
      * Z-index is factored in by adding `zIndex * maxArea` to the score.
      */
     object Surface : DropStrategy {
@@ -69,8 +69,9 @@ interface DropStrategy {
     }
 
     /**
-     * Selects the target with the largest overlap as a percentage of the dragged item area.
-     * This is the default strategy. Z-index is added to the percentage score.
+     * Selects the target covered the most by the dragged item, as a share of the target's own
+     * area: a small target that is fully covered wins over a large one that is partly covered.
+     * With targets of the same size it picks like [Surface]. Z-index is added to the score.
      */
     object SurfacePercentage : DropStrategy {
         override fun <T> getHoveredDropTarget(
@@ -80,14 +81,19 @@ interface DropStrategy {
         ): DropTargetState<T>? =
             dropTargets
                 .maxByOrNull {
-                    val maxOverlappingArea = draggedItemSize.width * draggedItemSize.height
+                    val targetArea = it.size.width * it.size.height
+                    val coveredShare = if (targetArea > 0f) {
+                        MathUtils.overlappingArea(
+                            topLeft1 = draggedItemTopLeft,
+                            size1 = draggedItemSize,
+                            topLeft2 = it.topLeft,
+                            size2 = it.size,
+                        ) / targetArea
+                    } else {
+                        0f
+                    }
 
-                    MathUtils.overlappingArea(
-                        topLeft1 = draggedItemTopLeft,
-                        size1 = draggedItemSize,
-                        topLeft2 = it.topLeft,
-                        size2 = it.size,
-                    ) / maxOverlappingArea + it.zIndex
+                    coveredShare + it.zIndex
                 }
     }
 

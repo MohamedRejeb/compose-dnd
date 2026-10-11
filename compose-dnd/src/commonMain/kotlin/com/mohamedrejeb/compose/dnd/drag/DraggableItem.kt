@@ -57,7 +57,7 @@ fun <T> DraggableItem(
     dragAfterLongPress: Boolean = state.dragAfterLongPress,
     requireFirstDownUnconsumed: Boolean = state.requireFirstDownUnconsumed,
     dropTargets: List<Any> = emptyList(),
-    dropStrategy: DropStrategy = DropStrategy.SurfacePercentage,
+    dropStrategy: DropStrategy = DropStrategy.Surface,
     dragAxis: DragAxis = DragAxis.Free,
     dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
     onDragStart: (state: DraggedItemState<T>) -> Unit = {},

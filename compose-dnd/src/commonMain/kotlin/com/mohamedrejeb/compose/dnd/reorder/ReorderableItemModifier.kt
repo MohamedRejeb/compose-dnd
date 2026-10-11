@@ -77,7 +77,7 @@ fun <T> Modifier.reorderableItem(
     dragAfterLongPress: Boolean = state.dragAfterLongPress,
     requireFirstDownUnconsumed: Boolean = state.requireFirstDownUnconsumed,
     dropTargets: List<Any> = emptyList(),
-    dropStrategy: DropStrategy = DropStrategy.SurfacePercentage,
+    dropStrategy: DropStrategy = DropStrategy.Surface,
     dragAxis: DragAxis = DragAxis.Free,
     hasDragHandle: Boolean = false,
     zIndex: Float = 0f,

@@ -52,13 +52,13 @@ internal enum class StrategyOption(
         label = "Surface",
         apiName = "DropStrategy.Surface",
         strategy = DropStrategy.Surface,
-        explanation = "The target that covers the most of the photo wins.",
+        explanation = "The target that covers the most of the photo wins. This is the default.",
     ),
     Percentage(
         label = "Percentage",
         apiName = "DropStrategy.SurfacePercentage",
         strategy = DropStrategy.SurfacePercentage,
-        explanation = "The target that covers the largest share of the photo wins. This is the default.",
+        explanation = "The target with the largest share of its own area under the photo wins.",
     ),
     Center(
         label = "Center",

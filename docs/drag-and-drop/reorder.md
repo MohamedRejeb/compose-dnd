@@ -65,7 +65,7 @@ items(items, key = { it }) { item ->
 | `dragAfterLongPress`         | `Boolean`                                 | Inherits from state              | Override long-press drag behavior. |
 | `requireFirstDownUnconsumed` | `Boolean`                                 | Inherits from state              | Override unconsumed pointer requirement. |
 | `dropTargets`                | `List<Any>`                               | `emptyList()`                    | Restrict which targets this item can be dropped on. |
-| `dropStrategy`               | `DropStrategy`                            | `DropStrategy.SurfacePercentage` | Strategy for choosing the hovered target. |
+| `dropStrategy`               | `DropStrategy`                            | `DropStrategy.Surface`           | Strategy for choosing the hovered target. |
 | `dragAxis`                   | `DragAxis`                                | `DragAxis.Free`                  | Constrain drag movement to one axis. See [Axis Lock](axis-lock.md). |
 | `hasDragHandle`              | `Boolean`                                 | `false`                          | If `true`, drag is initiated from a `dragHandle` modifier. See [Drag Handle](drag-handle.md). |
 | `zIndex`                     | `Float`                                   | `0f`                             | Z-index for overlapping items. |

@@ -84,7 +84,7 @@ The item's configuration (`dropTargets`, `dropStrategy`, `dragAxis`, `dropAnimat
 | `dragAfterLongPress`         | `Boolean`                      | Inherits from state            | Override the long-press drag behavior for this item. |
 | `requireFirstDownUnconsumed` | `Boolean`                      | Inherits from state            | Override the unconsumed pointer requirement for this item. |
 | `dropTargets`                | `List<Any>`                    | `emptyList()`                  | Restrict which drop targets this item can be dropped on. Empty means any target. |
-| `dropStrategy`               | `DropStrategy`                 | `DropStrategy.SurfacePercentage` | Strategy for choosing the hovered drop target. |
+| `dropStrategy`               | `DropStrategy`                 | `DropStrategy.Surface`           | Strategy for choosing the hovered drop target. |
 | `dragAxis`                   | `DragAxis`                     | `DragAxis.Free`                | Constrain drag movement to one axis. See [Axis Lock](axis-lock.md). |
 | `hasDragHandle`              | `Boolean`                      | `false`                        | If `true`, drag is initiated from a `dragHandle` modifier instead of the whole item. See [Drag Handle](drag-handle.md). |
 | `dropAnimationSpec`          | `AnimationSpec<Offset>`        | `SpringSpec()`                 | Animation for position when dropping. |

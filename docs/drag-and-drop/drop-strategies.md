@@ -10,9 +10,28 @@ During a drag operation, the dragged item may visually overlap more than one dro
 
 ## Built-in Strategies
 
-### SurfacePercentage (Default)
+### Surface (Default)
 
-Selects the drop target that has the highest percentage of its surface covered by the dragged item. This is the default strategy and works well for most use cases.
+Selects the drop target with the largest absolute overlapping area (in pixels) with the dragged item, regardless of the target's own size. This is the default strategy and works well for most use cases.
+
+```kotlin
+Text(
+    text = "Hello",
+    modifier = Modifier.draggableItem(
+        key = "item-1",
+        data = "Hello",
+        state = dragAndDropState,
+        dropStrategy = DropStrategy.Surface,
+        draggableContent = {
+            Text(text = "Hello")
+        },
+    ),
+)
+```
+
+### SurfacePercentage
+
+Selects the drop target that has the highest percentage of its own surface covered by the dragged item.
 
 ```kotlin
 Text(
@@ -32,29 +51,10 @@ Text(
 The percentage is calculated as:
 
 ```
-overlapping area / dragged item area
+overlapping area / drop target area
 ```
 
-This means a smaller drop target that is fully covered by the dragged item may be preferred over a larger target that is only partially covered.
-
-### Surface
-
-Selects the drop target with the largest absolute overlapping area (in pixels) with the dragged item, regardless of the target's own size.
-
-```kotlin
-Text(
-    text = "Hello",
-    modifier = Modifier.draggableItem(
-        key = "item-1",
-        data = "Hello",
-        state = dragAndDropState,
-        dropStrategy = DropStrategy.Surface,
-        draggableContent = {
-            Text(text = "Hello")
-        },
-    ),
-)
-```
+This means a smaller drop target that is fully covered by the dragged item is preferred over a larger target that is only partially covered. When all targets have the same size, it picks the same target as `Surface`.
 
 ### CenterDistance
 
@@ -79,8 +79,8 @@ Text(
 
 | Strategy            | Algorithm                         | Best For                                       |
 |---------------------|-----------------------------------|-------------------------------------------------|
-| `SurfacePercentage` | Max overlapping area / item area  | General purpose, mixed-size targets             |
-| `Surface`           | Max absolute overlapping area     | Same-size targets, grid layouts                 |
+| `Surface`           | Max absolute overlapping area     | General purpose, lists and grids (default)      |
+| `SurfacePercentage` | Max overlapping area / target area | Small targets next to large ones               |
 | `CenterDistance`    | Min distance between centers      | Precise targeting, small targets                |
 
 ## Z-Index
