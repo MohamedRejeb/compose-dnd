@@ -49,6 +49,7 @@ The first 1.0 alpha. It unifies the API around `DragAndDropState`, removes the l
 - A second pointer can no longer start a concurrent drag.
 - A drag started by a long press inside a scrollable is no longer taken over by the scrollable when the finger drifted during the press. Once a drag is on, the container follows the pointer before its children see the event.
 - Releasing a long-press drag without moving no longer also clicks the item.
+- The drop animation of an item locked to an axis (`dragAxis`) now keeps to that axis. Before, the item slid sideways to the middle of a target wider than itself, then jumped back to its place.
 - A scrollable under a drag no longer scrolls itself when the finger reports an event without movement. During auto-scroll this made the list jump back and stop scrolling.
 - Reordering items of different sizes no longer bounces. A dragged item now takes the slot of another one when its leading edge passes the middle of that item, a rule that stays true after the swap whatever the two sizes. Before, the target was picked by the drop strategy alone and could change with the very swap it caused: a card carried over another list could swap back and forth several times and end one slot away from where it was held.
 - Hovering is resolved against where items settle, not where they are while `animateItem()` moves them, so the reorder animation no longer changes the hovered item.

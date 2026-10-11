@@ -23,6 +23,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.positionInRoot
 import com.mohamedrejeb.compose.dnd.drag.DraggableItemState
+import com.mohamedrejeb.compose.dnd.drag.applyConstraint
 import com.mohamedrejeb.compose.dnd.drop.DropTargetState
 import com.mohamedrejeb.compose.dnd.utils.MathUtils
 
@@ -102,15 +103,21 @@ internal suspend fun <T> DragAndDropState<T>.animateDropOnTarget(
             (ownMotion - targetMotion).getDistance() > REORDER_DETECTION_DISTANCE
     }
 
+    // A drag locked to an axis also lands along it: the ghost doesn't slide sideways
+    // to the middle of a target wider than the item
+    val releaseTopLeft = dragPosition.value
+    val dragAxis = currentDraggableItem.dragAxis
+    fun onDragAxis(topLeft: Offset) = releaseTopLeft + dragAxis.applyConstraint(topLeft - releaseTopLeft)
+
     animateDropPosition(currentDraggableItem.dropAnimationSpec) {
         detectHoverReorder()
         if (reorderedOnHover) {
-            releaseAnchor
+            onDragAxis(releaseAnchor)
         } else {
             dropTarget.layoutCoordinates
                 ?.takeIf { it.isAttached }
                 ?.let { dropTarget.topLeft = it.positionInRoot() }
-            dropTarget.getDropTopLeft(ghostSize)
+            onDragAxis(dropTarget.getDropTopLeft(ghostSize))
         }
     }
 
