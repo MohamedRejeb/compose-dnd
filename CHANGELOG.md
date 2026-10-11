@@ -47,6 +47,7 @@ The first 1.0 alpha. It unifies the API around `DragAndDropState`, removes the l
 - A second pointer can no longer start a concurrent drag.
 - A drag started by a long press inside a scrollable is no longer taken over by the scrollable when the finger drifted during the press. Once a drag is on, the container follows the pointer before its children see the event.
 - Releasing a long-press drag without moving no longer also clicks the item.
+- A scrollable under a drag no longer scrolls itself when the finger reports an event without movement. During auto-scroll this made the list jump back and stop scrolling.
 - An item inserted into another list (a Kanban card entering a column) now swaps with the item it pushed along when the drag moves on to it. Before, the reorder hysteresis kept that item excluded until the drag reversed, so `onDragEnter` never fired for it.
 - Disabling a `DragAndDropContainer` (`enabled = false`) mid-drag now cancels the drag instead of leaving it stuck.
 - A gesture canceled by the system (an incoming call, a parent taking over the touch, the container leaving the composition) now cancels the drag. Before, it was handled as a release and dropped the item on the hovered target.

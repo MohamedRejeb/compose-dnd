@@ -169,8 +169,12 @@ private suspend fun <T> AwaitPointerEventScope.trackDrag(
                 return
             }
 
-            change.positionChanged() -> {
-                state.handleDrag(change.position + containerPositionInRoot())
+            else -> {
+                if (change.positionChanged()) {
+                    state.handleDrag(change.position + containerPositionInRoot())
+                }
+                // Also an event without movement: left unconsumed, a scrollable under
+                // the pointer would take it as its own drag and scroll
                 change.consume()
             }
         }

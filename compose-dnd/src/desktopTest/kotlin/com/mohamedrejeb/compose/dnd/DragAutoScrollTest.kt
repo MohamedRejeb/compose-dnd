@@ -239,6 +239,26 @@ class DragAutoScrollTest {
     }
 
     @Test
+    fun eventsWithoutMovement_doNotLetTheListScrollItselfUnderTheDrag() = runComposeUiTest {
+        items = List(200) { "item-$it" }
+        setColumn()
+        dragAndHold(from = Offset(200f, 150f), to = Offset(200f, 380f), holdFrames = 0)
+
+        // A finger held still keeps reporting events, e.g. when its pressure changes
+        var lastScrolled = scrolledPx()
+        repeat(120) {
+            onNodeWithTag(ContainerTag).performTouchInput {
+                advanceEventTime(FrameMs)
+                moveBy(Offset.Zero)
+            }
+            mainClock.advanceTimeBy(FrameMs)
+            assertTrue(scrolledPx() >= lastScrolled, "The list jumped back from $lastScrolled to ${scrolledPx()}")
+            lastScrolled = scrolledPx()
+        }
+        assertTrue(lastScrolled > 1000, "The list should keep scrolling, got to $lastScrolled")
+    }
+
+    @Test
     fun itemPickedUpAtTheEdge_doesNotScrollUntilItMoves() = runComposeUiTest {
         setColumn()
         mainClock.autoAdvance = false
