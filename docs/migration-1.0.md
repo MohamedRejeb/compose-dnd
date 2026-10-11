@@ -226,6 +226,14 @@ Calls using named arguments compile unchanged. Only calls passing these argument
     }
     ```
 
+## DropStrategy: SurfacePercentage and the Default
+
+`DropStrategy.SurfacePercentage` used to divide the overlap by the dragged item's area. That value is the same for every target, so it always picked the same target as `DropStrategy.Surface`. It now divides by each drop target's own area: the target covered the most, as a share of its size, wins.
+
+The default `dropStrategy` changed from `SurfacePercentage` to `Surface`, so items relying on the default hover exactly as before.
+
+You only need to act if you pass `dropStrategy = DropStrategy.SurfacePercentage` explicitly **and** your drop targets have different sizes: switch to `DropStrategy.Surface` to keep the old behavior.
+
 ## What's New (Not a Breaking Change)
 
 These are additive and don't require any changes to existing code:

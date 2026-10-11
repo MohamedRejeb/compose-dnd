@@ -25,8 +25,12 @@ The first 1.0 alpha. It unifies the API around `DragAndDropState`, removes the l
 - `dragAutoScroll` and `dragScrollPin` are no longer annotated `@ExperimentalDndApi` and no longer require `@OptIn`. Axis lock (`dragAxis`) and `canDrop` were already stable; their docs incorrectly asked for opt-in and have been corrected. Nothing in the public API currently requires `@OptIn(ExperimentalDndApi::class)`.
 - `DragAutoScrollConfig.maxScrollSpeed` is now a `Dp` distance scrolled per second instead of a raw pixel-per-second `Float`, so auto-scroll feels the same on every screen density. The default is `600.dp`.
 - `DragAutoScrollConfig` is a regular class instead of a `data class`. It still exposes `copy()`, but no longer supports `componentN()` destructuring.
+- Auto-scroll edge zones are capped to a quarter of the viewport, and an item too large to fit between them is followed around the pointer instead of by its edges. Before, a wide item on a small screen (a Kanban card on a phone) sat in both zones at once: it scrolled at full speed after a short move, or not at all when it started next to the list's first edge.
+- An item picked up next to an edge no longer scrolls the list right away: auto-scroll waits for the pointer to move `8.dp` toward that edge, or for the item to leave the edge zone and come back.
 - Auto-scroll now stays idle once the container can't scroll further in a direction, instead of spinning frames against the end of the list.
 - A draggable item's configuration (`dropTargets`, `dropStrategy`, `dragAxis`, `dropAnimationSpec`, `draggableContent`) is now captured when a drag starts and applies for the whole drag.
+- **Breaking:** `DropStrategy.SurfacePercentage` now measures the overlap as a share of each **drop target's** area, as its docs described: a small target that is fully covered wins over a large one that is partly covered. Before, it divided by the dragged item's area, which made it pick exactly like `DropStrategy.Surface`.
+- The default `dropStrategy` is now `DropStrategy.Surface`. The default hover behavior is unchanged, since the old default picked the same target.
 - **Breaking:** the `DraggableItem` and `ReorderableItem` composables now take `key, data, state, modifier` first, in that order, like the `draggableItem` and `reorderableItem` modifiers. `ReorderableItem` also takes `zIndex` after `dragAxis`. Calls with named arguments are not affected; calls passing these positionally need to be reordered.
 - The drag is anchored at the point where the pointer went down instead of where the touch slop was crossed, so the grabbed point stays under the pointer and `DraggedItemState.dragAmount` matches the pointer movement exactly.
 
@@ -52,6 +56,8 @@ The first 1.0 alpha. It unifies the API around `DragAndDropState`, removes the l
 - `cancelDrag()` called right after the item was released no longer runs the drop and the cancel together, which called `onDragEnd` twice.
 - `enabled = false` on an item now also stops its drag handle.
 - An item whose scoped `dragHandle()` is removed from its content can be dragged as a whole again.
+- Items and drop targets now follow their position when an ancestor moves them, such as a list scrolling under the drag. Before, hover detection could use positions from before the scroll, so on Android a Kanban column dragged to the edge scrolled the board without ever swapping with the columns passing under it.
+- `dragAutoScroll` on lazy layouts keeps a steady pace while the pointer keeps moving inside an edge zone. Before, every pointer move restarted its frame loop.
 - `dragAutoScroll` now scrolls the right way in lists and grids with `reverseLayout = true` and in horizontal layouts in right-to-left locales. Before, it did not scroll at all toward the far end of such a list.
 - Changing an item's key (for example on lazy layout node reuse) no longer leaves a stale registration behind.
 - Drag handles no longer poll for their item every millisecond while waiting for it to register.

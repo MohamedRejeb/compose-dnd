@@ -152,7 +152,7 @@ LazyColumn(
 
 | Parameter            | Type | Default  | Description                                                               |
 |----------------------|------|----------|---------------------------------------------------------------------------|
-| `minScrollThreshold` | `Dp` | `DragAutoScrollConfig.DefaultMinScrollThreshold` (`48.dp`)  | Minimum distance from the edge where scrolling begins. The effective threshold adapts to the first/last visible item size: `clamp(itemSize, minScrollThreshold, maxScrollThreshold)`. |
+| `minScrollThreshold` | `Dp` | `DragAutoScrollConfig.DefaultMinScrollThreshold` (`48.dp`)  | Minimum distance from the edge where scrolling begins. The effective threshold adapts to the first/last visible item size: `clamp(itemSize, minScrollThreshold, maxScrollThreshold)`, and never more than a quarter of the viewport. |
 | `maxScrollThreshold` | `Dp` | `DragAutoScrollConfig.DefaultMaxScrollThreshold` (`160.dp`) | Maximum distance from the edge for auto-scroll activation. Prevents the adaptive threshold from growing too large with tall items or containers. |
 | `maxScrollSpeed`     | `Dp` | `DragAutoScrollConfig.DefaultMaxScrollSpeed` (`600.dp`)     | The maximum scroll speed, as a distance scrolled per second at the very edge. Being a `Dp`, the scroll feels the same on every screen density. |
 
@@ -169,10 +169,12 @@ val fasterConfig = DragAutoScrollConfig().copy(maxScrollSpeed = 900.dp)
 
 The auto scroll mechanism uses a dynamic threshold approach:
 
-1. **Detection** -- When a dragged item is within the scroll threshold distance from the container edge, scrolling begins.
-2. **Quadratic Easing** -- Scroll speed increases quadratically as the dragged item moves closer to the edge. This provides a natural feel where small movements near the threshold produce slow scrolling, while pushing toward the edge accelerates.
-3. **Frame-Synced** -- Scroll operations are synchronized with the frame rate for smooth, jank-free scrolling.
-4. **Bidirectional** -- Scrolling works in both directions: toward the start and toward the end of the container.
+1. **Detection** -- When an edge of the dragged item is within the scroll threshold distance from the container edge, scrolling begins.
+2. **Large items follow the pointer** -- An item too large to fit between the two edge zones (a Kanban column on a phone) would touch both all the time. Its edges are followed no further from the pointer than half the free space, so for large items the pointer decides when to scroll.
+3. **No scroll on pick-up** -- An item picked up next to an edge doesn't scroll the list under your finger. It starts scrolling once the pointer moves toward that edge by `8.dp`, or once the item leaves the edge zone and comes back.
+4. **Quadratic Easing** -- Scroll speed increases quadratically as the dragged item moves closer to the edge. This provides a natural feel where small movements near the threshold produce slow scrolling, while pushing toward the edge accelerates.
+5. **Frame-Synced** -- Scroll operations are synchronized with the frame rate for smooth, jank-free scrolling.
+6. **Bidirectional** -- Scrolling works in both directions: toward the start and toward the end of the container.
 5. **Bounded** -- Auto-scroll stays idle once the container can't scroll further in that direction, instead of spinning frames against the end of the list.
 
 ## Scroll Pinning (dragScrollPin)
