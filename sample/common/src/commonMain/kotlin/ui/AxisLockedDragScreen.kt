@@ -60,6 +60,8 @@ import theme.SampleTheme
 
 private val Speeds = listOf("0.5x", "1x", "1.5x", "2x")
 private const val SpeedKey = "speed"
+
+private fun speedStopKey(index: Int) = "speed-$index"
 private const val InitialSpeed = 1
 private val SpeedTokenWidth = 64.dp
 private val RailHeight = 56.dp
@@ -105,7 +107,7 @@ fun AxisLockedDragScreen(
 
 @Composable
 private fun SpeedRail() {
-    val stops = remember { Speeds.indices.map { "speed-$it" } }
+    val stops = remember { Speeds.indices.map(::speedStopKey) }
     var selected by remember { mutableIntStateOf(InitialSpeed) }
     val state = rememberDragAndDropState<Int>()
     val colors = SampleTheme.colors
@@ -163,7 +165,13 @@ private fun SpeedToken(
                 state = state,
                 dragAxis = DragAxis.Horizontal,
                 draggableContent = {
-                    AxisHueToken(speed, Hues.Sky, Modifier.width(SpeedTokenWidth).lifted(shape = pill))
+                    // While it is dragged, the knob reads the speed of the stop it is over
+                    val hovered = Speeds.indices.firstOrNull { state.hoveredDropTargetKey == speedStopKey(it) }
+                    AxisHueToken(
+                        label = Speeds[hovered ?: index],
+                        hue = Hues.Sky,
+                        modifier = Modifier.width(SpeedTokenWidth).lifted(shape = pill),
+                    )
                 },
             ),
     )

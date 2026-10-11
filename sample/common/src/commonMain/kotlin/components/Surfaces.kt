@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import theme.SampleTheme
 
 /**
@@ -112,9 +113,13 @@ fun Modifier.lifted(
 
 private const val LiftedDarkHighlight = 0.06f
 
+/** Under its neighbors: an item sliding into the slot next to the hole passes over it. */
+private const val PlaceholderZIndex = -1f
+
 /**
  * Replaces an item with the hole it leaves behind while it is being dragged:
- * a recessed fill with a dashed outline in the item's [shape].
+ * a recessed fill with a dashed outline in the item's [shape]. The hole is drawn
+ * under the other items, so the ones that move during a reorder are never hidden by it.
  */
 @Composable
 fun Modifier.dragPlaceholder(
@@ -123,7 +128,7 @@ fun Modifier.dragPlaceholder(
 ): Modifier {
     val fill = SampleTheme.colors.well
     val outline = SampleTheme.colors.line
-    return drawWithContent {
+    return zIndex(if (active) PlaceholderZIndex else 0f).drawWithContent {
         if (!active) {
             drawContent()
             return@drawWithContent

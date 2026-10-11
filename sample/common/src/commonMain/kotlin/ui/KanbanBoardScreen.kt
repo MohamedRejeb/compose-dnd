@@ -37,6 +37,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
@@ -94,6 +96,12 @@ Modifier.reorderableItem(
     dragAxis = DragAxis.Horizontal, ...
 )
 Modifier.dragHandle(column.id, columnState)
+// Under its cards, a column takes a card at its end
+Modifier.dropTarget(
+    key = "end-" + column.id, state = cardState,
+    zIndex = -1f,
+    onDragEnter = { moveToEnd(it.data, column) },
+)
 """
 
 @Composable
@@ -148,7 +156,7 @@ private fun KanbanBoard(
                             columnState = columnState,
                             onColumnEnter = { dragged -> columns = columns.moveColumn(dragged.id, column.id) },
                             onCardEnter = { dragged, target -> columns = columns.moveCard(dragged, target.id) },
-                            onDropInEmpty = { dragged -> columns = columns.moveCardToEnd(dragged, column.id) },
+                            onCardEnterEnd = { dragged -> columns = columns.moveCardToEnd(dragged, column.id) },
                             modifier = Modifier
                                 .animateItem()
                                 .width(columnWidth)
@@ -184,7 +192,7 @@ private fun BoardColumn(
     columnState: DragAndDropState<KanbanColumn>,
     onColumnEnter: (dragged: KanbanColumn) -> Unit,
     onCardEnter: (dragged: KanbanCard, target: KanbanCard) -> Unit,
-    onDropInEmpty: (dragged: KanbanCard) -> Unit,
+    onCardEnterEnd: (dragged: KanbanCard) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val key = columnKey(column)
@@ -213,7 +221,7 @@ private fun BoardColumn(
                 column = column,
                 cardState = cardState,
                 onCardEnter = onCardEnter,
-                onDropInEmpty = onDropInEmpty,
+                onCardEnterEnd = onCardEnterEnd,
             )
         }
     }
@@ -229,27 +237,48 @@ private fun columnWellState(
 ): WellState {
     val dragged = cardState.draggedItem ?: return WellState.Idle
     val holdsCard = column.cards.any { it.id == dragged.key }
-    val overEmptySlot = cardState.isDropTargetHovered(emptySlotKey(column))
-    return if (holdsCard || overEmptySlot) WellState.Accept else WellState.Idle
+    return if (holdsCard) WellState.Accept else WellState.Idle
 }
 
+private fun columnEndKey(column: KanbanColumn) = "end-${column.id}"
+
 private fun emptySlotKey(column: KanbanColumn) = "empty-${column.id}"
+
+/** Below the cards, so a card under the pointer always wins over the end of its column. */
+private const val ColumnEndZIndex = -1f
 
 @Composable
 private fun CardList(
     column: KanbanColumn,
     cardState: DragAndDropState<KanbanCard>,
     onCardEnter: (dragged: KanbanCard, target: KanbanCard) -> Unit,
-    onDropInEmpty: (dragged: KanbanCard) -> Unit,
+    onCardEnterEnd: (dragged: KanbanCard) -> Unit,
 ) {
     val listState = rememberLazyListState()
+    // Where the last slot starts: a card released over the empty area lands there
+    val lastSlotTop by remember {
+        derivedStateOf {
+            listState.layoutInfo.visibleItemsInfo
+            .lastOrNull()
+            ?.offset ?: 0
+        }
+    }
     LazyColumn(
         state = listState,
         verticalArrangement = Arrangement.spacedBy(CardSpacing),
         contentPadding = PaddingValues(bottom = ColumnPadding),
         modifier = Modifier
             .fillMaxSize()
-            .dragAutoScroll(state = cardState, lazyListState = listState),
+            // The whole list is a target under its cards: it gets the card when no card
+            // is under it, in the empty area below the last one or in an empty column
+            .dropTarget(
+                key = columnEndKey(column),
+                state = cardState,
+                zIndex = ColumnEndZIndex,
+                dropAlignment = Alignment.TopStart,
+                dropOffset = Offset(0f, lastSlotTop.toFloat()),
+                onDragEnter = { dragged -> onCardEnterEnd(dragged.data) },
+            ).dragAutoScroll(state = cardState, lazyListState = listState),
     ) {
         items(column.cards, key = { it.id }) { card ->
             KanbanCardView(
@@ -275,13 +304,7 @@ private fun CardList(
             )
         }
         if (column.cards.isEmpty()) {
-            item(key = emptySlotKey(column)) {
-                EmptyColumnSlot(
-                    column = column,
-                    cardState = cardState,
-                    onDrop = onDropInEmpty,
-                )
-            }
+            item(key = emptySlotKey(column)) { EmptyColumnSlot() }
         }
     }
 }
@@ -289,23 +312,13 @@ private fun CardList(
 private val EmptySlotHeight = 96.dp
 
 @Composable
-private fun EmptyColumnSlot(
-    column: KanbanColumn,
-    cardState: DragAndDropState<KanbanCard>,
-    onDrop: (KanbanCard) -> Unit,
-) {
+private fun EmptyColumnSlot() {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxWidth()
             .height(EmptySlotHeight)
-            .dragPlaceholder(active = true)
-            .dropTarget(
-                key = emptySlotKey(column),
-                state = cardState,
-                dropAnimationEnabled = false,
-                onDrop = { dragged -> onDrop(dragged.data) },
-            ),
+            .dragPlaceholder(active = true),
     ) {
         Text(
             text = "No cards yet",

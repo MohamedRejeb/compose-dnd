@@ -15,6 +15,7 @@
  */
 package ui
 
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
@@ -70,6 +71,49 @@ class KanbanBoardTest {
         waitForIdle()
 
         assertTrue(centerOf("To do").x > centerOf("In progress").x, "To do must move after In progress")
+    }
+
+    @Test
+    fun kanban_cardHeldInTheEmptyAreaUnderAColumn_goesLastInIt() = runDesktopComposeUiTest(width = WideWidth, height = WindowHeight) {
+        setContent { AppTheme { KanbanBoardScreen(onBack = {}) } }
+        waitForIdle()
+
+        val card = centerOf("Set up CI pipeline")
+        val lastInReview = centerOf("Redesign settings page")
+        // Well below the last card of Review, where the column is empty
+        val emptyArea = Offset(lastInReview.x, WindowHeight - 100f)
+        onRoot().performTouchInput { longPress(card) }
+        waitForIdle()
+        onRoot().performTouchInput {
+            glideTo(card, emptyArea, steps = 40)
+            up()
+        }
+        waitForIdle()
+
+        val neighbour = topLeftOf("Redesign settings page")
+        val dropped = topLeftOf("Set up CI pipeline")
+        assertTrue(abs(dropped.x - neighbour.x) < 1f && dropped.y > neighbour.y, "The card must end last in Review")
+    }
+
+    @Test
+    fun kanban_cardHeldUnderItsOwnColumn_goesLastInIt() = runDesktopComposeUiTest(width = WideWidth, height = WindowHeight) {
+        setContent { AppTheme { KanbanBoardScreen(onBack = {}) } }
+        waitForIdle()
+
+        val card = centerOf("Search with filters")
+        val emptyArea = Offset(card.x, WindowHeight - 100f)
+        onRoot().performTouchInput { longPress(card) }
+        waitForIdle()
+        onRoot().performTouchInput {
+            glideTo(card, emptyArea, steps = 40)
+            up()
+        }
+        waitForIdle()
+
+        assertTrue(
+            topLeftOf("Search with filters").y > topLeftOf("Fix image loader leak").y,
+            "The card must end after the last card of its column",
+        )
     }
 
     private companion object {

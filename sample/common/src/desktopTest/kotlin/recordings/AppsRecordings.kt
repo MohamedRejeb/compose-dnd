@@ -46,7 +46,8 @@ class AppsRecordings {
         release()
         pause(600)
         longPress(centerOf("Fix image loader leak"))
-        moveTo(centerOf("Redesign settings page") + dp(0, 90), 1100)
+        // The empty area under the last card takes the card at the end of the column
+        moveTo(centerOf("Redesign settings page") + dp(0, 230), 1100)
         pause(500)
         release()
         pause(600)
