@@ -273,6 +273,9 @@ private fun ItemCard(
 
     Place `animateItem()` **before** `reorderableItem` in the modifier chain. This lets the library track the item's animated position, so dropping while items are still moving lands the drag shadow exactly where the item settles.
 
+!!! tip
+    If you draw a placeholder in the slot of the dragged item instead of hiding it, add `Modifier.zIndex(if (isDragging) -1f else 0f)` to the item. The items that slide past during a reorder are then drawn over the placeholder instead of behind it.
+
 ## Alternative: ReorderableItem Wrapper Composable
 
 If you prefer wrapping composables over modifier chains, `ReorderableItem` offers the same features as the `reorderableItem` modifier, built on the same `DragAndDropState` and `DragAndDropContainer` as everything else:

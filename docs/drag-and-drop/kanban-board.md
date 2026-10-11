@@ -10,7 +10,7 @@ The building blocks:
 - A second `DragAndDropState` for the columns, dragged by their header. Two states let card drags and column drags coexist on one screen.
 - An outer `LazyRow` of columns and an inner `LazyColumn` per column, each with its own `dragAutoScroll`.
 - `Modifier.reorderableItem` on each card, handling both same-column reorder and cross-column insertion in a single callback.
-- A `dropTarget` placeholder so cards can be dropped into empty columns.
+- A `dropTarget` under the cards of each column, so a card can be dropped below the last card or into an empty column.
 
 On a narrow screen the board shows one column at a time. Holding a card or a column at the edge scrolls the board to the next ones:
 
@@ -153,32 +153,45 @@ Two lists are the smallest version of the same idea. Here a person either joins 
 
 <video class="demo-phone" src="../../videos/between-lists.mp4" autoplay loop muted playsinline></video>
 
-## Dropping into Empty Columns
+## Dropping at the End of a Column
 
-An empty column has no cards to hover over, so `onDragEnter` never fires. Add a placeholder `dropTarget` that appears when the column is empty:
+Cards only react when another card is under the dragged one. The empty area below the last card, and a column with no cards at all, need a target of their own. Make the whole list a `dropTarget` that sits **under** its cards:
 
 ```kotlin
-if (column.cards.isEmpty()) {
-    item(key = "empty-${column.id}") {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp)
-                .dropTarget(
-                    key = "empty-${column.id}",
-                    state = dndState,
-                    dropAnimationEnabled = false,
-                    onDrop = { state -> onDropInEmpty(state.data) },
-                ),
-        ) {
-            Text("Drop here")
-        }
+LazyColumn(
+    state = listState,
+    modifier = Modifier
+        .fillMaxSize()
+        .dropTarget(
+            key = "end-${column.id}",
+            state = dndState,
+            zIndex = -1f,
+            dropAlignment = Alignment.TopStart,
+            dropOffset = Offset(0f, lastSlotTop.toFloat()),
+            onDragEnter = { state -> onCardEnterEnd(state.data) },
+        )
+        .dragAutoScroll(state = dndState, lazyListState = listState),
+) {
+    // cards
+}
+
+fun moveCardToEnd(card: Card, columnId: String) {
+    columns = columns.map { column ->
+        val rest = column.cards.filter { it.id != card.id }
+        column.copy(cards = if (column.id == columnId) rest + card else rest)
     }
 }
 ```
 
-`dropAnimationEnabled = false` commits the move immediately on drop — the card is re-parented into the column, so animating toward the placeholder's old position would fight the layout change.
+- `zIndex = -1f` puts the list below its cards: when both are under the dragged card, only the cards are considered. The list gets the card when no card does.
+- `onDragEnter` moves the card to the end right away, like the cards do, so its slot opens while the card is still held.
+- `dropAlignment` and `dropOffset` aim the drop animation at that slot instead of the middle of the list. `lastSlotTop` is the offset of the last visible item:
+
+```kotlin
+val lastSlotTop by remember {
+    derivedStateOf { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.offset ?: 0 }
+}
+```
 
 ## Reordering the Columns Themselves
 
