@@ -20,6 +20,8 @@ A library that allows you to easily add drag and drop functionality to your Jetp
 - **Works inside scrollables** -- long press to drag, auto scroll at the edges, lazy lists and grids.
 - **You own the data** -- the library reports what happens, your state decides what changes.
 
+<div align="center"><a href="https://github.com/Safouene1/support-palestine-banner/blob/master/Markdown-pages/Support.md"><img src="https://raw.githubusercontent.com/Safouene1/support-palestine-banner/master/banner-project.svg" alt="Support Palestine" width="100%"></a></div>
+
 ## What you can build
 
 Every clip below is a screen of the [sample app](sample/common/src/commonMain/kotlin/ui). Click one to open its guide.
@@ -252,7 +254,9 @@ Support it by joining [stargazers](https://github.com/MohamedRejeb/compose-dnd/s
 
 Also, [follow me](https://github.com/MohamedRejeb) on GitHub for more libraries!
 
-You can always <a href="https://www.buymeacoffee.com/MohamedRejeb"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=MohamedRejeb&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff"></a>
+You can always buy me a coffee:
+
+<a href="https://www.buymeacoffee.com/MohamedRejeb"><img src="docs/images/bmc-yellow-button.png" alt="Buy me a coffee" height="48"></a>
 
 ## License
 
