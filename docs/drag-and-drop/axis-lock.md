@@ -2,7 +2,7 @@
 
 By default, items can be dragged freely in any direction. **Axis lock** constrains the drag movement to a single axis -- either horizontal or vertical. This is useful for lists, sliders, or any UI where dragging should only occur along one dimension.
 
-<video src="../../videos/axis-locked.mp4" autoplay loop muted playsinline width="720"></video>
+<video class="demo-phone" src="../../videos/axis-lock.mp4" autoplay loop muted playsinline></video>
 
 ## DragAxis
 

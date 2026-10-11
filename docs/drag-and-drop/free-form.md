@@ -2,6 +2,8 @@
 
 Reordering and Kanban both move items between fixed slots. Some boards have no slots at all -- a note can land anywhere. This guide walks through the pattern used by the Sticky Notes Board sample: a free-form canvas where notes carry an absolute `Offset` position instead of a place in a list.
 
+<video class="demo-phone" src="../../videos/free-form.mp4" autoplay loop muted playsinline></video>
+
 The building blocks:
 
 - Notes are plain `draggableItem`s at an absolute position (`Modifier.offset { ... }`), not `reorderableItem`s -- there is no list order to maintain.

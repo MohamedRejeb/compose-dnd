@@ -2,6 +2,8 @@
 
 Compose DND provides a declarative API for adding drag and drop functionality to your Compose UI. The core building blocks are:
 
+<video class="demo-phone" src="../../videos/drag-and-drop.mp4" autoplay loop muted playsinline></video>
+
 - `DragAndDropState` -- Holds the state for all drag and drop operations.
 - `DragAndDropContainer` -- A container that wraps all draggable items and drop targets.
 - `draggableItem` modifier -- Makes a composable draggable.

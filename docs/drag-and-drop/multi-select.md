@@ -2,6 +2,8 @@
 
 Some interactions need one draggable item to drive two different gestures depending on how the drag starts. This guide walks through the pattern used by the Photo Gallery sample, a grid where the same photo tile supports:
 
+<video class="demo-phone" src="../../videos/multi-select.mp4" autoplay loop muted playsinline></video>
+
 - **Drag to select** -- long-press an unselected photo and drag across the grid to select a range, like Google Photos.
 - **Group drag** -- long-press an already-selected photo to drag the whole selection as a stack onto an album.
 

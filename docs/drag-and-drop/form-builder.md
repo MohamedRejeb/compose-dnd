@@ -2,7 +2,7 @@
 
 Most drag and drop moves an item from one place to another. A form builder needs something different: dragging a field type from a **palette** should *create* a new field in the form while the palette chip stays put. This guide walks through the pattern used by the Form Builder sample.
 
-<video src="../../videos/form-builder.mp4" autoplay loop muted playsinline width="720"></video>
+<video class="demo-phone" src="../../videos/form-builder.mp4" autoplay loop muted playsinline></video>
 
 The building blocks:
 

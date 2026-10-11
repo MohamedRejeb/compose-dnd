@@ -1,8 +1,44 @@
-
 /* Demo videos */
 .md-content video {
   max-width: 100%;
   height: auto;
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* A clip of the whole window, e.g. the Kanban board */
+.md-content video.demo-wide {
+  display: block;
+  width: 100%;
+  margin: 1.5em auto;
+}
+
+/* A clip recorded at phone size */
+.md-content video.demo-phone {
+  display: block;
+  width: 320px;
+  margin: 1.5em auto;
+  border-radius: 20px;
+}
+
+/* Gallery of clips on the home page: each one links to its guide */
+.md-content .demo-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.2em;
+  margin: 1.5em 0;
+}
+
+.md-content .demo-gallery a {
+  display: block;
+  color: inherit;
+  text-align: center;
+  font-weight: 500;
+}
+
+.md-content .demo-gallery video {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.5em;
+  border-radius: 16px;
 }

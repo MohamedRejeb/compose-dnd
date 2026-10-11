@@ -2,7 +2,7 @@
 
 By default, any dragged item can be dropped on any drop target. **Conditional drop** lets you control which drop targets accept which items, enabling scenarios such as typed drop zones, capacity limits, or permission-based dropping.
 
-<video src="../../videos/conditional-drop.mp4" autoplay loop muted playsinline width="720"></video>
+<video class="demo-phone" src="../../videos/conditional-drop.mp4" autoplay loop muted playsinline></video>
 
 ## Using canDrop
 

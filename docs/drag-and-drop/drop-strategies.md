@@ -2,7 +2,7 @@
 
 When a dragged item overlaps multiple drop targets, a **drop strategy** determines which target is considered "hovered." Compose DND provides several built-in strategies and allows you to create custom ones.
 
-<video src="../../videos/drop-strategies.mp4" autoplay loop muted playsinline width="720"></video>
+<video class="demo-phone" src="../../videos/drop-strategies.mp4" autoplay loop muted playsinline></video>
 
 ## What Are Drop Strategies?
 

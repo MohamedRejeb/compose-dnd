@@ -2,7 +2,7 @@
 
 When dragging items in a scrollable container, you often need the container to scroll automatically as the user drags near its edges. Compose DND provides the `dragAutoScroll` modifier for this purpose.
 
-<video src="../../videos/reorder.mp4" autoplay loop muted playsinline width="720"></video>
+<video class="demo-phone" src="../../videos/auto-scroll.mp4" autoplay loop muted playsinline></video>
 
 ## LazyColumn / LazyRow
 

@@ -2,7 +2,7 @@
 
 A Kanban board combines several features into a single screen: multiple columns, cross-column card transfer, positional insertion, auto-scroll on both axes, and reordering the columns themselves. This guide walks through the pattern used by the Kanban Board sample.
 
-<video src="../../videos/kanban.mp4" autoplay loop muted playsinline width="720"></video>
+<video class="demo-wide" src="../../videos/kanban.mp4" autoplay loop muted playsinline></video>
 
 The building blocks:
 
@@ -11,6 +11,10 @@ The building blocks:
 - An outer `LazyRow` of columns and an inner `LazyColumn` per column, each with its own `dragAutoScroll`.
 - `Modifier.reorderableItem` on each card, handling both same-column reorder and cross-column insertion in a single callback.
 - A `dropTarget` placeholder so cards can be dropped into empty columns.
+
+On a narrow screen the board shows one column at a time. Holding a card or a column at the edge scrolls the board to the next ones:
+
+<video class="demo-phone" src="../../videos/kanban-phone.mp4" autoplay loop muted playsinline></video>
 
 ## Data Model and State
 
@@ -144,6 +148,10 @@ fun List<Column>.moveCard(dragged: Card, target: Card): List<Column> {
     }
 }
 ```
+
+Two lists are the smallest version of the same idea. Here a person either joins the end of the other team, or lands on the row they are dropped on:
+
+<video class="demo-phone" src="../../videos/between-lists.mp4" autoplay loop muted playsinline></video>
 
 ## Dropping into Empty Columns
 

@@ -8,22 +8,94 @@ A library that allows you to easily add drag and drop functionality to your Jetp
 [![BuildPassing](https://shields.io/badge/build-passing-brightgreen)](https://github.com/MohamedRejeb/compose-dnd/actions)
 [![Maven Central](https://img.shields.io/maven-central/v/com.mohamedrejeb.dnd/compose-dnd)](https://search.maven.org/search?q=g:%22com.mohamedrejeb.dnd%22%20AND%20a:%22compose-dnd%22)
 
-![Compose DND sample](docs/images/hero.gif)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/demos/kanban.gif">
+  <img src="docs/images/demos/kanban-light.gif" alt="A Kanban board built with Compose DND: cards move between columns and columns reorder" width="880">
+</picture>
 
-**[Try the live demo](https://mohamedrejeb.github.io/compose-dnd/demo/)** · **[Documentation](https://mohamedrejeb.github.io/compose-dnd/)**
+**[Try the live demo](https://mohamedrejeb.github.io/compose-dnd/demo/)** · **[Documentation](https://mohamedrejeb.github.io/compose-dnd/)** · **[Sample app](sample/common/src/commonMain/kotlin/ui)**
+
+- **One API for every platform** -- Android, iOS, desktop and web share the same code.
+- **Just modifiers** -- add `draggableItem`, `dropTarget` or `reorderableItem` to the composables you already have.
+- **Works inside scrollables** -- long press to drag, auto scroll at the edges, lazy lists and grids.
+- **You own the data** -- the library reports what happens, your state decides what changes.
+
+## What you can build
+
+Every clip below is a screen of the [sample app](sample/common/src/commonMain/kotlin/ui). Click one to open its guide.
+
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <a href="https://mohamedrejeb.github.io/compose-dnd/drag-and-drop/overview/"><img src="docs/images/demos/drag-and-drop.gif" alt="Drag and drop" width="260"><br><b>Drag and drop</b></a><br>
+      <sub><code>draggableItem</code> + <code>dropTarget</code></sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://mohamedrejeb.github.io/compose-dnd/drag-and-drop/reorder/"><img src="docs/images/demos/reorder.gif" alt="Reorder a list" width="260"><br><b>Reorder a list</b></a><br>
+      <sub><code>reorderableItem</code></sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://mohamedrejeb.github.io/compose-dnd/drag-and-drop/drag-handle/"><img src="docs/images/demos/drag-handle.gif" alt="Drag handle" width="260"><br><b>Drag handle</b></a><br>
+      <sub>Only the grip starts the drag</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="33%">
+      <a href="https://mohamedrejeb.github.io/compose-dnd/drag-and-drop/kanban-board/"><img src="docs/images/demos/between-lists.gif" alt="Move between lists" width="260"><br><b>Move between lists</b></a><br>
+      <sub>One state, many lists</sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://mohamedrejeb.github.io/compose-dnd/drag-and-drop/auto-scroll/"><img src="docs/images/demos/auto-scroll.gif" alt="Auto scroll" width="260"><br><b>Auto scroll</b></a><br>
+      <sub>Lists, grids and staggered grids</sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://mohamedrejeb.github.io/compose-dnd/drag-and-drop/kanban-board/"><img src="docs/images/demos/kanban-phone.gif" alt="Scroll across columns" width="260"><br><b>Scroll across columns</b></a><br>
+      <sub>Auto scroll on both axes</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="33%">
+      <a href="https://mohamedrejeb.github.io/compose-dnd/drag-and-drop/multi-select/"><img src="docs/images/demos/multi-select.gif" alt="Drag to select" width="260"><br><b>Drag to select</b></a><br>
+      <sub>Then drag the selection as a group</sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://mohamedrejeb.github.io/compose-dnd/drag-and-drop/free-form/"><img src="docs/images/demos/free-form.gif" alt="Free-form placement" width="260"><br><b>Free-form placement</b></a><br>
+      <sub>Drop anywhere, snap to a grid</sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://mohamedrejeb.github.io/compose-dnd/drag-and-drop/form-builder/"><img src="docs/images/demos/form-builder.gif" alt="Copy on drop" width="260"><br><b>Copy on drop</b></a><br>
+      <sub>A palette that keeps its items</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="33%">
+      <a href="https://mohamedrejeb.github.io/compose-dnd/drag-and-drop/conditional-drop/"><img src="docs/images/demos/conditional-drop.gif" alt="Conditional drop" width="260"><br><b>Conditional drop</b></a><br>
+      <sub>Targets choose what they accept</sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://mohamedrejeb.github.io/compose-dnd/drag-and-drop/drop-strategies/"><img src="docs/images/demos/drop-strategies.gif" alt="Drop strategies" width="260"><br><b>Drop strategies</b></a><br>
+      <sub>Pick the target under the item</sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://mohamedrejeb.github.io/compose-dnd/drag-and-drop/axis-lock/"><img src="docs/images/demos/axis-lock.gif" alt="Axis lock" width="260"><br><b>Axis lock</b></a><br>
+      <sub>Horizontal or vertical only</sub>
+    </td>
+  </tr>
+</table>
 
 ## Features
 
 - **Drag and Drop** -- Drag items from one location and drop them onto designated targets
-- **Reorder Lists** -- Reorder items within a list using drag and drop gestures
-- **Drag Lifecycle Callbacks** -- `onDragStart` and `onDragEnd` on every draggable item, so you can persist state once per drag
+- **Reorder Lists** -- Reorder items within a list, a grid, or across several lists
+- **Auto Scroll** -- Scroll lazy lists, grids, staggered grids and scrollable containers when an item is held near an edge, in any layout direction
 - **Drag to Select / Multi-Select** -- Extend a selection by dragging across items, then drag the whole selection as a group
 - **Free-Form Placement** -- Drop items anywhere on a board, with the drop animation landing exactly where they snap
-- **Auto Scroll** -- Automatically scroll containers, including staggered grids, when dragging items near edges
-- **Drop Strategies** -- Choose from multiple built-in strategies to determine which drop target receives the dragged item
+- **Drop Strategies** -- Choose which drop target wins when the dragged item covers several, or write your own
 - **Drag Handle** -- Restrict the drag gesture to a specific handle area within the item
 - **Axis Lock** -- Constrain dragging to the horizontal or vertical axis
 - **Conditional Drop** -- Control which drop targets accept which dragged items
+- **Long Press to Drag** -- Keep taps and scrolling working on draggable items
+- **Drag Lifecycle Callbacks** -- `onDragStart` and `onDragEnd` on every draggable item, so you can persist state once per drag
 - **Drop Animation** -- Smooth spring-based animations when items are dropped
 - **Custom Drag Shadow** -- Provide a custom composable to display while an item is being dragged
 

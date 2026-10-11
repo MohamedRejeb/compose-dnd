@@ -2,7 +2,7 @@
 
 Reordering builds on the core drag and drop primitives: the `reorderableItem` modifier makes an item both draggable and a drop target at the same time, which is all a sortable list needs.
 
-<video src="../../videos/reorder.mp4" autoplay loop muted playsinline width="720"></video>
+<video class="demo-phone" src="../../videos/reorder.mp4" autoplay loop muted playsinline></video>
 
 ## Setting Up
 
@@ -132,6 +132,8 @@ onDragEnter = { state ->
 This also runs when the drag is cancelled or released outside any target, so it is a safe single place to sync state, log analytics, or re-enable UI that was disabled during the drag.
 
 ## Pinned or Locked Items (canDrop)
+
+<video class="demo-phone" src="../../videos/pinned-chats.mp4" autoplay loop muted playsinline></video>
 
 Pass `canDrop = false` to keep an item's slot out of reordering: dragged items pass over it without hovering it, so it is never swapped. Combine it with `enabled = false` to also stop the item itself from being dragged -- the usual combination for a pinned or locked row:
 

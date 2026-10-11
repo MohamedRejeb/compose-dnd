@@ -7,7 +7,64 @@ A library that allows you to easily add drag and drop functionality to your Jetp
 [![Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Maven Central](https://img.shields.io/maven-central/v/com.mohamedrejeb.dnd/compose-dnd)](https://search.maven.org/search?q=g:%22com.mohamedrejeb.dnd%22%20AND%20a:%22compose-dnd%22)
 
-<video src="videos/hero.mp4" autoplay loop muted playsinline width="720"></video>
+<video class="demo-wide" src="videos/kanban.mp4" autoplay loop muted playsinline></video>
+
+**[Try the live demo](https://mohamedrejeb.github.io/compose-dnd/demo/)** in your browser.
+
+## What You Can Build
+
+Every clip is a screen of the [sample app](https://github.com/MohamedRejeb/compose-dnd/tree/main/sample/common/src/commonMain/kotlin/ui). Click one to open its guide.
+
+<div class="demo-gallery">
+  <a href="drag-and-drop/overview/">
+    <video src="videos/drag-and-drop.mp4" autoplay loop muted playsinline></video>
+    Drag and drop
+  </a>
+  <a href="drag-and-drop/reorder/">
+    <video src="videos/reorder.mp4" autoplay loop muted playsinline></video>
+    Reorder a list
+  </a>
+  <a href="drag-and-drop/drag-handle/">
+    <video src="videos/drag-handle.mp4" autoplay loop muted playsinline></video>
+    Drag handle
+  </a>
+  <a href="drag-and-drop/kanban-board/">
+    <video src="videos/between-lists.mp4" autoplay loop muted playsinline></video>
+    Move between lists
+  </a>
+  <a href="drag-and-drop/auto-scroll/">
+    <video src="videos/auto-scroll.mp4" autoplay loop muted playsinline></video>
+    Auto scroll
+  </a>
+  <a href="drag-and-drop/kanban-board/">
+    <video src="videos/kanban-phone.mp4" autoplay loop muted playsinline></video>
+    Scroll across columns
+  </a>
+  <a href="drag-and-drop/multi-select/">
+    <video src="videos/multi-select.mp4" autoplay loop muted playsinline></video>
+    Drag to select
+  </a>
+  <a href="drag-and-drop/free-form/">
+    <video src="videos/free-form.mp4" autoplay loop muted playsinline></video>
+    Free-form placement
+  </a>
+  <a href="drag-and-drop/form-builder/">
+    <video src="videos/form-builder.mp4" autoplay loop muted playsinline></video>
+    Copy on drop
+  </a>
+  <a href="drag-and-drop/conditional-drop/">
+    <video src="videos/conditional-drop.mp4" autoplay loop muted playsinline></video>
+    Conditional drop
+  </a>
+  <a href="drag-and-drop/drop-strategies/">
+    <video src="videos/drop-strategies.mp4" autoplay loop muted playsinline></video>
+    Drop strategies
+  </a>
+  <a href="drag-and-drop/axis-lock/">
+    <video src="videos/axis-lock.mp4" autoplay loop muted playsinline></video>
+    Axis lock
+  </a>
+</div>
 
 ## Features
 
