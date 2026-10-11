@@ -37,17 +37,17 @@ import com.mohamedrejeb.compose.dnd.drop.dropTarget
  * [ReorderableItemScope] exposing [ReorderableItemScope.isDragging] and a
  * [ReorderableItemScope.dragHandle] modifier that needs no key or state.
  *
- * @param modifier The modifier to be applied to the item.
- * @param state The drag and drop state.
  * @param key The key used to identify the item.
  * @param data The data associated with the item.
- * @param zIndex The z-index of the item.
+ * @param state The drag and drop state.
+ * @param modifier The modifier to be applied to the item.
  * @param enabled Whether the reorder is enabled.
  * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press
  * @param requireFirstDownUnconsumed if true, the first down event must be unconsumed to start the drag
  * @param dropTargets - list of drop targets ids to which this item can be dropped, if empty, item can be dropped to any drop target
  * @param dropStrategy - strategy to determine the drop target
  * @param dragAxis - axis constraint for drag movement
+ * @param zIndex The z-index of the item.
  * @param dropAnimationSpec - animation spec for the drop animation
  * @param dropAlignment Alignment of the dropped item within this item.
  * @param dropOffset Offset applied to the dropped item position.
@@ -67,17 +67,17 @@ import com.mohamedrejeb.compose.dnd.drop.dropTarget
  */
 @Composable
 fun <T> ReorderableItem(
-    modifier: Modifier = Modifier,
-    state: DragAndDropState<T>,
     key: Any,
     data: T,
-    zIndex: Float = 0f,
+    state: DragAndDropState<T>,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     dragAfterLongPress: Boolean = state.dragAfterLongPress,
     requireFirstDownUnconsumed: Boolean = state.requireFirstDownUnconsumed,
     dropTargets: List<Any> = emptyList(),
     dropStrategy: DropStrategy = DropStrategy.SurfacePercentage,
     dragAxis: DragAxis = DragAxis.Free,
+    zIndex: Float = 0f,
     dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
     dropAlignment: Alignment = Alignment.Center,
     dropOffset: Offset = Offset.Zero,
@@ -151,7 +151,7 @@ fun <T> ReorderableItem(
 @Deprecated(
     message = "ReorderState is deprecated, pass a DragAndDropState instead.",
     replaceWith = ReplaceWith(
-        "ReorderableItem(modifier = modifier, state = state.dndState, key = key, data = data, zIndex = zIndex, " +
+        "ReorderableItem(key = key, data = data, state = state.dndState, modifier = modifier, zIndex = zIndex, " +
             "enabled = enabled, dragAfterLongPress = dragAfterLongPress, " +
             "requireFirstDownUnconsumed = requireFirstDownUnconsumed, dropTargets = dropTargets, " +
             "dropStrategy = dropStrategy, dragAxis = dragAxis, onDrop = onDrop, onDragEnter = onDragEnter, " +

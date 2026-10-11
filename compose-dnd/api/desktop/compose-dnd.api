@@ -37,7 +37,7 @@ public final class com/mohamedrejeb/compose/dnd/drag/DragHandleModifierKt {
 }
 
 public final class com/mohamedrejeb/compose/dnd/drag/DraggableItemKt {
-	public static final fun DraggableItem (Landroidx/compose/ui/Modifier;Ljava/lang/Object;Ljava/lang/Object;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;ZZZLjava/util/List;Lcom/mohamedrejeb/compose/dnd/drag/DropStrategy;Lcom/mohamedrejeb/compose/dnd/drag/DragAxis;Landroidx/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
+	public static final fun DraggableItem (Ljava/lang/Object;Ljava/lang/Object;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;Landroidx/compose/ui/Modifier;ZZZLjava/util/List;Lcom/mohamedrejeb/compose/dnd/drag/DropStrategy;Lcom/mohamedrejeb/compose/dnd/drag/DragAxis;Landroidx/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class com/mohamedrejeb/compose/dnd/drag/DraggableItemModifierKt {
@@ -122,7 +122,7 @@ public final class com/mohamedrejeb/compose/dnd/reorder/ReorderStateKt {
 
 public final class com/mohamedrejeb/compose/dnd/reorder/ReorderableItemKt {
 	public static final fun ReorderableItem (Landroidx/compose/ui/Modifier;Lcom/mohamedrejeb/compose/dnd/reorder/ReorderState;Ljava/lang/Object;Ljava/lang/Object;FZZZLjava/util/List;Lcom/mohamedrejeb/compose/dnd/drag/DropStrategy;Lcom/mohamedrejeb/compose/dnd/drag/DragAxis;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Landroidx/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
-	public static final fun ReorderableItem-8_MqTXg (Landroidx/compose/ui/Modifier;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;Ljava/lang/Object;Ljava/lang/Object;FZZZLjava/util/List;Lcom/mohamedrejeb/compose/dnd/drag/DropStrategy;Lcom/mohamedrejeb/compose/dnd/drag/DragAxis;Landroidx/compose/animation/core/AnimationSpec;Landroidx/compose/ui/Alignment;JZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;IIII)V
+	public static final fun ReorderableItem-8_MqTXg (Ljava/lang/Object;Ljava/lang/Object;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;Landroidx/compose/ui/Modifier;ZZZLjava/util/List;Lcom/mohamedrejeb/compose/dnd/drag/DropStrategy;Lcom/mohamedrejeb/compose/dnd/drag/DragAxis;FLandroidx/compose/animation/core/AnimationSpec;Landroidx/compose/ui/Alignment;JZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;IIII)V
 }
 
 public final class com/mohamedrejeb/compose/dnd/reorder/ReorderableItemModifierKt {

@@ -31,10 +31,10 @@ import com.mohamedrejeb.compose.dnd.DragAndDropState
  * [DraggableItemScope] exposing [DraggableItemScope.isDragging] and a
  * [DraggableItemScope.dragHandle] modifier that needs no key or state.
  *
- * @param modifier - modifier for the DraggableItem composable
  * @param key - unique key for this item
  * @param data - data that will be passed to drop target on drop
  * @param state - state of the drag and drop
+ * @param modifier - modifier for the DraggableItem composable
  * @param enabled - whether the drag and drop is enabled
  * @param dragAfterLongPress if true, drag will start after long press, otherwise drag will start after simple press
  * @param requireFirstDownUnconsumed if true, the first down event must be unconsumed to start the drag
@@ -49,10 +49,10 @@ import com.mohamedrejeb.compose.dnd.DragAndDropState
  */
 @Composable
 fun <T> DraggableItem(
-    modifier: Modifier = Modifier,
     key: Any,
     data: T,
     state: DragAndDropState<T>,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     dragAfterLongPress: Boolean = state.dragAfterLongPress,
     requireFirstDownUnconsumed: Boolean = state.requireFirstDownUnconsumed,
