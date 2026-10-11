@@ -52,6 +52,7 @@ The first 1.0 alpha. It unifies the API around `DragAndDropState`, removes the l
 - The drop animation of an item locked to an axis (`dragAxis`) now keeps to that axis. Before, the item slid sideways to the middle of a target wider than itself, then jumped back to its place.
 - A scrollable under a drag no longer scrolls itself when the finger reports an event without movement. During auto-scroll this made the list jump back and stop scrolling.
 - Reordering items of different sizes no longer bounces. A dragged item now takes the slot of another one when its leading edge passes the middle of that item, a rule that stays true after the swap whatever the two sizes. Before, the target was picked by the drop strategy alone and could change with the very swap it caused: a card carried over another list could swap back and forth several times and end one slot away from where it was held.
+- An item pulled more than half out of its list sideways, on its way to another one, no longer swaps with the items it leaves behind.
 - Hovering is resolved against where items settle, not where they are while `animateItem()` moves them, so the reorder animation no longer changes the hovered item.
 - A card inserted into another list above a card it is mostly below now moves on past that card right away, instead of waiting for the drag to move again.
 - Disabling a `DragAndDropContainer` (`enabled = false`) mid-drag now cancels the drag instead of leaving it stuck.

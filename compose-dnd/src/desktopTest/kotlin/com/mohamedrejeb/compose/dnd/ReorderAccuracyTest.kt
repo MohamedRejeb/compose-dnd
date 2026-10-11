@@ -219,6 +219,37 @@ class ReorderAccuracyTest {
         assertEquals("XYA", order(1), "$strategy, moves $moves")
     }
 
+    @Test
+    fun cardMostlyOutOfItsListSideways_doesNotSwapInIt() = strategies.forEach { strategy ->
+        moves.clear()
+        lists = listOf(listOf(Card("A", 130), Card("B", 110), Card("C", 110)))
+        runOnBoard(strategy) {
+            // A is pulled more than half its width out of the list, then carried down past B
+            mainClock.autoAdvance = false
+            onNodeWithTag(BoardTag).performTouchInput { down(Offset(100f, 65f)) }
+            mainClock.advanceTimeBy(600)
+            repeat(40) { onNodeWithTag(BoardTag).performTouchInput { moveBy(Offset(3f, 0f)) } }
+            repeat(50) { onNodeWithTag(BoardTag).performTouchInput { moveBy(Offset(0f, 3f)) } }
+            repeat(30) { mainClock.advanceTimeBy(FrameMs) }
+            release()
+        }
+        assertEquals(emptyList(), moves, "$strategy")
+        assertEquals("ABC", order(0), "$strategy")
+    }
+
+    @Test
+    fun cardSlightlyOffItsListSideways_stillSwapsInIt() = strategies.forEach { strategy ->
+        moves.clear()
+        lists = listOf(listOf(Card("A", 130), Card("B", 110), Card("C", 110)))
+        runOnBoard(strategy) {
+            // A third of its width out: A is still over the list
+            drag(from = Offset(100f, 65f), to = Offset(165f, 215f))
+            release()
+        }
+        assertEquals(listOf("A>B"), moves, "$strategy")
+        assertEquals("BAC", order(0), "$strategy")
+    }
+
     private companion object {
         const val BoardTag = "board"
         const val ColumnWidth = 200

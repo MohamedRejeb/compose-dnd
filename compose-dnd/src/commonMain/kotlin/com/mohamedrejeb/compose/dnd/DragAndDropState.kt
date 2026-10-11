@@ -517,6 +517,7 @@ class DragAndDropState<T>(
             hasReachedSlot(
                 ownSlotCenter = ownSlot.center,
                 slotCenter = it.center,
+                slotSize = it.size,
                 draggedTopLeft = draggedTopLeft,
                 draggedSize = draggedSize,
                 marginPx = reorderHysteresisDistancePx / 2f,

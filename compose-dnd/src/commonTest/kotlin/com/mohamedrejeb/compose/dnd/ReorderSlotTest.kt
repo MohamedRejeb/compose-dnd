@@ -31,11 +31,13 @@ class ReorderSlotTest {
         slotHeight: Float,
         draggedTop: Float,
         margin: Float = 0f,
+        draggedLeft: Float = 0f,
     ): Boolean =
         hasReachedSlot(
             ownSlotCenter = Offset(50f, ownTop + ownHeight / 2f),
             slotCenter = Offset(50f, slotTop + slotHeight / 2f),
-            draggedTopLeft = Offset(0f, draggedTop),
+            slotSize = Size(100f, slotHeight),
+            draggedTopLeft = Offset(draggedLeft, draggedTop),
             draggedSize = Size(100f, ownHeight),
             marginPx = margin,
         )
@@ -88,6 +90,7 @@ class ReorderSlotTest {
         fun reachedAt(draggedLeft: Float) = hasReachedSlot(
             ownSlotCenter = Offset(50f, 50f),
             slotCenter = Offset(170f, 50f),
+            slotSize = Size(100f, 100f),
             draggedTopLeft = Offset(draggedLeft, 0f),
             draggedSize = Size(100f, 100f),
             marginPx = 0f,
@@ -102,10 +105,38 @@ class ReorderSlotTest {
             hasReachedSlot(
                 ownSlotCenter = Offset(50f, 50f),
                 slotCenter = Offset(50f, 50f),
+                slotSize = Size(100f, 100f),
                 draggedTopLeft = Offset.Zero,
                 draggedSize = Size(100f, 100f),
                 marginPx = 0f,
             ),
         )
+    }
+
+    @Test
+    fun slotBelow_isNotReachedOnceTheItemIsMostlyOutSideways() {
+        // Far enough down to take the slot, as long as at least half of the item is over it
+        fun reachedAt(draggedLeft: Float) =
+            reached(ownTop = 0f, ownHeight = 100f, slotTop = 100f, slotHeight = 100f, draggedTop = 80f, draggedLeft = draggedLeft)
+
+        assertTrue(reachedAt(0f))
+        assertTrue(reachedAt(50f))
+        assertFalse(reachedAt(51f))
+        assertFalse(reachedAt(-51f))
+    }
+
+    @Test
+    fun narrowItemOverAWideSlot_isMeasuredAgainstItsOwnWidth() {
+        // A 40 px wide item over a 300 px wide slot: half of the item is enough
+        fun reachedAt(draggedLeft: Float) = hasReachedSlot(
+            ownSlotCenter = Offset(150f, 50f),
+            slotCenter = Offset(150f, 150f),
+            slotSize = Size(300f, 100f),
+            draggedTopLeft = Offset(draggedLeft, 80f),
+            draggedSize = Size(40f, 100f),
+            marginPx = 0f,
+        )
+        assertTrue(reachedAt(280f))
+        assertFalse(reachedAt(281f))
     }
 }

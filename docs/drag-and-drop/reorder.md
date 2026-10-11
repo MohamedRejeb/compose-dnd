@@ -159,7 +159,9 @@ See [Conditional Drop](conditional-drop.md) for the equivalent `canDrop` on a pl
 
 A dragged item takes the slot of another item when its **leading edge passes the middle of that item**: dragging down, the bottom edge of the dragged item has to get past the middle of the item below; dragging up, its top edge past the middle of the item above. Between rows, columns or lists, the edge is measured along the line between the two slots.
 
-This holds whatever the sizes of the two items. Right after the swap the other item lies on the other side, and its middle is out of reach again, so holding still at the swap point never flips the two back and forth -- also when a short item passes a tall one.
+The dragged item also has to be at least half over that slot sideways. A card pulled most of the way out of its column, on its way to another one, no longer swaps with the cards it leaves behind.
+
+The rule holds whatever the sizes of the two items. Right after the swap the other item lies on the other side, and its middle is out of reach again, so holding still at the swap point never flips the two back and forth -- also when a short item passes a tall one.
 
 Two more things keep the order under the pointer predictable:
 
