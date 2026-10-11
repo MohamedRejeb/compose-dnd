@@ -19,6 +19,7 @@ import androidx.compose.ui.geometry.Offset
 import kotlin.test.Test
 import recordings.Recorder.record
 import ui.FormBuilderScreen
+import ui.HomeScreen
 import ui.KanbanBoardScreen
 import ui.PhotoGalleryScreen
 import ui.PinnedChatsScreen
@@ -38,6 +39,16 @@ class AppsRecordings {
         dark = false,
         content = { KanbanBoardScreen {} },
     ) { moveCardsAndAColumn() }
+
+    /** The home screen and the board with a card in hand, as window-sized stills. */
+    @Test
+    fun stills() {
+        Recorder.still("thumbnail", width = 1000, height = 700, content = { HomeScreen {} })
+        Recorder.still("kanban", width = 1000, height = 700, content = { KanbanBoardScreen {} }) {
+            longPress(centerOf("Set up CI pipeline"))
+            moveTo(centerOf("Update onboarding flow") - dp(30, 20), 900)
+        }
+    }
 
     private fun Clip.moveCardsAndAColumn() {
         longPress(centerOf("Set up CI pipeline"))

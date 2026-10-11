@@ -35,3 +35,10 @@ for clip in "$raw"/*.mp4; do
         "docs/images/demos/$name.gif"
     echo "$name: $(du -h "docs/videos/$name.mp4" | cut -f1) mp4, $(du -h "docs/images/demos/$name.gif" | cut -f1) gif"
 done
+
+# Window-sized stills: the home screen and the board with a card in hand
+for still in "$raw"/*.png; do
+    [[ -e "$still" ]] || continue
+    cp "$still" "docs/images/$(basename "$still")"
+    echo "$(basename "$still"): $(du -h "docs/images/$(basename "$still")" | cut -f1)"
+done

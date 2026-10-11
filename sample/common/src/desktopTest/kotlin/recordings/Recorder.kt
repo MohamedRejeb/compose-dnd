@@ -27,7 +27,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -43,6 +45,7 @@ import java.io.File
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import javax.imageio.ImageIO
 import theme.AppTheme
 
 /**
@@ -64,6 +67,8 @@ object Recorder {
     const val Scale = 2
 
     /**
+     * Records [script] to `name.mp4`.
+     *
      * @param width Width of the screen in dp.
      * @param height Height of the screen in dp.
      */
@@ -74,6 +79,31 @@ object Recorder {
         dark: Boolean = true,
         content: @Composable () -> Unit,
         script: Clip.() -> Unit,
+    ) = run(name, width, height, dark, showPointer = true, content, script) { file, widthPx, heightPx ->
+        VideoEncoder(File(file.path + ".mp4"), widthPx, heightPx)
+    }
+
+    /** Saves the screen as it is at the end of [script] to `name.png`, e.g. with an item held mid-drag. */
+    fun still(
+        name: String,
+        width: Int,
+        height: Int,
+        dark: Boolean = true,
+        content: @Composable () -> Unit,
+        script: Clip.() -> Unit = {},
+    ) = run(name, width, height, dark, showPointer = false, content, script) { file, _, _ ->
+        LastFrame(File(file.path + ".png"))
+    }
+
+    private fun run(
+        name: String,
+        width: Int,
+        height: Int,
+        dark: Boolean,
+        showPointer: Boolean,
+        content: @Composable () -> Unit,
+        script: Clip.() -> Unit,
+        sink: (file: File, widthPx: Int, heightPx: Int) -> FrameSink,
     ) {
         if (outDir == null) return
         if (only != null && name !in only) return
@@ -88,7 +118,7 @@ object Recorder {
                     AppTheme(initialDarkTheme = dark) {
                         Box(Modifier.fillMaxSize()) {
                             content()
-                            PointerOverlay(pointer, dark)
+                            if (showPointer) PointerOverlay(pointer, dark)
                         }
                     }
                 }
@@ -97,15 +127,15 @@ object Recorder {
             mainClock.advanceTimeBy(1500)
             mainClock.autoAdvance = false
 
-            val encoder = Encoder(File(outDir, "$name.mp4"), widthPx, heightPx)
+            val frames = sink(File(outDir, name), widthPx, heightPx)
             try {
-                Clip(this, pointer, encoder, Offset(widthPx.toFloat(), heightPx.toFloat())).apply {
+                Clip(this, pointer, frames, Offset(widthPx.toFloat(), heightPx.toFloat())).apply {
                     pause(400)
                     script()
                     pause(900)
                 }
             } finally {
-                encoder.close()
+                frames.close()
             }
         }
     }
@@ -131,12 +161,35 @@ private fun PointerOverlay(pointer: PointerState, dark: Boolean) {
     }
 }
 
+/** Where the frames of a script go. */
+internal interface FrameSink {
+    fun write(image: ImageBitmap)
+
+    fun close()
+}
+
+/** Keeps the last frame only, as a PNG. */
+internal class LastFrame(
+    private val file: File
+) : FrameSink {
+    private var last: ImageBitmap? = null
+
+    override fun write(image: ImageBitmap) {
+        last = image
+    }
+
+    override fun close() {
+        val image = checkNotNull(last) { "No frame to save to ${file.name}" }
+        ImageIO.write(image.toAwtImage(), "png", file)
+    }
+}
+
 /** Pipes raw frames to ffmpeg. */
-internal class Encoder(
+internal class VideoEncoder(
     file: File,
     private val width: Int,
     private val height: Int
-) {
+) : FrameSink {
     private val process = ProcessBuilder(
         "ffmpeg", "-y", "-loglevel", "error",
         "-f", "rawvideo", "-pix_fmt", "bgra", "-s", "${width}x$height", "-r", "30", "-i", "-",
@@ -147,7 +200,7 @@ internal class Encoder(
     private val pixels = IntArray(width * height)
     private val bytes = ByteBuffer.allocate(width * height * 4).order(ByteOrder.LITTLE_ENDIAN)
 
-    fun write(image: androidx.compose.ui.graphics.ImageBitmap) {
+    override fun write(image: ImageBitmap) {
         check(image.width == width && image.height == height) { "Unexpected frame ${image.width}x${image.height}" }
         image.readPixels(pixels)
         bytes.clear()
@@ -155,7 +208,7 @@ internal class Encoder(
         input.write(bytes.array())
     }
 
-    fun close() {
+    override fun close() {
         input.close()
         check(process.waitFor() == 0) { "ffmpeg failed" }
     }
@@ -166,7 +219,7 @@ internal class Encoder(
 class Clip internal constructor(
     private val test: ComposeUiTest,
     private val pointer: PointerState,
-    private val encoder: Encoder,
+    private val encoder: FrameSink,
     /** Size of the screen in px. */
     val size: Offset,
 ) {
