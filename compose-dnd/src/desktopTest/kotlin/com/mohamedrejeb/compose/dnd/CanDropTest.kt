@@ -278,11 +278,12 @@ class CanDropTest {
             }
         }
 
-        // Drag past the disabled target into the enabled one
+        // Drag past the disabled target into the enabled one (y 200..320):
+        // the 80px ghost ends at y 250..330
         onNodeWithTag("draggable").performTouchInput {
             simulateDrag(
                 start = center,
-                end = Offset(center.x, center.y + 350f),
+                end = Offset(center.x, center.y + 250f),
             )
         }
 

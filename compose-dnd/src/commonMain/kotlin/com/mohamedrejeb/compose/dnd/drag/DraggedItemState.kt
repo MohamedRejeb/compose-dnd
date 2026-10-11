@@ -58,4 +58,7 @@ class DraggedItemState<T> internal constructor(
         result = 31 * result + dragAmount.hashCode()
         return result
     }
+
+    override fun toString(): String =
+        "DraggedItemState(key=$key, data=$data, dragAmount=$dragAmount)"
 }

@@ -16,12 +16,10 @@
 package ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -36,10 +34,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,343 +45,122 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.DragAndDropState
-import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 import com.mohamedrejeb.compose.dnd.drag.DragAxis
 import com.mohamedrejeb.compose.dnd.drag.DropStrategy
 import com.mohamedrejeb.compose.dnd.drag.dragHandle
-import com.mohamedrejeb.compose.dnd.drag.isDragging
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import com.mohamedrejeb.compose.dnd.reorder.reorderableItem
 import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
-import components.DemoScreenScaffold
+import components.DemoScaffold
+import components.DropWell
 import components.GripDots
+import components.WellState
+import components.dragPlaceholder
+import components.lifted
+import navigation.Demo
+import theme.SampleTheme
 
-// -- Data model --
+private val BoardGutter = 16.dp
+private val ColumnSpacing = 12.dp
+private val ColumnPadding = 8.dp
+private val CardSpacing = 8.dp
 
-private enum class Priority { Low, Medium, High, Urgent }
+/** A column never gets narrower than this when the whole board fits on screen. */
+private val MinFitColumnWidth = 260.dp
+private val MaxColumnWidth = 340.dp
 
-private enum class Tag(
-    val label: String,
-    val color: Color
-) {
-    Frontend("Frontend", Color(0xFF5B8DEF)),
-    Backend("Backend", Color(0xFF4CAF50)),
-    Design("Design", Color(0xFFAB6FE8)),
-    Bug("Bug", Color(0xFFE53935)),
-    Feature("Feature", Color(0xFFF5A623)),
-    Docs("Docs", Color(0xFF78909C)),
-}
+/** On narrow screens a column leaves this much room so the next one peeks in. */
+private val NextColumnPeek = 72.dp
+private val PreferredColumnWidth = 296.dp
 
-private data class KanbanCard(
-    val id: String,
-    val title: String,
-    val description: String? = null,
-    val assignee: String? = null,
-    val priority: Priority = Priority.Medium,
-    val tags: List<Tag> = emptyList(),
+private const val CardTilt = 3f
+
+private const val KanbanCode = """
+// Cards share one state across columns
+Modifier.reorderableItem(
+    key = card.id, data = card,
+    state = cardState,
+    onDragEnter = { move(it.data, card) },
+    draggableContent = { CardView(card) },
 )
-
-private data class KanbanColumn(
-    val id: String,
-    val title: String,
-    val color: Color,
-    val cards: List<KanbanCard>,
+// Columns move by their header grip
+Modifier.reorderableItem(
+    key = column.id, data = column,
+    state = columnState, hasDragHandle = true,
+    dragAxis = DragAxis.Horizontal, ...
 )
-
-private fun initialColumns() = listOf(
-    KanbanColumn(
-        id = "todo",
-        title = "To Do",
-        color = Color(0xFF5B8DEF),
-        cards = listOf(
-            KanbanCard("1", "Set up CI/CD pipeline", "Configure GitHub Actions for automated builds and tests", "Alex", Priority.High, listOf(Tag.Backend)),
-            KanbanCard("2", "Design login screen", null, "Sarah", Priority.Medium, listOf(Tag.Design, Tag.Frontend)),
-            KanbanCard("3", "Write API documentation", "Document all REST endpoints with examples", null, Priority.Low, listOf(Tag.Docs, Tag.Backend)),
-            KanbanCard("4", "Fix date picker crash", "App crashes when selecting Feb 29 on non-leap years", "Mike", Priority.Urgent, listOf(Tag.Bug, Tag.Frontend)),
-            KanbanCard("5", "Add dark mode support", null, null, Priority.Medium, listOf(Tag.Feature, Tag.Design)),
-            KanbanCard("6", "Database migration script", "Migrate user table to new schema with zero downtime", "Alex", Priority.High, listOf(Tag.Backend)),
-        ),
-    ),
-    KanbanColumn(
-        id = "progress",
-        title = "In Progress",
-        color = Color(0xFFF5A623),
-        cards = listOf(
-            KanbanCard("7", "Implement search feature", "Full-text search with filters and sorting", "Sarah", Priority.High, listOf(Tag.Feature, Tag.Frontend, Tag.Backend)),
-            KanbanCard("8", "Update onboarding flow", null, "Mike", Priority.Medium, listOf(Tag.Design)),
-            KanbanCard("9", "Fix memory leak in image loader", "Profile shows increasing heap usage after scrolling gallery", "Alex", Priority.Urgent, listOf(Tag.Bug)),
-        ),
-    ),
-    KanbanColumn(
-        id = "review",
-        title = "Review",
-        color = Color(0xFFAB6FE8),
-        cards = listOf(
-            KanbanCard("10", "Add unit tests for auth module", "Cover login, logout, token refresh, and session expiry", "Mike", Priority.Medium, listOf(Tag.Backend)),
-            KanbanCard("11", "Redesign settings page", null, "Sarah", Priority.Low, listOf(Tag.Design, Tag.Frontend)),
-        ),
-    ),
-    KanbanColumn(
-        id = "done",
-        title = "Done",
-        color = Color(0xFF4CAF50),
-        cards = listOf(
-            KanbanCard("12", "Set up project structure", null, "Alex", Priority.High, listOf(Tag.Backend, Tag.Frontend)),
-            KanbanCard("13", "Create color palette", "Define primary, secondary, and accent colors for the brand", "Sarah", Priority.Low, listOf(Tag.Design)),
-            KanbanCard("14", "Configure linter", null, "Mike", Priority.Low, listOf(Tag.Docs)),
-            KanbanCard("15", "Fix navigation crash on back press", null, "Alex", Priority.Urgent, listOf(Tag.Bug, Tag.Frontend)),
-        ),
-    ),
+Modifier.dragHandle(column.id, columnState)
+// Under its cards, a column takes a card at its end
+Modifier.dropTarget(
+    key = "end-" + column.id, state = cardState,
+    zIndex = -1f,
+    onDragEnter = { moveToEnd(it.data, column) },
 )
-
-// -- Screen --
+"""
 
 @Composable
 fun KanbanBoardScreen(
     onBack: () -> Unit,
 ) {
-    DemoScreenScaffold(
-        title = "Kanban Board",
+    DemoScaffold(
+        title = Demo.Kanban.title,
+        hint = "Long-press a card to move it. Drag a column by its header.",
+        code = KanbanCode,
         onBack = onBack,
-    ) { paddingValues ->
-        KanbanBoardContent(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
+    ) { insets ->
+        KanbanBoard(
+            contentPadding = insets,
+            modifier = Modifier.fillMaxSize(),
         )
     }
 }
 
-@OptIn(ExperimentalDndApi::class)
 @Composable
-private fun KanbanBoardContent(
+private fun KanbanBoard(
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
-    val dndState = rememberDragAndDropState<KanbanCard>()
-    val columnDndState = rememberDragAndDropState<KanbanColumn>()
-    var columns by remember { mutableStateOf(initialColumns()) }
+    val cardState = rememberDragAndDropState<KanbanCard>(dragAfterLongPress = true)
+    val columnState = rememberDragAndDropState<KanbanColumn>()
+    var columns by remember { mutableStateOf(initialKanbanColumns()) }
     val rowState = rememberLazyListState()
 
-    DragAndDropContainer(
-        state = columnDndState,
-        modifier = modifier,
-    ) {
-        DragAndDropContainer(
-            state = dndState,
-            modifier = Modifier.fillMaxSize(),
-        ) {
-        LazyRow(
-            state = rowState,
-            contentPadding = PaddingValues(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier
-                .fillMaxSize()
-                .dragAutoScroll(
-                    state = dndState,
-                    lazyListState = rowState,
-                ).dragAutoScroll(
-                    state = columnDndState,
-                    lazyListState = rowState,
-                ),
-        ) {
-            items(columns, key = { it.id }) { column ->
-                KanbanColumnUi(
-                    column = column,
-                    dndState = dndState,
-                    columnDndState = columnDndState,
-                    onColumnEnter = { dragged, target ->
-                        if (dragged.id != target.id) {
-                            columns = columns.toMutableList().apply {
-                                val from = indexOfFirst { it.id == dragged.id }
-                                val to = indexOfFirst { it.id == target.id }
-                                if (from != -1 && to != -1) add(to, removeAt(from))
-                            }
-                        }
-                    },
-                    onReorder = { draggedCard, targetCard ->
-                        if (draggedCard.id == targetCard.id) return@KanbanColumnUi
-
-                        columns = columns.map { col ->
-                            val targetIndex = col.cards.indexOfFirst { it.id == targetCard.id }
-                            if (targetIndex == -1) {
-                                col.copy(cards = col.cards.filter { it.id != draggedCard.id })
-                            } else {
-                                col.copy(
-                                    cards = col.cards
-                                        .filter { it.id != draggedCard.id }
-                                        .toMutableList()
-                                        .apply { add(targetIndex.coerceAtMost(size), draggedCard) }
-                                )
-                            }
-                        }
-                    },
-                    onDropInEmpty = { draggedCard ->
-                        columns = columns.map { col ->
-                            if (col.id == column.id) {
-                                col.copy(cards = col.cards + draggedCard)
-                            } else {
-                                col.copy(cards = col.cards.filter { it.id != draggedCard.id })
-                            }
-                        }
-                    },
-                    modifier = Modifier.animateItem(),
-                )
-            }
-        }
-        }
-    }
-}
-
-@OptIn(ExperimentalDndApi::class)
-@Composable
-private fun KanbanColumnUi(
-    column: KanbanColumn,
-    dndState: DragAndDropState<KanbanCard>,
-    columnDndState: DragAndDropState<KanbanColumn>,
-    onColumnEnter: (dragged: KanbanColumn, target: KanbanColumn) -> Unit,
-    onReorder: (draggedCard: KanbanCard, targetCard: KanbanCard) -> Unit,
-    onDropInEmpty: (draggedCard: KanbanCard) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colState = rememberLazyListState()
-    val shape = MaterialTheme.shapes.large
-    val isColumnDragging = columnDndState.isDragging("col-${column.id}")
-
-    Column(
-        modifier = modifier
-            .graphicsLayer { alpha = if (isColumnDragging) 0f else 1f }
-            .reorderableItem(
-                key = "col-${column.id}",
-                data = column,
-                state = columnDndState,
-                hasDragHandle = true,
-                dragAxis = DragAxis.Horizontal,
-                dropStrategy = DropStrategy.CenterDistance,
-                onDragEnter = { state -> onColumnEnter(state.data, column) },
-                draggableContent = {
-                    ColumnDragPreview(column = column)
-                },
-            ).width(280.dp)
-            .fillMaxHeight()
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .padding(8.dp),
-    ) {
-        // Column header doubles as the drag handle for reordering columns
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .dragHandle(
-                    key = "col-${column.id}",
-                    state = columnDndState,
-                ).padding(horizontal = 8.dp, vertical = 10.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(column.color),
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = column.title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = "${column.cards.size}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                    .padding(horizontal = 6.dp, vertical = 1.dp),
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            GripDots(color = MaterialTheme.colorScheme.outlineVariant)
-        }
-
-        // Cards list
-        LazyColumn(
-            state = colState,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(bottom = 8.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .dragAutoScroll(
-                    state = dndState,
-                    lazyListState = colState,
-                ),
-        ) {
-            items(column.cards, key = { it.id }) { card ->
-                val isDragging = dndState.isDragging(card.id)
-
-                KanbanCardUi(
-                    card = card,
-                    columnColor = column.color,
+    DragAndDropContainer(state = columnState, modifier = modifier) {
+        DragAndDropContainer(state = cardState, modifier = Modifier.fillMaxSize()) {
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val columnWidth = columnWidthFor(maxWidth, columns.size)
+                LazyRow(
+                    state = rowState,
+                    contentPadding = PaddingValues(
+                        start = BoardGutter,
+                        end = BoardGutter,
+                        top = 4.dp,
+                        bottom = contentPadding.calculateBottomPadding() + BoardGutter,
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(ColumnSpacing),
                     modifier = Modifier
-                        .animateItem()
-                        .graphicsLayer { alpha = if (isDragging) 0f else 1f }
-                        .reorderableItem(
-                            key = card.id,
-                            data = card,
-                            state = dndState,
-                            dropStrategy = DropStrategy.CenterDistance,
-                            dragAfterLongPress = true,
-                            onDragEnter = { state -> onReorder(state.data, card) },
-                            draggableContent = {
-                                KanbanCardUi(
-                                    card = card,
-                                    columnColor = column.color,
-                                    isDragShadow = true,
-                                    modifier = Modifier.width(264.dp),
-                                )
-                            },
-                        ).fillMaxWidth()
-                )
-            }
-
-            // Empty column placeholder
-            if (column.cards.isEmpty()) {
-                item(key = "empty-${column.id}") {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(80.dp)
-                            .border(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant,
-                                shape = MaterialTheme.shapes.medium,
-                            ).dropTarget(
-                                key = "empty-${column.id}",
-                                state = dndState,
-                                dropAnimationEnabled = false,
-                                onDrop = { state -> onDropInEmpty(state.data) },
-                            ),
-                    ) {
-                        Text(
-                            text = "Drop here",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
+                        .fillMaxSize()
+                        .dragAutoScroll(state = cardState, lazyListState = rowState)
+                        .dragAutoScroll(state = columnState, lazyListState = rowState),
+                ) {
+                    items(columns, key = { it.id }) { column ->
+                        BoardColumn(
+                            column = column,
+                            cardState = cardState,
+                            columnState = columnState,
+                            onColumnEnter = { dragged -> columns = columns.moveColumn(dragged.id, column.id) },
+                            onCardEnter = { dragged, target -> columns = columns.moveCard(dragged, target.id) },
+                            onCardEnterEnd = { dragged -> columns = columns.moveCardToEnd(dragged, column.id) },
+                            modifier = Modifier
+                                .animateItem()
+                                .width(columnWidth)
+                                .fillMaxHeight(),
                         )
                     }
                 }
@@ -392,185 +169,217 @@ private fun KanbanColumnUi(
     }
 }
 
+/**
+ * Wide windows split the width between all columns. Narrow ones give each column most of
+ * the screen and let the next one peek in, which tells the user the board scrolls.
+ */
+private fun columnWidthFor(available: Dp, columnCount: Int): Dp {
+    val gaps = ColumnSpacing * (columnCount - 1)
+    val fitAll = (available - BoardGutter * 2 - gaps) / columnCount
+    return if (fitAll >= MinFitColumnWidth) {
+        fitAll.coerceAtMost(MaxColumnWidth)
+    } else {
+        (available - BoardGutter - ColumnSpacing - NextColumnPeek).coerceAtMost(PreferredColumnWidth)
+    }
+}
+
+private fun columnKey(column: KanbanColumn) = "col-${column.id}"
+
 @Composable
-private fun ColumnDragPreview(
+private fun BoardColumn(
     column: KanbanColumn,
+    cardState: DragAndDropState<KanbanCard>,
+    columnState: DragAndDropState<KanbanColumn>,
+    onColumnEnter: (dragged: KanbanColumn) -> Unit,
+    onCardEnter: (dragged: KanbanCard, target: KanbanCard) -> Unit,
+    onCardEnterEnd: (dragged: KanbanCard) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val shape = MaterialTheme.shapes.large
-
-    Column(
-        modifier = Modifier
-            .graphicsLayer { rotationZ = -2f }
-            .shadow(elevation = 16.dp, shape = shape)
-            .width(280.dp)
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .padding(8.dp),
+    val key = columnKey(column)
+    val shape = SampleTheme.shapes.well
+    DropWell(
+        state = columnWellState(column, cardState),
+        modifier = modifier
+            .dragPlaceholder(active = columnState.isDragging(key), shape = shape)
+            .reorderableItem(
+                key = key,
+                data = column,
+                state = columnState,
+                hasDragHandle = true,
+                dragAxis = DragAxis.Horizontal,
+                dropStrategy = DropStrategy.CenterDistance,
+                onDragEnter = { dragged -> onColumnEnter(dragged.data) },
+                draggableContent = { LiftedColumn(column) },
+            ),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 10.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(column.color),
+        Column(modifier = Modifier.padding(ColumnPadding)) {
+            ColumnHeader(
+                column = column,
+                modifier = Modifier.dragHandle(key = key, state = columnState),
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = column.title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
+            CardList(
+                column = column,
+                cardState = cardState,
+                onCardEnter = onCardEnter,
+                onCardEnterEnd = onCardEnterEnd,
             )
-            Spacer(modifier = Modifier.weight(1f))
-            GripDots(color = MaterialTheme.colorScheme.outlineVariant)
-        }
-
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(bottom = 8.dp),
-        ) {
-            column.cards.take(3).forEach { card ->
-                KanbanCardUi(
-                    card = card,
-                    columnColor = column.color,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            if (column.cards.size > 3) {
-                Text(
-                    text = "+${column.cards.size - 3} more",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                )
-            }
         }
     }
 }
 
-// -- Card UI --
+/**
+ * Cards reorder as soon as they enter a slot, so the column that holds the dragged card
+ * is the one it will land in.
+ */
+private fun columnWellState(
+    column: KanbanColumn,
+    cardState: DragAndDropState<KanbanCard>,
+): WellState {
+    val dragged = cardState.draggedItem ?: return WellState.Idle
+    val holdsCard = column.cards.any { it.id == dragged.key }
+    return if (holdsCard) WellState.Accept else WellState.Idle
+}
 
-@OptIn(ExperimentalLayoutApi::class)
+private fun columnEndKey(column: KanbanColumn) = "end-${column.id}"
+
+private fun emptySlotKey(column: KanbanColumn) = "empty-${column.id}"
+
+/** Below the cards, so a card under the pointer always wins over the end of its column. */
+private const val ColumnEndZIndex = -1f
+
 @Composable
-private fun KanbanCardUi(
-    card: KanbanCard,
-    columnColor: Color,
-    isDragShadow: Boolean = false,
+private fun CardList(
+    column: KanbanColumn,
+    cardState: DragAndDropState<KanbanCard>,
+    onCardEnter: (dragged: KanbanCard, target: KanbanCard) -> Unit,
+    onCardEnterEnd: (dragged: KanbanCard) -> Unit,
+) {
+    val listState = rememberLazyListState()
+    // Where the last slot starts: a card released over the empty area lands there
+    val lastSlotTop by remember {
+        derivedStateOf {
+            listState.layoutInfo.visibleItemsInfo
+            .lastOrNull()
+            ?.offset ?: 0
+        }
+    }
+    LazyColumn(
+        state = listState,
+        verticalArrangement = Arrangement.spacedBy(CardSpacing),
+        contentPadding = PaddingValues(bottom = ColumnPadding),
+        modifier = Modifier
+            .fillMaxSize()
+            // The whole list is a target under its cards: it gets the card when no card
+            // is under it, in the empty area below the last one or in an empty column
+            .dropTarget(
+                key = columnEndKey(column),
+                state = cardState,
+                zIndex = ColumnEndZIndex,
+                dropAlignment = Alignment.TopStart,
+                dropOffset = Offset(0f, lastSlotTop.toFloat()),
+                onDragEnter = { dragged -> onCardEnterEnd(dragged.data) },
+            ).dragAutoScroll(state = cardState, lazyListState = listState),
+    ) {
+        items(column.cards, key = { it.id }) { card ->
+            KanbanCardView(
+                card = card,
+                modifier = Modifier
+                    .animateItem()
+                    .dragPlaceholder(active = cardState.isDragging(card.id))
+                    .reorderableItem(
+                        key = card.id,
+                        data = card,
+                        state = cardState,
+                        dropStrategy = DropStrategy.CenterDistance,
+                        onDragEnter = { dragged -> onCardEnter(dragged.data, card) },
+                        draggableContent = {
+                            KanbanCardView(
+                                card = card,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .lifted(tilt = CardTilt),
+                            )
+                        },
+                    ).fillMaxWidth(),
+            )
+        }
+        if (column.cards.isEmpty()) {
+            item(key = emptySlotKey(column)) { EmptyColumnSlot() }
+        }
+    }
+}
+
+private val EmptySlotHeight = 96.dp
+
+@Composable
+private fun EmptyColumnSlot() {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(EmptySlotHeight)
+            .dragPlaceholder(active = true),
+    ) {
+        Text(
+            text = "No cards yet",
+            style = MaterialTheme.typography.bodySmall,
+            color = SampleTheme.colors.inkMuted,
+        )
+    }
+}
+
+@Composable
+private fun ColumnHeader(
+    column: KanbanColumn,
     modifier: Modifier = Modifier,
 ) {
-    val shape = MaterialTheme.shapes.medium
-    val priorityColor = when (card.priority) {
-        Priority.Urgent -> Color(0xFFE53935)
-        Priority.High -> Color(0xFFF5A623)
-        Priority.Medium -> Color(0xFF5B8DEF)
-        Priority.Low -> Color(0xFF78909C)
-    }
-
-    Column(
+    val colors = SampleTheme.colors
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
-            .then(
-                if (isDragShadow) {
-                    Modifier.shadow(elevation = 12.dp, shape = shape)
-                } else {
-                    Modifier
-                }
-            ).clip(shape)
-            .background(MaterialTheme.colorScheme.surface)
-            .border(
-                width = 0.5.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                shape = shape,
-            ).padding(12.dp),
+            .fillMaxWidth()
+            .padding(start = 8.dp, end = 8.dp, top = 6.dp, bottom = 12.dp),
     ) {
-        // Priority indicator + title
-        Row(
-            verticalAlignment = Alignment.Top,
-        ) {
-            Box(
-                modifier = Modifier
-                    .padding(top = 5.dp)
-                    .size(6.dp)
-                    .clip(CircleShape)
-                    .background(priorityColor),
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = card.title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .clip(SampleTheme.shapes.pill)
+                .background(column.hue.container),
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = column.title,
+            style = MaterialTheme.typography.titleMedium,
+            color = colors.ink,
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = column.cards.size.toString(),
+            style = MaterialTheme.typography.labelMedium,
+            color = colors.inkMuted,
+        )
+        Spacer(Modifier.weight(1f))
+        GripDots(color = colors.inkMuted.copy(alpha = 0.6f))
+    }
+}
 
-        // Description (variable height)
-        if (card.description != null) {
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = card.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-                lineHeight = 16.sp,
-            )
-        }
-
-        // Tags
-        if (card.tags.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                card.tags.forEach { tag ->
-                    Text(
-                        text = tag.label,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = tag.color,
-                        fontSize = 10.sp,
-                        modifier = Modifier
-                            .clip(MaterialTheme.shapes.small)
-                            .background(tag.color.copy(alpha = 0.12f))
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                    )
+/** The column as it follows the pointer: the same well, lifted, with its cards. */
+@Composable
+private fun LiftedColumn(column: KanbanColumn) {
+    val shape = SampleTheme.shapes.well
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .lifted(shape = shape)
+            .clip(shape)
+            .background(SampleTheme.colors.well),
+    ) {
+        Column(modifier = Modifier.padding(ColumnPadding)) {
+            ColumnHeader(column = column)
+            Column(verticalArrangement = Arrangement.spacedBy(CardSpacing)) {
+                column.cards.forEach { card ->
+                    KanbanCardView(card = card, modifier = Modifier.fillMaxWidth())
                 }
-            }
-        }
-
-        // Assignee
-        if (card.assignee != null) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // Avatar circle with initial
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                ) {
-                    Text(
-                        text = card.assignee.first().toString(),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                }
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = card.assignee,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
         }
     }

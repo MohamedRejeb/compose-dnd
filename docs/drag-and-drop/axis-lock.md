@@ -2,10 +2,7 @@
 
 By default, items can be dragged freely in any direction. **Axis lock** constrains the drag movement to a single axis -- either horizontal or vertical. This is useful for lists, sliders, or any UI where dragging should only occur along one dimension.
 
-<video src="../../videos/axis-locked.mp4" autoplay loop muted playsinline width="720"></video>
-
-!!! warning "Experimental API"
-    The axis lock API is annotated with `@ExperimentalDndApi`. You must opt in with `@OptIn(ExperimentalDndApi::class)` to use it.
+<video class="demo-phone" src="../../videos/axis-lock.mp4" autoplay loop muted playsinline></video>
 
 ## DragAxis
 
@@ -20,7 +17,6 @@ The `DragAxis` enum defines the available axis constraints:
 ## Usage with draggableItem
 
 ```kotlin
-@OptIn(ExperimentalDndApi::class)
 val isDragging = dragAndDropState.isDragging("item-1")
 
 Text(
@@ -46,7 +42,6 @@ Text(
 Axis lock works naturally with reorderable lists. For a vertical list, lock to the vertical axis so items cannot be dragged sideways:
 
 ```kotlin
-@OptIn(ExperimentalDndApi::class)
 @Composable
 fun VerticalLockedReorderExample() {
     val dndState = rememberDragAndDropState<String>()
@@ -120,7 +115,6 @@ private fun ItemCard(
 For a horizontal list or row:
 
 ```kotlin
-@OptIn(ExperimentalDndApi::class)
 ItemCard(
     text = item,
     modifier = Modifier.reorderableItem(

@@ -52,6 +52,15 @@ class DropTargetState<T> internal constructor(
 
     internal var layoutCoordinates: LayoutCoordinates? = null
 
+    internal val center: Offset
+        get() = topLeft + Offset(size.width / 2f, size.height / 2f)
+
+    /** Reads [topLeft] again from the layout, with [positionOf] giving the position of a node. */
+    internal fun refreshPosition(positionOf: (LayoutCoordinates) -> Offset) {
+        val coordinates = layoutCoordinates?.takeIf { it.isAttached } ?: return
+        topLeft = positionOf(coordinates)
+    }
+
     internal fun getDropTopLeft(droppedItemSize: Size): Offset =
         topLeft + dropOffset + when (dropAlignment) {
             Alignment.TopStart -> {

@@ -36,6 +36,7 @@ import com.mohamedrejeb.compose.dnd.drag.DragAxis
 import com.mohamedrejeb.compose.dnd.drag.DraggableItem
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -266,5 +267,63 @@ class DragAxisTest {
 
         waitForIdle()
         assertFalse(droppedOnRight, "Should NOT drop on right target with vertical axis lock")
+    }
+
+    @Test
+    fun verticalAxis_dropAnimationKeepsToTheAxis() = runComposeUiTest {
+        lateinit var state: DragAndDropState<Int>
+        var dropped = false
+
+        setContent {
+            state = rememberDragAndDropState()
+
+            DragAndDropContainer(
+                state = state,
+                modifier = Modifier.size(400.dp).testTag("container"),
+            ) {
+                Column {
+                    DraggableItem(
+                        state = state,
+                        key = "item",
+                        data = 1,
+                        dragAxis = DragAxis.Vertical,
+                        modifier = Modifier.size(100.dp),
+                    ) {
+                        Box(Modifier.size(100.dp))
+                    }
+                    Box(Modifier.fillMaxWidth().height(100.dp))
+                    // A row as wide as the container: its center is far to the right of the item
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                            .dropTarget(key = "row", state = state, onDrop = { dropped = true }),
+                    )
+                }
+            }
+        }
+        waitForIdle()
+
+        mainClock.autoAdvance = false
+        onNodeWithTag("container").performTouchInput {
+            down(Offset(50f, 50f))
+            repeat(10) { moveBy(Offset(0f, 18f)) }
+            up()
+        }
+
+        val ghostX = mutableListOf<Float>()
+        var lastGhostY = Float.NaN
+        var frames = 0
+        while (state.draggedItem != null && frames < 120) {
+            ghostX += state.dragPosition.value.x
+            lastGhostY = state.dragPosition.value.y
+            mainClock.advanceTimeBy(16)
+            frames++
+        }
+
+        assertTrue(dropped, "The item should have been dropped on the row")
+        assertTrue(ghostX.size > 3, "The drop should be animated, took ${ghostX.size} frames")
+        assertTrue(ghostX.all { it == 0f }, "A vertical drag must not slide sideways on drop: $ghostX")
+        assertEquals(200f, lastGhostY, 0.5f, "The item should land level with the row")
     }
 }

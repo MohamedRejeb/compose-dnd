@@ -2,7 +2,7 @@
 
 Most drag and drop moves an item from one place to another. A form builder needs something different: dragging a field type from a **palette** should *create* a new field in the form while the palette chip stays put. This guide walks through the pattern used by the Form Builder sample.
 
-<video src="../../videos/form-builder.mp4" autoplay loop muted playsinline width="720"></video>
+<video class="demo-phone" src="../../videos/form-builder.mp4" autoplay loop muted playsinline></video>
 
 The building blocks:
 
@@ -85,11 +85,11 @@ Rows drag by a grip handle (`hasDragHandle = true` plus `Modifier.dragHandle(key
 
 ## Showing Where the Field Will Land
 
-Palette drops insert *above* the hovered row, so mark that edge while a palette item is in the air. `hoveredDropTargetKey` plus a type check on `draggedItem` is all it takes:
+Palette drops insert *above* the hovered row, so mark that edge while a palette item is in the air. `isDropTargetHovered` plus a type check on `draggedItem` is all it takes:
 
 ```kotlin
 val isPaletteItemHovering = dndState.draggedItem?.data is FormDragData.PaletteItem &&
-    dndState.hoveredDropTargetKey == field.id
+    dndState.isDropTargetHovered(field.id)
 ```
 
 The sample tints the hovered row and draws an accent bar across its top edge:

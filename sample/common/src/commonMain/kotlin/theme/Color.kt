@@ -15,68 +15,81 @@
  */
 package theme
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
-// -- Light scheme --
-val md_theme_light_primary = Color(0xFF4355B9)
-val md_theme_light_onPrimary = Color(0xFFFFFFFF)
-val md_theme_light_primaryContainer = Color(0xFFDEE0FF)
-val md_theme_light_onPrimaryContainer = Color(0xFF00105C)
-val md_theme_light_secondary = Color(0xFF5B5D72)
-val md_theme_light_onSecondary = Color(0xFFFFFFFF)
-val md_theme_light_secondaryContainer = Color(0xFFE0E1F9)
-val md_theme_light_onSecondaryContainer = Color(0xFF181A2C)
-val md_theme_light_tertiary = Color(0xFF77536D)
-val md_theme_light_onTertiary = Color(0xFFFFFFFF)
-val md_theme_light_tertiaryContainer = Color(0xFFFFD7F1)
-val md_theme_light_onTertiaryContainer = Color(0xFF2D1228)
-val md_theme_light_error = Color(0xFFBA1A1A)
-val md_theme_light_onError = Color(0xFFFFFFFF)
-val md_theme_light_errorContainer = Color(0xFFFFDAD6)
-val md_theme_light_onErrorContainer = Color(0xFF410002)
-val md_theme_light_outline = Color(0xFF767680)
-val md_theme_light_background = Color(0xFFFBF8FF)
-val md_theme_light_onBackground = Color(0xFF1B1B21)
-val md_theme_light_surface = Color(0xFFFBF8FF)
-val md_theme_light_onSurface = Color(0xFF1B1B21)
-val md_theme_light_surfaceVariant = Color(0xFFE3E1EC)
-val md_theme_light_onSurfaceVariant = Color(0xFF46464F)
-val md_theme_light_inverseSurface = Color(0xFF303036)
-val md_theme_light_inverseOnSurface = Color(0xFFF2F0FA)
-val md_theme_light_inversePrimary = Color(0xFFBAC3FF)
-val md_theme_light_surfaceTint = Color(0xFF4355B9)
-val md_theme_light_outlineVariant = Color(0xFFC7C5D0)
-val md_theme_light_scrim = Color(0xFF000000)
+/**
+ * The sample's color tokens. Every screen reads colors from here, so the
+ * whole app changes together between light and dark.
+ */
+@Immutable
+data class SampleColors(
+    /** Screen background. */
+    val canvas: Color,
+    /** Items and cards that sit on the canvas. */
+    val surface: Color,
+    /** Recessed areas: drop zones, placeholders, tracks. */
+    val well: Color,
+    /** 1dp borders and dividers. */
+    val line: Color,
+    val ink: Color,
+    val inkMuted: Color,
+    /** A drop target that accepts the dragged item, and selection. */
+    val accent: Color,
+    val onAccent: Color,
+    /** A drop target that rejects the dragged item, and delete actions. */
+    val danger: Color,
+    val isDark: Boolean,
+)
 
-// -- Dark scheme --
-val md_theme_dark_primary = Color(0xFFBAC3FF)
-val md_theme_dark_onPrimary = Color(0xFF08218A)
-val md_theme_dark_primaryContainer = Color(0xFF293CA0)
-val md_theme_dark_onPrimaryContainer = Color(0xFFDEE0FF)
-val md_theme_dark_secondary = Color(0xFFC3C5DD)
-val md_theme_dark_onSecondary = Color(0xFF2D2F42)
-val md_theme_dark_secondaryContainer = Color(0xFF434559)
-val md_theme_dark_onSecondaryContainer = Color(0xFFE0E1F9)
-val md_theme_dark_tertiary = Color(0xFFE6BAD7)
-val md_theme_dark_onTertiary = Color(0xFF44263D)
-val md_theme_dark_tertiaryContainer = Color(0xFF5D3C55)
-val md_theme_dark_onTertiaryContainer = Color(0xFFFFD7F1)
-val md_theme_dark_error = Color(0xFFFFB4AB)
-val md_theme_dark_onError = Color(0xFF690005)
-val md_theme_dark_errorContainer = Color(0xFF93000A)
-val md_theme_dark_onErrorContainer = Color(0xFFFFDAD6)
-val md_theme_dark_outline = Color(0xFF90909A)
-val md_theme_dark_background = Color(0xFF131318)
-val md_theme_dark_onBackground = Color(0xFFE4E1E9)
-val md_theme_dark_surface = Color(0xFF131318)
-val md_theme_dark_onSurface = Color(0xFFE4E1E9)
-val md_theme_dark_surfaceVariant = Color(0xFF46464F)
-val md_theme_dark_onSurfaceVariant = Color(0xFFC7C5D0)
-val md_theme_dark_inverseSurface = Color(0xFFE4E1E9)
-val md_theme_dark_inverseOnSurface = Color(0xFF303036)
-val md_theme_dark_inversePrimary = Color(0xFF4355B9)
-val md_theme_dark_surfaceTint = Color(0xFFBAC3FF)
-val md_theme_dark_outlineVariant = Color(0xFF46464F)
-val md_theme_dark_scrim = Color(0xFF000000)
+val LightSampleColors = SampleColors(
+    canvas = Color(0xFFF2F3F5),
+    surface = Color(0xFFFFFFFF),
+    well = Color(0xFFE8EAEE),
+    line = Color(0xFFDDE0E5),
+    ink = Color(0xFF15171C),
+    inkMuted = Color(0xFF666C77),
+    accent = Color(0xFF2F5BFF),
+    onAccent = Color(0xFFFFFFFF),
+    danger = Color(0xFFE5484D),
+    isDark = false,
+)
 
-val seed = Color(0xFF4355B9)
+val DarkSampleColors = SampleColors(
+    canvas = Color(0xFF111317),
+    surface = Color(0xFF1C1F25),
+    well = Color(0xFF17191E),
+    line = Color(0xFF2B2F37),
+    ink = Color(0xFFEDEEF1),
+    inkMuted = Color(0xFF9AA0AB),
+    accent = Color(0xFF7C93FF),
+    onAccent = Color(0xFF0E1330),
+    danger = Color(0xFFFF6B6F),
+    isDark = true,
+)
+
+/**
+ * A content color pair: a soft [container] fill and a strong [onContainer]
+ * for text and icons on it. Content (notes, photos, avatars, tags) only uses
+ * these hues, so every screen shares one palette.
+ */
+@Immutable
+data class Hue(
+    val name: String,
+    val container: Color,
+    val onContainer: Color,
+)
+
+object Hues {
+    val Butter = Hue("Butter", Color(0xFFFFE08A), Color(0xFF6B4B00))
+    val Mint = Hue("Mint", Color(0xFFA8E6C1), Color(0xFF17613A))
+    val Sky = Hue("Sky", Color(0xFFA9D2FF), Color(0xFF1A4F8C))
+    val Rose = Hue("Rose", Color(0xFFFFB8CB), Color(0xFF8F2A4C))
+    val Lilac = Hue("Lilac", Color(0xFFD2BFFF), Color(0xFF4E3399))
+    val Peach = Hue("Peach", Color(0xFFFFC7A3), Color(0xFF8A4214))
+
+    val all: List<Hue> = listOf(Butter, Mint, Sky, Rose, Lilac, Peach)
+
+    /** A stable hue for any index, cycling through [all]. */
+    fun at(index: Int): Hue = all[index.mod(all.size)]
+}

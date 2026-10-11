@@ -2,11 +2,11 @@
 
 By default, any dragged item can be dropped on any drop target. **Conditional drop** lets you control which drop targets accept which items, enabling scenarios such as typed drop zones, capacity limits, or permission-based dropping.
 
-<video src="../../videos/conditional-drop.mp4" autoplay loop muted playsinline width="720"></video>
+<video class="demo-phone" src="../../videos/conditional-drop.mp4" autoplay loop muted playsinline></video>
 
 ## Using canDrop
 
-The `canDrop` parameter on the `dropTarget` modifier accepts a lambda that receives the `DraggedItemState` and returns a `Boolean`. If it returns `false`, the drop target will not respond to that dragged item.
+The `canDrop` parameter on the `dropTarget` modifier is a plain `Boolean`, evaluated by Compose like any other modifier argument. Because it is just a boolean expression, it can read live state -- including `state.draggedItem?.data` -- to accept or reject whichever item is currently being dragged:
 
 ```kotlin
 Box(
@@ -14,10 +14,8 @@ Box(
         .dropTarget(
             key = "numbers-only",
             state = dragAndDropState,
-            canDrop = { state ->
-                // Only accept items whose data is a number
-                state.data is Int
-            },
+            // Only accept items whose data is a number
+            canDrop = dragAndDropState.draggedItem?.data is Int,
             onDrop = { state ->
                 println("Accepted: ${state.data}")
             },
@@ -27,8 +25,7 @@ Box(
 }
 ```
 
-!!! warning "Experimental API"
-    The `canDrop` parameter is annotated with `@ExperimentalDndApi`. You must opt in with `@OptIn(ExperimentalDndApi::class)` to use it.
+When `canDrop` is `false`, the target is excluded from hover detection entirely: it will not trigger `onDragEnter`, `onDragExit`, or `onDrop` for that item, and `hoveredDropTargetKey` never points to it.
 
 ## Usage Scenarios
 
@@ -37,10 +34,10 @@ Box(
 Accept only specific data types in different zones:
 
 ```kotlin
-@OptIn(ExperimentalDndApi::class)
 @Composable
 fun TypedDropZonesExample() {
     val dragAndDropState = rememberDragAndDropState<Any>()
+    val draggedData = dragAndDropState.draggedItem?.data
 
     DragAndDropContainer(state = dragAndDropState) {
         Row(
@@ -55,7 +52,7 @@ fun TypedDropZonesExample() {
                     .dropTarget(
                         key = "text-zone",
                         state = dragAndDropState,
-                        canDrop = { it.data is String },
+                        canDrop = draggedData is String,
                         onDrop = { /* handle text drop */ },
                     )
             ) {
@@ -70,7 +67,7 @@ fun TypedDropZonesExample() {
                     .dropTarget(
                         key = "number-zone",
                         state = dragAndDropState,
-                        canDrop = { it.data is Int },
+                        canDrop = draggedData is Int,
                         onDrop = { /* handle number drop */ },
                     )
             ) {
@@ -86,7 +83,6 @@ fun TypedDropZonesExample() {
 Prevent dropping when a zone is full:
 
 ```kotlin
-@OptIn(ExperimentalDndApi::class)
 val maxItems = 5
 var droppedItems by remember { mutableStateOf(listOf<String>()) }
 
@@ -95,7 +91,7 @@ Box(
         .dropTarget(
             key = "limited-zone",
             state = dragAndDropState,
-            canDrop = { droppedItems.size < maxItems },
+            canDrop = droppedItems.size < maxItems,
             onDrop = { state ->
                 droppedItems = droppedItems + state.data
             },
@@ -110,13 +106,12 @@ Box(
 Prevent an item from being dropped back onto itself:
 
 ```kotlin
-@OptIn(ExperimentalDndApi::class)
 Box(
     modifier = Modifier
         .dropTarget(
             key = item.id,
             state = dragAndDropState,
-            canDrop = { state -> state.key != item.id },
+            canDrop = dragAndDropState.draggedItem?.key != item.id,
             onDrop = { state ->
                 // Handle drop from a different item
             },
@@ -129,23 +124,23 @@ Box(
 The `canDrop` parameter on the drop target is different from the `dropTargets` parameter on the `draggableItem` modifier:
 
 | Feature        | `dropTargets` (on draggableItem)       | `canDrop` (on dropTarget)                |
-|----------------|----------------------------------------|------------------------------------------|
+|----------------|-----------------------------------------|-------------------------------------------|
 | Defined on     | The dragged item                       | The drop target                          |
-| Filters by     | Drop target keys (allowlist)           | Custom logic based on dragged item state |
+| Filters by     | Drop target keys (allowlist)           | Custom boolean expression on live state  |
 | Use case       | "This item can only go to zones A, B"  | "This zone only accepts certain items"   |
 
-Both can be combined. The dragged item first checks its `dropTargets` list, and then the drop target checks its `canDrop` lambda.
+Both can be combined. The dragged item first checks its `dropTargets` list, and then the drop target checks its `canDrop` value.
 
 ## Visual Feedback
 
-Combine `canDrop` with `hoveredDropTargetKey` to provide visual feedback:
+Combine `canDrop` with `isDropTargetHovered` to provide visual feedback:
 
 ```kotlin
-@OptIn(ExperimentalDndApi::class)
 @Composable
 fun ConditionalDropWithFeedback() {
     val dragAndDropState = rememberDragAndDropState<String>()
-    val isHovered = dragAndDropState.hoveredDropTargetKey == "target-1"
+    val isHovered = dragAndDropState.isDropTargetHovered("target-1")
+    val draggedText = dragAndDropState.draggedItem?.data
 
     Box(
         modifier = Modifier
@@ -156,9 +151,8 @@ fun ConditionalDropWithFeedback() {
             .dropTarget(
                 key = "target-1",
                 state = dragAndDropState,
-                canDrop = { state ->
-                    state.data.length <= 10 // Only accept short strings
-                },
+                // Only accept short strings
+                canDrop = draggedText == null || draggedText.length <= 10,
                 onDrop = { state ->
                     println("Dropped: ${state.data}")
                 },
@@ -170,4 +164,7 @@ fun ConditionalDropWithFeedback() {
 ```
 
 !!! note
-    When `canDrop` returns `false`, the drop target will not trigger `onDragEnter`, `onDragExit`, or `onDrop` for that item. The `hoveredDropTargetKey` will not be set to this target's key, so visual hover feedback will not activate.
+    When `canDrop` is `false`, the drop target will not trigger `onDragEnter`, `onDragExit`, or `onDrop` for that item. `hoveredDropTargetKey` will not be set to this target's key, so visual hover feedback will not activate either.
+
+!!! tip
+    `reorderableItem` and `ReorderableItem` have their own `canDrop` parameter for keeping specific rows out of a reorder -- for example pinned or locked items. See [Reorder List: Pinned or Locked Items](reorder.md#pinned-or-locked-items-candrop).

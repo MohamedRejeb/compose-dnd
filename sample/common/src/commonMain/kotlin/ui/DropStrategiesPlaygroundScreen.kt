@@ -15,453 +15,254 @@
  */
 package ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 import com.mohamedrejeb.compose.dnd.drag.DropStrategy
 import com.mohamedrejeb.compose.dnd.drag.draggableItem
-import com.mohamedrejeb.compose.dnd.drag.isDragging
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
-import components.DemoScreenScaffold
-import components.DndSettingsDrawer
-import components.RedBox
-import kotlinx.coroutines.launch
+import components.DemoScaffold
+import components.SegmentedControl
+import components.dragPlaceholder
+import components.lifted
+import components.wellState
+import theme.SampleTheme
 
+private const val TrayName = "Tray"
+private val TrayHeight = 76.dp
+private const val HoveredZ = 1f
+
+private val DropStrategiesCode = """
+    Modifier.draggableItem(
+        key = "beach",
+        data = photo,
+        state = dndState,
+        dropStrategy =
+            DropStrategy.CenterDistance,
+        draggableContent = { PhotoToken() },
+    )
+
+    Modifier.dropTarget(
+        key = "Shared",
+        state = dndState,
+        onDrop = { location = "Shared" },
+    )
+"""
+
+/**
+ * `DropStrategy` decides which target wins when the dragged item overlaps
+ * several. Each setup has its own photo; drag it across the targets and switch
+ * strategies to see which one lights up.
+ */
 @Composable
 fun DropStrategiesPlaygroundScreen(
     onBack: () -> Unit,
 ) {
-    var dragAfterLongPress by remember { mutableStateOf(false) }
-    var requireFirstDownUnconsumed by remember { mutableStateOf(false) }
-    val drawerState = androidx.compose.material3.rememberDrawerState(
-        initialValue = androidx.compose.material3.DrawerValue.Closed,
-    )
-    val scope = rememberCoroutineScope()
+    DropStrategiesPlayground(initialOption = StrategyOption.Surface, onBack = onBack)
+}
 
-    DndSettingsDrawer(
-        drawerState = drawerState,
-        dragAfterLongPress = dragAfterLongPress,
-        onDragAfterLongPressChange = { dragAfterLongPress = it },
-        requireFirstDownUnconsumed = requireFirstDownUnconsumed,
-        onRequireFirstDownUnconsumedChange = { requireFirstDownUnconsumed = it },
+/** The screen with a chosen starting strategy, for previews and snapshots. */
+@Composable
+internal fun DropStrategiesPlayground(
+    initialOption: StrategyOption,
+    onBack: () -> Unit,
+) {
+    var option by remember { mutableStateOf(initialOption) }
+
+    DemoScaffold(
+        title = "Drop strategies",
+        hint = "Pick a strategy, then drag a photo across the targets.",
+        code = DropStrategiesCode,
+        onBack = onBack,
+    ) { insets ->
+        DropStrategiesContent(
+            option = option,
+            onOptionChange = { option = it },
+            insets = insets,
+        )
+    }
+}
+
+@Composable
+private fun DropStrategiesContent(
+    option: StrategyOption,
+    onOptionChange: (StrategyOption) -> Unit,
+    insets: PaddingValues,
+) {
+    val state = rememberDragAndDropState<String>()
+
+    DragAndDropContainer(
+        state = state,
+        modifier = Modifier.fillMaxSize(),
     ) {
-        DemoScreenScaffold(
-            title = "Drop Strategies",
-            onBack = onBack,
-            actions = {
-                IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                    Icon(Icons.Rounded.Settings, contentDescription = "Settings")
-                }
-            },
-        ) { paddingValues ->
-            DropStrategiesPlaygroundContent(
-                dragAfterLongPress = dragAfterLongPress,
-                requireFirstDownUnconsumed = requireFirstDownUnconsumed,
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(insets)
+                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+        ) {
+            SegmentedControl(
+                options = StrategyOption.entries,
+                selected = option,
+                onSelect = onOptionChange,
+                label = { it.label },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
+                text = option.explanation,
+                style = MaterialTheme.typography.bodyMedium,
+                color = SampleTheme.colors.inkMuted,
+                minLines = 2,
+                modifier = Modifier.padding(top = 12.dp),
+            )
+            Spacer(Modifier.height(20.dp))
+            StrategySetupView(OverlappingSetup, option.strategy, state)
+            Spacer(Modifier.height(20.dp))
+            StrategySetupView(SizesSetup, option.strategy, state)
+        }
+    }
+}
+
+@Composable
+private fun StrategySetupView(
+    setup: StrategySetup,
+    strategy: DropStrategy,
+    state: DragAndDropState<String>,
+) {
+    // Where the photo sits: a target name, or the tray.
+    var location by remember { mutableStateOf(TrayName) }
+    val targetKeys = remember(setup) { setup.targets.map { it.name } + trayKey(setup) }
+    val hovered = setup.targets.firstOrNull { state.isDropTargetHovered(it.name) }?.name
+    val photo: @Composable (Modifier) -> Unit = { modifier ->
+        DraggablePhoto(setup, strategy, targetKeys, state, modifier)
+    }
+
+    Column {
+        SetupHeader(
+            title = setup.title,
+            hovered = hovered,
+            droppedIn = location.takeIf { it != TrayName },
+        )
+        PhotoTray(
+            state = wellState(
+                dragging = state.isDragging(setup.photoKey) && location != TrayName,
+                hovered = state.isDropTargetHovered(trayKey(setup)),
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(TrayHeight)
+                .dropTarget(key = trayKey(setup), state = state, onDrop = { location = TrayName }),
+        ) {
+            if (location == TrayName) photo(Modifier)
+        }
+        Spacer(Modifier.height(8.dp))
+        TargetsArea(
+            setup = setup,
+            state = state,
+            location = location,
+            onDrop = { location = it },
+            photo = photo,
+        )
+    }
+}
+
+@Composable
+private fun TargetsArea(
+    setup: StrategySetup,
+    state: DragAndDropState<String>,
+    location: String,
+    onDrop: (String) -> Unit,
+    photo: @Composable (Modifier) -> Unit,
+) {
+    val dragging = state.isDragging(setup.photoKey)
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = setup.targetsHeight),
+    ) {
+        val width = maxWidth
+        setup.targets.forEach { target ->
+            val isHovered = state.isDropTargetHovered(target.name)
+            TargetWell(
+                name = target.name,
+                state = wellState(dragging = dragging, hovered = isHovered),
+                labelAlignment = target.labelAlignment,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
+                    .zIndex(if (isHovered) HoveredZ else 0f)
+                    .placed(this, target, width)
+                    .dropTarget(key = target.name, state = state, onDrop = { onDrop(target.name) }),
             )
         }
-    }
-}
-
-@Composable
-private fun DropStrategiesPlaygroundContent(
-    dragAfterLongPress: Boolean,
-    requireFirstDownUnconsumed: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val dndState = rememberDragAndDropState<Int>(
-        dragAfterLongPress = dragAfterLongPress,
-        requireFirstDownUnconsumed = requireFirstDownUnconsumed,
-    )
-
-    var selectedStrategy by remember {
-        mutableStateOf<DropStrategy>(DropStrategy.SurfacePercentage)
-    }
-
-    Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = modifier.verticalScroll(rememberScrollState()),
-    ) {
-        StrategySelector(
-            selectedStrategy = selectedStrategy,
-            onSelectedStrategyChange = { selectedStrategy = it },
-        )
-
-        StrategyDescription(selectedStrategy)
-
-        // HUD
-        val hoveredKey = dndState.hoveredDropTargetKey
-        Text(
-            text = if (hoveredKey != null) "Hovered: $hoveredKey" else "Hovered: none",
-            color = if (hoveredKey != null) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.outlineVariant
-            },
-            style = MaterialTheme.typography.labelMedium,
-        )
-
-        Text(
-            text = "Overlapping targets -- drag the box across them to see which one gets selected",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        OverlappingTargetsDemo(dndState = dndState, selectedStrategy = selectedStrategy)
-
-        Text(
-            text = "Different sizes -- the small target covers faster by percentage",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-
-        DifferentSizesDemo(dndState = dndState, selectedStrategy = selectedStrategy)
-    }
-}
-
-// --- Demo 1: Three overlapping targets ---
-
-@Composable
-private fun OverlappingTargetsDemo(
-    dndState: DragAndDropState<Int>,
-    selectedStrategy: DropStrategy,
-) {
-    val shape = MaterialTheme.shapes.medium
-
-    DragAndDropContainer(
-        state = dndState,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(280.dp),
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxSize(),
-        ) {
+        // The photo sits on top of the target it was dropped in.
+        setup.targets.firstOrNull { it.name == location }?.let { target ->
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        shape = shape,
-                    ),
+                modifier = Modifier.zIndex(HoveredZ + 1f).placed(this, target, width),
             ) {
-                val isDragging = dndState.isDragging("draggable-1")
-
-                RedBox(
-                    modifier = Modifier
-                        .graphicsLayer { alpha = if (isDragging) 0f else 1f }
-                        .draggableItem(
-                            key = "draggable-1",
-                            data = 1,
-                            state = dndState,
-                            dropTargets = listOf("a", "b", "c"),
-                            dropStrategy = selectedStrategy,
-                            draggableContent = {
-                                RedBox(modifier = Modifier.size(80.dp))
-                            },
-                        ).size(80.dp),
-                )
-            }
-
-            BoxWithConstraints(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(150.dp),
-            ) {
-                val totalWidth = maxWidth
-                val targetWidth = totalWidth * 0.45f
-
-                TargetBox(
-                    key = "a",
-                    label = "A",
-                    dndState = dndState,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .width(targetWidth)
-                        .height(150.dp)
-                        .align(Alignment.CenterStart),
-                )
-
-                TargetBox(
-                    key = "b",
-                    label = "B",
-                    dndState = dndState,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier
-                        .width(targetWidth)
-                        .height(120.dp)
-                        .align(Alignment.Center),
-                )
-
-                TargetBox(
-                    key = "c",
-                    label = "C",
-                    dndState = dndState,
-                    color = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier
-                        .width(targetWidth)
-                        .height(150.dp)
-                        .align(Alignment.CenterEnd),
-                )
+                photo(Modifier)
             }
         }
     }
 }
 
-// --- Demo 2: Different sized targets side by side ---
-
 @Composable
-private fun DifferentSizesDemo(
-    dndState: DragAndDropState<Int>,
-    selectedStrategy: DropStrategy,
-) {
-    val shape = MaterialTheme.shapes.medium
-
-    DragAndDropContainer(
-        state = dndState,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(300.dp),
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        shape = shape,
-                    ),
-            ) {
-                val isDragging = dndState.isDragging("draggable-2")
-
-                RedBox(
-                    modifier = Modifier
-                        .graphicsLayer { alpha = if (isDragging) 0f else 1f }
-                        .draggableItem(
-                            key = "draggable-2",
-                            data = 2,
-                            state = dndState,
-                            dropTargets = listOf("small", "medium", "large"),
-                            dropStrategy = selectedStrategy,
-                            draggableContent = {
-                                RedBox(modifier = Modifier.size(60.dp))
-                            },
-                        ).size(60.dp),
-                )
-            }
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(0.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-            ) {
-                TargetBox(
-                    key = "small",
-                    label = "Small",
-                    dndState = dndState,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier
-                        .width(80.dp)
-                        .height(80.dp),
-                )
-
-                TargetBox(
-                    key = "medium",
-                    label = "Medium",
-                    dndState = dndState,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .width(120.dp)
-                        .height(120.dp),
-                )
-
-                TargetBox(
-                    key = "large",
-                    label = "Large",
-                    dndState = dndState,
-                    color = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(180.dp),
-                )
-            }
-        }
-    }
-}
-
-// --- Shared components ---
-
-@Composable
-private fun TargetBox(
-    key: Any,
-    label: String,
-    dndState: DragAndDropState<Int>,
-    color: Color,
+private fun DraggablePhoto(
+    setup: StrategySetup,
+    strategy: DropStrategy,
+    targetKeys: List<String>,
+    state: DragAndDropState<String>,
     modifier: Modifier = Modifier,
 ) {
-    val isHovered = dndState.hoveredDropTargetKey == key
-    val shape = MaterialTheme.shapes.medium
-
-    Box(
-        contentAlignment = Alignment.Center,
+    PhotoToken(
+        hue = setup.photoHue,
         modifier = modifier
-            .clip(shape)
-            .border(
-                width = if (isHovered) 3.dp else 1.dp,
-                color = if (isHovered) color else MaterialTheme.colorScheme.outlineVariant,
-                shape = shape,
-            ).background(
-                if (isHovered) color.copy(alpha = 0.12f) else Color.Transparent
-            ).dropTarget(
-                key = key,
-                state = dndState,
+            .dragPlaceholder(active = state.isDragging(setup.photoKey))
+            .draggableItem(
+                key = setup.photoKey,
+                data = setup.photoKey,
+                state = state,
+                dropTargets = targetKeys,
+                dropStrategy = strategy,
+                draggableContent = { PhotoToken(hue = setup.photoHue, modifier = Modifier.lifted()) },
             ),
-    ) {
-        Text(
-            text = label,
-            style = if (isHovered) {
-                MaterialTheme.typography.titleMedium
-            } else {
-                MaterialTheme.typography.bodyMedium
-            },
-            color = if (isHovered) color else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun StrategySelector(
-    selectedStrategy: DropStrategy,
-    onSelectedStrategyChange: (DropStrategy) -> Unit,
-) {
-    val strategies = remember {
-        listOf(
-            DropStrategy.Surface,
-            DropStrategy.SurfacePercentage,
-            DropStrategy.CenterDistance,
-        )
-    }
-
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        strategies.forEach { strategy ->
-            val selected = strategy == selectedStrategy
-            val name = when (strategy) {
-                DropStrategy.Surface -> "Surface"
-                DropStrategy.SurfacePercentage -> "Surface %"
-                DropStrategy.CenterDistance -> "Center Dist."
-                else -> ""
-            }
-
-            val chipShape = MaterialTheme.shapes.extraLarge
-
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .clip(chipShape)
-                    .border(
-                        width = if (selected) 2.dp else 1.dp,
-                        color = if (selected) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.outlineVariant
-                        },
-                        shape = chipShape,
-                    ).background(
-                        color = if (selected) {
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                        } else {
-                            Color.Transparent
-                        },
-                    ).clickable { onSelectedStrategyChange(strategy) }
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-            ) {
-                Text(
-                    text = name,
-                    color = if (selected) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    style = MaterialTheme.typography.labelMedium,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun StrategyDescription(strategy: DropStrategy) {
-    val description = when (strategy) {
-        DropStrategy.Surface -> {
-            "Picks the target with the most overlap area (pixels). Favors larger targets."
-        }
-
-        DropStrategy.SurfacePercentage -> {
-            "Picks the target with the highest overlap relative to its own size. Favors smaller targets."
-        }
-
-        DropStrategy.CenterDistance -> {
-            "Picks the target whose center is closest to the dragged item. Size doesn't matter."
-        }
-
-        else -> {
-            ""
-        }
-    }
-
-    Text(
-        text = description,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
+
+private fun trayKey(setup: StrategySetup): String = "${setup.photoKey}-tray"
+
+private fun Modifier.placed(
+    scope: BoxScope,
+    target: TargetSpec,
+    width: Dp,
+): Modifier = with(scope) { align(Alignment.CenterStart) }
+    .offset(x = width * target.startFraction)
+    .width(width * target.widthFraction)
+    .height(target.height)

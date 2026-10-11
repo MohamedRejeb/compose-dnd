@@ -15,9 +15,6 @@
  */
 package com.mohamedrejeb.compose.dnd.drag
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 
@@ -50,28 +47,32 @@ interface DraggableItemScope {
 internal class DraggableItemScopeImpl<T>(
     val state: DragAndDropState<T>,
     override val key: Any,
-) : DraggableItemScope {
+) : DraggableItemScope,
+    DragHandleOwner {
     override val isDragging: Boolean
         get() = state.draggedItem?.key == key
 
-    internal var hasDragHandle by mutableStateOf(false)
-    internal var draggableItemState: DraggableItemState<T>? = null
+    private val handleCounter = DragHandleCounter()
+
+    override val hasDragHandle: Boolean
+        get() = handleCounter.hasDragHandle
 
     override fun Modifier.dragHandle(
         enabled: Boolean,
         dragAfterLongPress: Boolean,
         requireFirstDownUnconsumed: Boolean,
-    ): Modifier {
-        hasDragHandle = true
-        draggableItemState?.hasDragHandle = true
-        return DragHandleModifier(
-            key = key,
-            state = state,
-            enabled = enabled,
-            dragAfterLongPress = dragAfterLongPress,
-            requireFirstDownUnconsumed = requireFirstDownUnconsumed,
-        ).let { this then it }
-    }
+    ): Modifier =
+        this
+            .dragHandleRegistration(handleCounter)
+            .then(
+                DragHandleModifier(
+                    key = key,
+                    state = state,
+                    enabled = enabled,
+                    dragAfterLongPress = dragAfterLongPress,
+                    requireFirstDownUnconsumed = requireFirstDownUnconsumed,
+                ),
+            )
 }
 
 internal class DraggableItemScopeShadowImpl(

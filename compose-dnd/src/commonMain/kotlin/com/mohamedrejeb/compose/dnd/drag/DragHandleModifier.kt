@@ -21,9 +21,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.platform.InspectorInfo
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 import com.mohamedrejeb.compose.dnd.gesture.detectDragStartGesture
-import kotlinx.coroutines.delay
 
 /**
  * Marks this composable as the drag handle for the draggable item identified by [key].
@@ -84,23 +85,15 @@ internal fun <T> DragHandleModifier(
             dragAfterLongPress,
             requireFirstDownUnconsumed,
         ) {
-            // Wait for the DraggableItemState to be registered by DisposableEffect
-            var draggableItemState: DraggableItemState<T>? = null
-            while (draggableItemState == null) {
-                draggableItemState = state.draggableItemMap[key]
-                if (draggableItemState == null) {
-                    delay(1)
-                }
-            }
-
+            // The dragged item is resolved from the registry when the drag
+            // starts, so the handle works even if its item registers later.
             detectDragStartGesture(
                 key = key,
                 state = state,
-                draggableItemState = draggableItemState,
+                draggableItemState = null,
                 enabled = enabled && state.enabled,
                 dragAfterLongPress = dragAfterLongPress,
                 requireFirstDownUnconsumed = requireFirstDownUnconsumed,
-                isHandle = true,
                 gestureSourcePositionInRoot = {
                     handleCoordinates
                         ?.takeIf { it.isAttached }
@@ -109,4 +102,43 @@ internal fun <T> DragHandleModifier(
                 },
             )
         }
+}
+
+/** Tells [counter] while a scoped drag handle is part of the composition. */
+internal fun Modifier.dragHandleRegistration(counter: DragHandleCounter): Modifier =
+    this then DragHandleRegistrationElement(counter)
+
+private data class DragHandleRegistrationElement(
+    val counter: DragHandleCounter,
+) : ModifierNodeElement<DragHandleRegistrationNode>() {
+    override fun create(): DragHandleRegistrationNode = DragHandleRegistrationNode(counter)
+
+    override fun update(node: DragHandleRegistrationNode) {
+        node.moveTo(counter)
+    }
+
+    override fun InspectorInfo.inspectableProperties() {
+        name = "dragHandleRegistration"
+    }
+}
+
+private class DragHandleRegistrationNode(
+    private var counter: DragHandleCounter,
+) : Modifier.Node() {
+    fun moveTo(newCounter: DragHandleCounter) {
+        if (newCounter === counter) return
+        if (isAttached) {
+            counter.onHandleDetached()
+            newCounter.onHandleAttached()
+        }
+        counter = newCounter
+    }
+
+    override fun onAttach() {
+        counter.onHandleAttached()
+    }
+
+    override fun onDetach() {
+        counter.onHandleDetached()
+    }
 }

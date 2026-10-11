@@ -66,9 +66,20 @@ kotlin {
         implementation(libs.compose.foundation)
         implementation(libs.compose.material3)
         implementation(libs.compose.material.icons.extended)
+        implementation(libs.compose.components.resources)
 
         implementation(libs.jetbrains.navigation.compose)
     }
+
+    sourceSets.named("desktopTest").dependencies {
+        implementation(kotlin("test"))
+        implementation(libs.compose.ui.test)
+        implementation(compose.desktop.currentOs)
+    }
+}
+
+compose.resources {
+    packageOfResClass = "sample.resources"
 }
 
 android {
@@ -87,4 +98,16 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+}
+
+// Pass -PsnapshotDir=<dir> to render every sample screen to PNG (see ScreenSnapshots).
+tasks.withType<Test>().configureEach {
+    (project.findProperty("snapshotDir") as String?)?.let { systemProperty("snapshotDir", it) }
+    (project.findProperty("snapshotOnly") as String?)?.let { systemProperty("snapshotOnly", it) }
+}
+
+// Pass -PrecordDir=<dir> to record the demo clips used by the README and the docs (see recordings/Recorder).
+tasks.withType<Test>().configureEach {
+    (project.findProperty("recordDir") as String?)?.let { systemProperty("recordDir", it) }
+    (project.findProperty("recordOnly") as String?)?.let { systemProperty("recordOnly", it) }
 }

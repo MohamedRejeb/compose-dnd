@@ -25,36 +25,42 @@ import androidx.compose.ui.input.pointer.PointerInputScope
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 import com.mohamedrejeb.compose.dnd.drag.DraggableItemState
 import com.mohamedrejeb.compose.dnd.utils.awaitPointerSlopOrCancellation
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 
 /**
- * @param gestureSourcePositionInRoot The root position of the composable that hosts this gesture.
- * When called from the item itself, this is null and `draggableItemState.positionInRoot` is used.
- * When called from a drag handle, this should be the handle's root position so the drag offset
- * is computed correctly.
+ * Detect the gesture that starts dragging the item registered under [key].
+ *
+ * @param draggableItemState The state of the item hosting this gesture, or
+ * null when the gesture comes from a drag handle. It is only used to skip the
+ * item-level gesture while the item uses a drag handle; the item that gets
+ * dragged is always resolved from the registry when the drag starts.
+ * @param gestureSourcePositionInRoot The root position of the composable that
+ * hosts this gesture. When null, the item's own live position is used; a drag
+ * handle passes its own position so the drag offset is computed correctly.
  */
 internal suspend fun <T> PointerInputScope.detectDragStartGesture(
     key: Any,
     state: DragAndDropState<T>,
-    draggableItemState: DraggableItemState<T>,
+    draggableItemState: DraggableItemState<T>?,
     enabled: Boolean,
     dragAfterLongPress: Boolean,
     requireFirstDownUnconsumed: Boolean,
-    isHandle: Boolean = false,
     gestureSourcePositionInRoot: (() -> Offset)? = null,
-) = coroutineScope {
-    if (!enabled) return@coroutineScope
-
-    // If a drag handle is used, only the handle's gesture detector should be active.
-    // The outer (item-level) gesture detector suspends indefinitely.
-    if (!isHandle && draggableItemState.hasDragHandle) {
-        awaitCancellation()
-    }
+) {
+    if (!enabled) return
 
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = requireFirstDownUnconsumed, pass = PointerEventPass.Main)
+
+        // With a drag handle, only the handle's own gesture detector starts
+        // the drag; the rest of the item stays interactive.
+        if (draggableItemState?.usesDragHandle() == true) return@awaitEachGesture
+
+        // A drag handle doesn't drag an item that is itself disabled
+        if (state.draggableItemMap[key]?.enabled == false) return@awaitEachGesture
+
+        // Another pointer is already dragging (multi-touch)
+        if (!state.canStartDrag()) return@awaitEachGesture
+
         var drag: PointerInputChange?
         if (dragAfterLongPress) {
             drag = awaitLongPressOrCancellation(down.id)
@@ -63,25 +69,31 @@ internal suspend fun <T> PointerInputScope.detectDragStartGesture(
                 drag = awaitPointerSlopOrCancellation(
                     down.id,
                     down.type,
-                    triggerOnMainAxisSlop = false
+                    triggerOnMainAxisSlop = false,
                 ) { change, _ ->
                     change.consume()
                 }
             } while (drag != null && !drag.isConsumed)
         }
 
-        if (drag != null) {
-            val draggableItemState = state.draggableItemMap.getOrPut(key) { draggableItemState }
-            val sourcePositionInRoot = gestureSourcePositionInRoot?.invoke()
-                ?: draggableItemState.positionInRoot
+        if (drag == null || !state.canStartDrag()) return@awaitEachGesture
 
-            launch {
-                state.handleDragStart(
-                    key = key,
-                    offset = drag.position + sourcePositionInRoot
-                )
-            }
+        // The touched item wins over a stale registration under the same key
+        // (e.g. the item was just recreated in another list)
+        if (draggableItemState != null) state.addDraggableItem(draggableItemState)
+        val itemState = state.draggableItemMap[key] ?: return@awaitEachGesture
+        val sourcePositionInRoot = gestureSourcePositionInRoot?.invoke()
+            ?: itemState.livePositionInRoot()
 
+        // Anchor the drag at the down position, not where the touch slop was
+        // crossed, so the grabbed point stays under the pointer: the shadow
+        // catches up with the slop on the first move instead of trailing it.
+        val started = state.handleDragStart(
+            key = key,
+            offset = down.position + sourcePositionInRoot,
+        )
+
+        if (started) {
             state.pointerId = drag.id
         }
     }

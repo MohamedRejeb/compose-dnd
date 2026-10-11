@@ -22,6 +22,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
+import androidx.compose.ui.node.GlobalPositionAwareModifierNode
 import androidx.compose.ui.node.LayoutAwareModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.currentValueOf
@@ -49,7 +50,9 @@ import com.mohamedrejeb.compose.dnd.drag.DraggedItemState
  * This is a Compose-evaluated boolean, so it can read state (e.g., `state.draggedItem?.data`)
  * to dynamically accept or reject specific items.
  * @param onDrop The action to perform when an item is dropped onto the target.
- * Accepts the dragged item state as a parameter.
+ * Accepts the dragged item state as a parameter. It is called once the drop animation has
+ * landed the drag shadow on this target, right before the dragged item's `onDragEnd`; with
+ * [dropAnimationEnabled] set to false it is called as soon as the item is released.
  * @param onDragEnter The action to perform when an item is dragged over the target.
  * Accepts the dragged item state as a parameter.
  * @param onDragExit The action to perform when an item is dragged out of the target.
@@ -111,25 +114,24 @@ private data class DropTargetNodeElement<T>(
         )
 
     override fun update(node: DropTargetNode<T>) {
-        node.apply {
-            this.state = state
+        val targetState = node.dropTargetState
+        val oldKey = targetState.key
+        val oldState = node.state
 
-            val isKeyChanged = dropTargetState.key != key
+        node.state = state
 
-            dropTargetState.key = key
-            dropTargetState.zIndex = zIndex
-            dropTargetState.dropAlignment = dropAlignment
-            dropTargetState.dropOffset = dropOffset
-            dropTargetState.dropAnimationEnabled = dropAnimationEnabled
-            dropTargetState.canDrop = canDrop
-            dropTargetState.onDrop = onDrop
-            dropTargetState.onDragEnter = onDragEnter
-            dropTargetState.onDragExit = onDragExit
+        targetState.key = key
+        targetState.zIndex = zIndex
+        targetState.dropAlignment = dropAlignment
+        targetState.dropOffset = dropOffset
+        targetState.dropAnimationEnabled = dropAnimationEnabled
+        targetState.canDrop = canDrop
+        targetState.onDrop = onDrop
+        targetState.onDragEnter = onDragEnter
+        targetState.onDragExit = onDragExit
 
-            if (isKeyChanged) {
-                onDetach()
-                onAttach()
-            }
+        if (oldKey != key || oldState != state) {
+            node.moveRegistration(oldKey, oldState)
         }
     }
 
@@ -148,16 +150,28 @@ private data class DropTargetNodeElement<T>(
     }
 }
 
-private data class DropTargetNode<T>(
+private class DropTargetNode<T>(
     val dropTargetState: DropTargetState<T>,
     var state: DragAndDropState<T>,
 ) : Modifier.Node(),
     LayoutAwareModifierNode,
+    GlobalPositionAwareModifierNode,
     CompositionLocalConsumerModifierNode {
 
     private val key get() = dropTargetState.key
 
     private var isShadow = false
+
+    /**
+     * Re-register under the current key/state after either changed, e.g. when
+     * a lazy layout reuses this node for another item.
+     */
+    fun moveRegistration(oldKey: Any, oldState: DragAndDropState<T>) {
+        if (!isAttached || isShadow) return
+
+        oldState.removeDropTarget(oldKey, dropTargetState)
+        state.addDropTarget(dropTargetState)
+    }
 
     override fun onAttach() {
         isShadow = currentValueOf(LocalDragAndDropInfo).isShadow
@@ -177,11 +191,21 @@ private data class DropTargetNode<T>(
         state.addDropTarget(dropTargetState)
 
         val size = coordinates.size.toSize()
-        val topLeft = coordinates.positionInRoot()
+        val topLeft = state.positionOf(coordinates)
 
         dropTargetState.layoutCoordinates = coordinates
         dropTargetState.size = size
         dropTargetState.topLeft = topLeft
+    }
+
+    // onPlaced is not called again when only an ancestor moved, e.g. a list scrolling
+    override fun onGloballyPositioned(coordinates: LayoutCoordinates) {
+        if (isShadow) {
+            return
+        }
+
+        dropTargetState.layoutCoordinates = coordinates
+        dropTargetState.topLeft = state.positionOf(coordinates)
     }
 
     override fun onRemeasured(size: IntSize) {
@@ -197,7 +221,7 @@ private data class DropTargetNode<T>(
             return
         }
 
-        state.removeDropTarget(key)
+        state.removeDropTarget(key, dropTargetState)
     }
 
     override fun onDetach() {
@@ -205,6 +229,6 @@ private data class DropTargetNode<T>(
             return
         }
 
-        state.removeDropTarget(key)
+        state.removeDropTarget(key, dropTargetState)
     }
 }

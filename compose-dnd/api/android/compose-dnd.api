@@ -1,0 +1,174 @@
+public final class com/mohamedrejeb/compose/dnd/DragAndDropContainerKt {
+	public static final fun DragAndDropContainer (Lcom/mohamedrejeb/compose/dnd/DragAndDropState;Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+}
+
+public final class com/mohamedrejeb/compose/dnd/DragAndDropState {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (ZZ)V
+	public synthetic fun <init> (ZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun cancelDrag ()V
+	public final fun getDraggedItem ()Lcom/mohamedrejeb/compose/dnd/drag/DraggedItemState;
+	public final fun getHoveredDropTargetKey ()Ljava/lang/Object;
+	public final fun isDragging (Ljava/lang/Object;)Z
+	public final fun isDropTargetHovered (Ljava/lang/Object;)Z
+}
+
+public final class com/mohamedrejeb/compose/dnd/DragAndDropStateKt {
+	public static final fun getDefaultReorderHysteresisDistance ()F
+	public static final fun rememberDragAndDropState-6a0pyJM (ZZFLandroidx/compose/runtime/Composer;II)Lcom/mohamedrejeb/compose/dnd/DragAndDropState;
+}
+
+public abstract interface annotation class com/mohamedrejeb/compose/dnd/annotation/ExperimentalDndApi : java/lang/annotation/Annotation {
+}
+
+public final class com/mohamedrejeb/compose/dnd/drag/DragAxis : java/lang/Enum {
+	public static final field Free Lcom/mohamedrejeb/compose/dnd/drag/DragAxis;
+	public static final field Horizontal Lcom/mohamedrejeb/compose/dnd/drag/DragAxis;
+	public static final field Vertical Lcom/mohamedrejeb/compose/dnd/drag/DragAxis;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/mohamedrejeb/compose/dnd/drag/DragAxis;
+	public static fun values ()[Lcom/mohamedrejeb/compose/dnd/drag/DragAxis;
+}
+
+public final class com/mohamedrejeb/compose/dnd/drag/DragHandleModifierKt {
+	public static final fun dragHandle (Landroidx/compose/ui/Modifier;Ljava/lang/Object;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;ZZZ)Landroidx/compose/ui/Modifier;
+	public static synthetic fun dragHandle$default (Landroidx/compose/ui/Modifier;Ljava/lang/Object;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;ZZZILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+}
+
+public final class com/mohamedrejeb/compose/dnd/drag/DraggableItemKt {
+	public static final fun DraggableItem (Ljava/lang/Object;Ljava/lang/Object;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;Landroidx/compose/ui/Modifier;ZZZLjava/util/List;Lcom/mohamedrejeb/compose/dnd/drag/DropStrategy;Lcom/mohamedrejeb/compose/dnd/drag/DragAxis;Landroidx/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
+}
+
+public final class com/mohamedrejeb/compose/dnd/drag/DraggableItemModifierKt {
+	public static final fun draggableItem (Landroidx/compose/ui/Modifier;Ljava/lang/Object;Ljava/lang/Object;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;ZZZLjava/util/List;Lcom/mohamedrejeb/compose/dnd/drag/DropStrategy;Lcom/mohamedrejeb/compose/dnd/drag/DragAxis;ZLandroidx/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Landroidx/compose/ui/Modifier;
+	public static synthetic fun draggableItem$default (Landroidx/compose/ui/Modifier;Ljava/lang/Object;Ljava/lang/Object;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;ZZZLjava/util/List;Lcom/mohamedrejeb/compose/dnd/drag/DropStrategy;Lcom/mohamedrejeb/compose/dnd/drag/DragAxis;ZLandroidx/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+	public static final fun isDragging (Lcom/mohamedrejeb/compose/dnd/DragAndDropState;Ljava/lang/Object;)Z
+}
+
+public abstract interface class com/mohamedrejeb/compose/dnd/drag/DraggableItemScope {
+	public abstract fun dragHandle (Landroidx/compose/ui/Modifier;ZZZ)Landroidx/compose/ui/Modifier;
+	public static synthetic fun dragHandle$default (Lcom/mohamedrejeb/compose/dnd/drag/DraggableItemScope;Landroidx/compose/ui/Modifier;ZZZILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+	public abstract fun getKey ()Ljava/lang/Object;
+	public abstract fun isDragging ()Z
+}
+
+public final class com/mohamedrejeb/compose/dnd/drag/DraggableItemScope$DefaultImpls {
+	public static synthetic fun dragHandle$default (Lcom/mohamedrejeb/compose/dnd/drag/DraggableItemScope;Landroidx/compose/ui/Modifier;ZZZILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+}
+
+public final class com/mohamedrejeb/compose/dnd/drag/DraggedItemState {
+	public static final field $stable I
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getData ()Ljava/lang/Object;
+	public final fun getDragAmount-F1C5BW0 ()J
+	public final fun getKey ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/mohamedrejeb/compose/dnd/drag/DropStrategy {
+	public abstract fun getHoveredDropTarget-TNW_H78 (JJLjava/util/List;)Lcom/mohamedrejeb/compose/dnd/drop/DropTargetState;
+}
+
+public final class com/mohamedrejeb/compose/dnd/drag/DropStrategy$CenterDistance : com/mohamedrejeb/compose/dnd/drag/DropStrategy {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/mohamedrejeb/compose/dnd/drag/DropStrategy$CenterDistance;
+	public fun getHoveredDropTarget-TNW_H78 (JJLjava/util/List;)Lcom/mohamedrejeb/compose/dnd/drop/DropTargetState;
+}
+
+public final class com/mohamedrejeb/compose/dnd/drag/DropStrategy$Surface : com/mohamedrejeb/compose/dnd/drag/DropStrategy {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/mohamedrejeb/compose/dnd/drag/DropStrategy$Surface;
+	public fun getHoveredDropTarget-TNW_H78 (JJLjava/util/List;)Lcom/mohamedrejeb/compose/dnd/drop/DropTargetState;
+}
+
+public final class com/mohamedrejeb/compose/dnd/drag/DropStrategy$SurfacePercentage : com/mohamedrejeb/compose/dnd/drag/DropStrategy {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/mohamedrejeb/compose/dnd/drag/DropStrategy$SurfacePercentage;
+	public fun getHoveredDropTarget-TNW_H78 (JJLjava/util/List;)Lcom/mohamedrejeb/compose/dnd/drop/DropTargetState;
+}
+
+public final class com/mohamedrejeb/compose/dnd/drop/DropTargetKt {
+	public static final fun dropTarget-sdE3uM4 (Landroidx/compose/ui/Modifier;Ljava/lang/Object;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;FLandroidx/compose/ui/Alignment;JZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
+	public static synthetic fun dropTarget-sdE3uM4$default (Landroidx/compose/ui/Modifier;Ljava/lang/Object;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;FLandroidx/compose/ui/Alignment;JZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+}
+
+public final class com/mohamedrejeb/compose/dnd/drop/DropTargetState {
+	public static final field $stable I
+	public final fun getKey ()Ljava/lang/Object;
+	public final fun getSize-NH-jbRc ()J
+	public final fun getTopLeft-F1C5BW0 ()J
+	public final fun getZIndex ()F
+}
+
+public final class com/mohamedrejeb/compose/dnd/reorder/ReorderContainerKt {
+	public static final fun ReorderContainer (Lcom/mohamedrejeb/compose/dnd/reorder/ReorderState;Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+}
+
+public final class com/mohamedrejeb/compose/dnd/reorder/ReorderState {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (ZZ)V
+	public synthetic fun <init> (ZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getDndState ()Lcom/mohamedrejeb/compose/dnd/DragAndDropState;
+	public final fun getDraggedItem ()Lcom/mohamedrejeb/compose/dnd/drag/DraggedItemState;
+	public final fun getHoveredDropTargetKey ()Ljava/lang/Object;
+}
+
+public final class com/mohamedrejeb/compose/dnd/reorder/ReorderStateKt {
+	public static final fun rememberReorderState-6a0pyJM (ZZFLandroidx/compose/runtime/Composer;II)Lcom/mohamedrejeb/compose/dnd/reorder/ReorderState;
+}
+
+public final class com/mohamedrejeb/compose/dnd/reorder/ReorderableItemKt {
+	public static final fun ReorderableItem (Landroidx/compose/ui/Modifier;Lcom/mohamedrejeb/compose/dnd/reorder/ReorderState;Ljava/lang/Object;Ljava/lang/Object;FZZZLjava/util/List;Lcom/mohamedrejeb/compose/dnd/drag/DropStrategy;Lcom/mohamedrejeb/compose/dnd/drag/DragAxis;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Landroidx/compose/animation/core/AnimationSpec;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
+	public static final fun ReorderableItem-8_MqTXg (Ljava/lang/Object;Ljava/lang/Object;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;Landroidx/compose/ui/Modifier;ZZZLjava/util/List;Lcom/mohamedrejeb/compose/dnd/drag/DropStrategy;Lcom/mohamedrejeb/compose/dnd/drag/DragAxis;FLandroidx/compose/animation/core/AnimationSpec;Landroidx/compose/ui/Alignment;JZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;IIII)V
+}
+
+public final class com/mohamedrejeb/compose/dnd/reorder/ReorderableItemModifierKt {
+	public static final fun reorderableItem-Wkhsg3k (Landroidx/compose/ui/Modifier;Ljava/lang/Object;Ljava/lang/Object;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;ZZZLjava/util/List;Lcom/mohamedrejeb/compose/dnd/drag/DropStrategy;Lcom/mohamedrejeb/compose/dnd/drag/DragAxis;ZFLandroidx/compose/animation/core/AnimationSpec;Landroidx/compose/ui/Alignment;JZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Landroidx/compose/ui/Modifier;
+	public static synthetic fun reorderableItem-Wkhsg3k$default (Landroidx/compose/ui/Modifier;Ljava/lang/Object;Ljava/lang/Object;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;ZZZLjava/util/List;Lcom/mohamedrejeb/compose/dnd/drag/DropStrategy;Lcom/mohamedrejeb/compose/dnd/drag/DragAxis;ZFLandroidx/compose/animation/core/AnimationSpec;Landroidx/compose/ui/Alignment;JZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+}
+
+public abstract interface class com/mohamedrejeb/compose/dnd/reorder/ReorderableItemScope : com/mohamedrejeb/compose/dnd/drag/DraggableItemScope {
+}
+
+public final class com/mohamedrejeb/compose/dnd/scroll/DragAutoScrollConfig {
+	public static final field $stable I
+	public static final field Companion Lcom/mohamedrejeb/compose/dnd/scroll/DragAutoScrollConfig$Companion;
+	public synthetic fun <init> (FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FFFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun copy-2z7ARbQ (FFF)Lcom/mohamedrejeb/compose/dnd/scroll/DragAutoScrollConfig;
+	public static synthetic fun copy-2z7ARbQ$default (Lcom/mohamedrejeb/compose/dnd/scroll/DragAutoScrollConfig;FFFILjava/lang/Object;)Lcom/mohamedrejeb/compose/dnd/scroll/DragAutoScrollConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMaxScrollSpeed-D9Ej5fM ()F
+	public final fun getMaxScrollThreshold-D9Ej5fM ()F
+	public final fun getMinScrollThreshold-D9Ej5fM ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/mohamedrejeb/compose/dnd/scroll/DragAutoScrollConfig$Companion {
+	public final fun getDefaultMaxScrollSpeed-D9Ej5fM ()F
+	public final fun getDefaultMaxScrollThreshold-D9Ej5fM ()F
+	public final fun getDefaultMinScrollThreshold-D9Ej5fM ()F
+}
+
+public final class com/mohamedrejeb/compose/dnd/scroll/DragAutoScrollConfigKt {
+	public static final fun DragAutoScrollConfig-Md-fbLM (FFF)Lcom/mohamedrejeb/compose/dnd/scroll/DragAutoScrollConfig;
+	public static synthetic fun DragAutoScrollConfig-Md-fbLM$default (FFFILjava/lang/Object;)Lcom/mohamedrejeb/compose/dnd/scroll/DragAutoScrollConfig;
+}
+
+public final class com/mohamedrejeb/compose/dnd/scroll/DragAutoScrollKt {
+	public static final fun dragAutoScroll (Landroidx/compose/ui/Modifier;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;Landroidx/compose/foundation/ScrollState;Landroidx/compose/foundation/gestures/Orientation;Lcom/mohamedrejeb/compose/dnd/scroll/DragAutoScrollConfig;Landroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun dragAutoScroll (Landroidx/compose/ui/Modifier;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;Landroidx/compose/foundation/lazy/LazyListState;Lcom/mohamedrejeb/compose/dnd/scroll/DragAutoScrollConfig;Landroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun dragAutoScroll (Landroidx/compose/ui/Modifier;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;Landroidx/compose/foundation/lazy/grid/LazyGridState;Lcom/mohamedrejeb/compose/dnd/scroll/DragAutoScrollConfig;Landroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun dragAutoScroll (Landroidx/compose/ui/Modifier;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;Landroidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridState;Lcom/mohamedrejeb/compose/dnd/scroll/DragAutoScrollConfig;Landroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+}
+
+public final class com/mohamedrejeb/compose/dnd/scroll/DragScrollPinKt {
+	public static final fun dragScrollPin (Landroidx/compose/ui/Modifier;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/Modifier;
+	public static final fun dragScrollPin (Landroidx/compose/ui/Modifier;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;Landroidx/compose/foundation/lazy/grid/LazyGridState;Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/Modifier;
+	public static final fun dragScrollPin (Landroidx/compose/ui/Modifier;Lcom/mohamedrejeb/compose/dnd/DragAndDropState;Landroidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridState;Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/Modifier;
+}
+

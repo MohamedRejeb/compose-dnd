@@ -15,14 +15,13 @@
  */
 package com.mohamedrejeb.compose.dnd.reorder
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.mohamedrejeb.compose.dnd.DragAndDropState
+import com.mohamedrejeb.compose.dnd.drag.DragHandleCounter
 import com.mohamedrejeb.compose.dnd.drag.DragHandleModifier
+import com.mohamedrejeb.compose.dnd.drag.DragHandleOwner
 import com.mohamedrejeb.compose.dnd.drag.DraggableItemScope
-import com.mohamedrejeb.compose.dnd.drag.DraggableItemState
+import com.mohamedrejeb.compose.dnd.drag.dragHandleRegistration
 
 /**
  * Scope for [ReorderableItem] content. Extends [DraggableItemScope] with
@@ -33,28 +32,32 @@ interface ReorderableItemScope : DraggableItemScope
 internal class ReorderableItemScopeImpl<T>(
     val state: DragAndDropState<T>,
     override val key: Any,
-) : ReorderableItemScope {
+) : ReorderableItemScope,
+    DragHandleOwner {
     override val isDragging: Boolean
         get() = state.draggedItem?.key == key
 
-    internal var hasDragHandle by mutableStateOf(false)
-    internal var draggableItemState: DraggableItemState<T>? = null
+    private val handleCounter = DragHandleCounter()
+
+    override val hasDragHandle: Boolean
+        get() = handleCounter.hasDragHandle
 
     override fun Modifier.dragHandle(
         enabled: Boolean,
         dragAfterLongPress: Boolean,
         requireFirstDownUnconsumed: Boolean,
-    ): Modifier {
-        hasDragHandle = true
-        draggableItemState?.hasDragHandle = true
-        return DragHandleModifier(
-            key = key,
-            state = state,
-            enabled = enabled,
-            dragAfterLongPress = dragAfterLongPress,
-            requireFirstDownUnconsumed = requireFirstDownUnconsumed,
-        ).let { this then it }
-    }
+    ): Modifier =
+        this
+            .dragHandleRegistration(handleCounter)
+            .then(
+                DragHandleModifier(
+                    key = key,
+                    state = state,
+                    enabled = enabled,
+                    dragAfterLongPress = dragAfterLongPress,
+                    requireFirstDownUnconsumed = requireFirstDownUnconsumed,
+                ),
+            )
 }
 
 internal class ReorderableItemScopeShadowImpl(

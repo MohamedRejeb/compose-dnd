@@ -15,258 +15,279 @@
  */
 package ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.items as listItems
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items as staggeredItems
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Tab
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
-import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
-import com.mohamedrejeb.compose.dnd.drag.isDragging
+import com.mohamedrejeb.compose.dnd.DragAndDropState
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import com.mohamedrejeb.compose.dnd.reorder.reorderableItem
 import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
-import components.DemoScreenScaffold
+import components.DemoScaffold
+import components.SectionLabel
+import components.SegmentedControl
+import components.dragPlaceholder
+import components.lifted
+import navigation.Demo
+import theme.SampleTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** The four scroll containers `dragAutoScroll` supports. */
+internal enum class AutoScrollLayout(
+    val label: String,
+    val code: String,
+) {
+    Row("Row", AutoScrollRowCode),
+    Grid("Grid", AutoScrollGridCode),
+    Masonry("Masonry", AutoScrollMasonryCode),
+    Column("Column", AutoScrollColumnCode),
+}
+
+private val Gutter = 16.dp
+private val Gap = 8.dp
+private const val PhotoTilt = 3f
+private const val CardTilt = 3f
+
 @Composable
 fun AutoScrollDemoScreen(
     onBack: () -> Unit,
 ) {
-    var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("LazyRow", "Grid", "Scroll")
+    AutoScrollDemoScreen(onBack = onBack, initialLayout = AutoScrollLayout.Row)
+}
 
-    DemoScreenScaffold(
-        title = "Auto-Scroll Demo",
+/** Opens the screen on a given layout, for previews and snapshots. */
+@Composable
+internal fun AutoScrollDemoScreen(
+    onBack: () -> Unit,
+    initialLayout: AutoScrollLayout,
+) {
+    var layout by remember { mutableStateOf(initialLayout) }
+
+    DemoScaffold(
+        title = Demo.AutoScroll.title,
+        hint = "Drag an item to the edge and the list scrolls.",
+        code = layout.code,
         onBack = onBack,
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-        ) {
-            PrimaryTabRow(selectedTabIndex = selectedTab) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        text = { Text(title) },
-                    )
+    ) { insets ->
+        Column(modifier = Modifier.fillMaxSize()) {
+            SegmentedControl(
+                options = AutoScrollLayout.entries,
+                selected = layout,
+                onSelect = { layout = it },
+                label = { it.label },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Gutter),
+            )
+            val contentPadding = PaddingValues(
+                start = Gutter,
+                end = Gutter,
+                top = 12.dp,
+                bottom = insets.calculateBottomPadding() + Gutter,
+            )
+            Box(modifier = Modifier.weight(1f)) {
+                when (layout) {
+                    AutoScrollLayout.Row -> ProductRow(contentPadding)
+                    AutoScrollLayout.Grid -> AppGrid(contentPadding)
+                    AutoScrollLayout.Masonry -> PhotoMasonry(contentPadding)
+                    AutoScrollLayout.Column -> TaskColumn(contentPadding)
                 }
             }
-
-            when (selectedTab) {
-                0 -> LazyRowReorderContent(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                )
-
-                1 -> LazyGridReorderContent(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                )
-
-                2 -> ScrollStateReorderContent(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                )
-            }
         }
     }
 }
 
-// -- LazyRow --
-
-@OptIn(ExperimentalDndApi::class)
-@Composable
-private fun LazyRowReorderContent(modifier: Modifier = Modifier) {
-    val dndState = rememberDragAndDropState<String>()
-    var items by remember { mutableStateOf((1..30).map { "item$it" }) }
-    val lazyListState = rememberLazyListState()
-
-    DragAndDropContainer(
-        state = dndState,
-        modifier = modifier,
-    ) {
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(horizontal = 8.dp),
-            state = lazyListState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp)
-                .dragAutoScroll(
-                    state = dndState,
-                    lazyListState = lazyListState,
-                ),
-        ) {
-            items(items, key = { it }) { item ->
-                val number = item.removePrefix("item")
-                val isDragging = dndState.isDragging(item)
-
-                AutoScrollItem(
-                    number = number,
-                    color = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier
-                        .animateItem()
-                        .graphicsLayer { alpha = if (isDragging) 0f else 1f }
-                        .reorderableItem(
-                            key = item,
-                            data = item,
-                            state = dndState,
-                            onDrop = {},
-                            onDragEnter = { state ->
-                                items = items.toMutableList().apply {
-                                    val index = indexOf(item)
-                                    if (index == -1) return@reorderableItem
-                                    remove(state.data)
-                                    add(index, state.data)
-                                }
-                            },
-                            draggableContent = {
-                                AutoScrollItem(
-                                    number = number,
-                                    isDragShadow = true,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier
-                                        .width(80.dp)
-                                        .fillMaxHeight(),
-                                )
-                            },
-                        ).width(80.dp)
-                        .fillMaxHeight(),
-                )
-            }
-        }
-    }
+/** Moves [item] to where [anchor] is, the way every mode on this screen reorders. */
+private fun <T> List<T>.withItemMovedTo(anchor: T, item: T): List<T> {
+    val index = indexOf(anchor)
+    if (index == -1) return this
+    val without = this - item
+    return without.take(index) + item + without.drop(index)
 }
 
-// -- LazyGrid --
-
-@OptIn(ExperimentalDndApi::class)
+/**
+ * Makes an item reorderable in its list: it leaves a placeholder behind and
+ * takes the spot of whatever item it is dragged over.
+ */
 @Composable
-private fun LazyGridReorderContent(modifier: Modifier = Modifier) {
-    val dndState = rememberDragAndDropState<String>()
-    var items by remember { mutableStateOf((1..40).map { "item$it" }) }
-    val lazyGridState = rememberLazyGridState()
+private fun <T> Modifier.reorderTile(
+    item: T,
+    key: Any,
+    state: DragAndDropState<T>,
+    onMove: (dragged: T) -> Unit,
+    shape: Shape = SampleTheme.shapes.item,
+    draggableContent: @Composable () -> Unit,
+): Modifier =
+    dragPlaceholder(active = state.isDragging(key), shape = shape)
+        .reorderableItem(
+            key = key,
+            data = item,
+            state = state,
+            onDragEnter = { dragged -> onMove(dragged.data) },
+            draggableContent = draggableContent,
+        )
 
-    DragAndDropContainer(
-        state = dndState,
-        modifier = modifier,
-    ) {
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            state = lazyGridState,
+@Composable
+private fun ProductRow(contentPadding: PaddingValues) {
+    val dndState = rememberDragAndDropState<ScrollProduct>()
+    var products by remember { mutableStateOf(InitialScrollProducts) }
+    val listState = rememberLazyListState()
+
+    DragAndDropContainer(state = dndState, modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .dragAutoScroll(
-                    state = dndState,
-                    lazyGridState = lazyGridState,
-                ),
+                .padding(top = contentPadding.calculateTopPadding()),
         ) {
-            items(items, key = { it }) { item ->
-                val number = item.removePrefix("item")
-                val isDragging = dndState.isDragging(item)
+            SectionLabel(
+                text = "New arrivals",
+                trailing = "${products.size} products",
+                modifier = Modifier.padding(start = Gutter, bottom = 12.dp),
+            )
+            // A single row of large cards, centered in the space left, reads as a carousel.
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(bottom = contentPadding.calculateBottomPadding() + 48.dp),
+            ) {
+                LazyRow(
+                    state = listState,
+                    horizontalArrangement = Arrangement.spacedBy(Gap),
+                    contentPadding = PaddingValues(horizontal = Gutter),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .dragAutoScroll(state = dndState, lazyListState = listState),
+                ) {
+                    listItems(products, key = { it.name }) { product ->
+                        ScrollProductCard(
+                            product = product,
+                            modifier = Modifier
+                                .animateItem()
+                                .reorderTile(
+                                    item = product,
+                                    key = product.name,
+                                    state = dndState,
+                                    onMove = { dragged -> products = products.withItemMovedTo(product, dragged) },
+                                    draggableContent = {
+                                        ScrollProductCard(product, Modifier.lifted(tilt = CardTilt))
+                                    },
+                                ),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
 
-                AutoScrollItem(
-                    number = number,
-                    color = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary,
+@Composable
+private fun AppGrid(contentPadding: PaddingValues) {
+    val dndState = rememberDragAndDropState<ScrollApp>()
+    var apps by remember { mutableStateOf(InitialScrollApps) }
+    val gridState = rememberLazyGridState()
+
+    DragAndDropContainer(state = dndState, modifier = Modifier.fillMaxSize()) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(4),
+            state = gridState,
+            contentPadding = contentPadding,
+            verticalArrangement = Arrangement.spacedBy(Gap),
+            horizontalArrangement = Arrangement.spacedBy(Gap),
+            modifier = Modifier
+                .fillMaxSize()
+                .dragAutoScroll(state = dndState, lazyGridState = gridState),
+        ) {
+            gridItems(apps, key = { it.name }) { app ->
+                ScrollAppTile(
+                    app = app,
                     modifier = Modifier
                         .animateItem()
-                        .graphicsLayer { alpha = if (isDragging) 0f else 1f }
-                        .reorderableItem(
-                            key = item,
-                            data = item,
+                        .reorderTile(
+                            item = app,
+                            key = app.name,
                             state = dndState,
-                            onDrop = {},
-                            onDragEnter = { state ->
-                                items = items.toMutableList().apply {
-                                    val index = indexOf(item)
-                                    if (index == -1) return@reorderableItem
-                                    remove(state.data)
-                                    add(index, state.data)
-                                }
-                            },
-                            draggableContent = {
-                                AutoScrollItem(
-                                    number = number,
-                                    isDragShadow = true,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    contentColor = MaterialTheme.colorScheme.onSecondary,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(80.dp),
-                                )
-                            },
-                        ).fillMaxWidth()
-                        .height(80.dp),
+                            onMove = { dragged -> apps = apps.withItemMovedTo(app, dragged) },
+                            draggableContent = { ScrollAppTile(app, Modifier.lifted()) },
+                        ),
                 )
             }
         }
     }
 }
 
-// -- ScrollState --
-
-@OptIn(ExperimentalDndApi::class)
 @Composable
-private fun ScrollStateReorderContent(modifier: Modifier = Modifier) {
-    val dndState = rememberDragAndDropState<String>()
-    var items by remember { mutableStateOf((1..30).map { "item$it" }) }
+private fun PhotoMasonry(contentPadding: PaddingValues) {
+    val dndState = rememberDragAndDropState<ScrollPhoto>()
+    var photos by remember { mutableStateOf(InitialScrollPhotos) }
+    val gridState = rememberLazyStaggeredGridState()
+
+    DragAndDropContainer(state = dndState, modifier = Modifier.fillMaxSize()) {
+        LazyVerticalStaggeredGrid(
+            columns = StaggeredGridCells.Fixed(2),
+            state = gridState,
+            contentPadding = contentPadding,
+            verticalItemSpacing = Gap,
+            horizontalArrangement = Arrangement.spacedBy(Gap),
+            modifier = Modifier
+                .fillMaxSize()
+                .dragAutoScroll(state = dndState, lazyStaggeredGridState = gridState),
+        ) {
+            staggeredItems(photos, key = { it.place }) { photo ->
+                ScrollPhotoTile(
+                    photo = photo,
+                    modifier = Modifier
+                        .animateItem()
+                        .reorderTile(
+                            item = photo,
+                            key = photo.place,
+                            state = dndState,
+                            onMove = { dragged -> photos = photos.withItemMovedTo(photo, dragged) },
+                            draggableContent = { ScrollPhotoTile(photo, Modifier.lifted(tilt = PhotoTilt)) },
+                        ),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TaskColumn(contentPadding: PaddingValues) {
+    val dndState = rememberDragAndDropState<ScrollTask>()
+    var tasks by remember { mutableStateOf(InitialScrollTasks) }
     val scrollState = rememberScrollState()
 
-    DragAndDropContainer(
-        state = dndState,
-        modifier = modifier,
-    ) {
+    DragAndDropContainer(state = dndState, modifier = Modifier.fillMaxSize()) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(Gap),
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scrollState)
@@ -274,114 +295,22 @@ private fun ScrollStateReorderContent(modifier: Modifier = Modifier) {
                     state = dndState,
                     scrollState = scrollState,
                     orientation = Orientation.Vertical,
-                ),
+                ).padding(contentPadding),
         ) {
-            items.forEach { item ->
-                key(item) {
-                    val number = item.removePrefix("item")
-                    val isDragging = dndState.isDragging(item)
-
-                    ScrollListItem(
-                        number = number,
-                        modifier = Modifier
-                            .graphicsLayer { alpha = if (isDragging) 0f else 1f }
-                            .reorderableItem(
-                                key = item,
-                                data = item,
-                                state = dndState,
-                                onDrop = {},
-                                onDragEnter = { state ->
-                                    items = items.toMutableList().apply {
-                                        val index = indexOf(item)
-                                        if (index == -1) return@reorderableItem
-                                        remove(state.data)
-                                        add(index, state.data)
-                                    }
-                                },
-                                draggableContent = {
-                                    ScrollListItem(
-                                        number = number,
-                                        isDragShadow = true,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(56.dp),
-                                    )
-                                },
-                            ).fillMaxWidth()
-                            .height(56.dp),
+            tasks.forEach { task ->
+                key(task.title) {
+                    ScrollTaskRow(
+                        task = task,
+                        modifier = Modifier.reorderTile(
+                            item = task,
+                            key = task.title,
+                            state = dndState,
+                            onMove = { dragged -> tasks = tasks.withItemMovedTo(task, dragged) },
+                            draggableContent = { ScrollTaskRow(task, Modifier.lifted()) },
+                        ),
                     )
                 }
             }
         }
-    }
-}
-
-// -- Item composables --
-
-@Composable
-private fun AutoScrollItem(
-    number: String,
-    color: androidx.compose.ui.graphics.Color,
-    contentColor: androidx.compose.ui.graphics.Color,
-    isDragShadow: Boolean = false,
-    modifier: Modifier = Modifier,
-) {
-    val shape = MaterialTheme.shapes.medium
-
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier
-            .then(
-                if (isDragShadow) {
-                    Modifier.shadow(16.dp, shape)
-                } else {
-                    Modifier
-                }
-            ).clip(shape)
-            .background(color),
-    ) {
-        Text(
-            text = "#$number",
-            color = contentColor,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
-@Composable
-private fun ScrollListItem(
-    number: String,
-    isDragShadow: Boolean = false,
-    modifier: Modifier = Modifier,
-) {
-    val shape = MaterialTheme.shapes.medium
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .then(
-                if (isDragShadow) {
-                    Modifier.shadow(16.dp, shape)
-                } else {
-                    Modifier
-                }
-            ).clip(shape)
-            .background(MaterialTheme.colorScheme.tertiaryContainer)
-            .padding(horizontal = 16.dp),
-    ) {
-        Text(
-            text = "#$number",
-            color = MaterialTheme.colorScheme.onTertiaryContainer,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = "Scroll item $number",
-            color = MaterialTheme.colorScheme.onTertiaryContainer,
-            style = MaterialTheme.typography.bodyMedium,
-        )
     }
 }

@@ -117,7 +117,7 @@ class DropDuringAnimateItemTest {
         var lastGhostY = Float.NaN
         var frames = 0
         while (dndState.draggedItem != null && frames < 1000) {
-            lastGhostY = dndState.dragPosition.value.y + dndState.dragPositionAnimatable.value.y
+            lastGhostY = dndState.dragPosition.value.y
             mainClock.advanceTimeBy(16)
             frames++
         }

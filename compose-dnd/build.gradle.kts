@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+@file:OptIn(
+    org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class,
+    org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class,
+)
 
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -28,6 +31,11 @@ plugins {
 
 kotlin {
     applyDefaultHierarchyTemplate()
+
+    // Tracks the public API in api/ so any change to it shows up in review
+    abiValidation {
+        enabled.set(true)
+    }
 
     androidTarget {
         publishLibraryVariants("release")

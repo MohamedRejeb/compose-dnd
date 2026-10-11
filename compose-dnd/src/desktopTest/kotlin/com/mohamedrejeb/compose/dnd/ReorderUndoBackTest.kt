@@ -126,7 +126,8 @@ class ReorderUndoBackTest {
         onNodeWithTag("item-B").performTouchInput {
             down(center)
             advanceEventTime(600) // long-press
-            val upDistance = 80f
+            // B takes A's slot once its top edge is past the middle of A
+            val upDistance = 120f
             val steps = 20
             val stepDelta = -upDistance / steps
             repeat(steps) {

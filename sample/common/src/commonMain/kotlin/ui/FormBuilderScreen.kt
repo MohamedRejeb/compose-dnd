@@ -15,35 +15,23 @@
  */
 package ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CheckBox
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Email
-import androidx.compose.material.icons.rounded.Numbers
-import androidx.compose.material.icons.rounded.Subject
-import androidx.compose.material.icons.rounded.TextFields
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,251 +42,137 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.DragAndDropState
-import com.mohamedrejeb.compose.dnd.annotation.ExperimentalDndApi
 import com.mohamedrejeb.compose.dnd.drag.DropStrategy
 import com.mohamedrejeb.compose.dnd.drag.dragHandle
-import com.mohamedrejeb.compose.dnd.drag.draggableItem
-import com.mohamedrejeb.compose.dnd.drag.isDragging
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import com.mohamedrejeb.compose.dnd.reorder.reorderableItem
 import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
-import components.DemoScreenScaffold
-import components.GripDots
-import theme.ExampleBrandColors
+import components.DemoScaffold
+import components.DropWell
+import components.ItemSurface
+import components.dragPlaceholder
+import components.wellState
+import navigation.Demo
+import theme.SampleTheme
 
-// -- Data model --
+private const val AppendSlotKey = "append-slot"
+private val MaxFormWidth = 640.dp
+private val EmptySlotHeight = 160.dp
+private val AppendSlotHeight = 56.dp
 
-private enum class FieldType(
-    val label: String,
-    val icon: ImageVector,
-    val placeholder: String,
-) {
-    ShortText("Short text", Icons.Rounded.TextFields, "Enter text..."),
-    LongText("Paragraph", Icons.Rounded.Subject, "Write something longer..."),
-    Email("Email", Icons.Rounded.Email, "name@example.com"),
-    Number("Number", Icons.Rounded.Numbers, "0"),
-    Checkbox("Checkbox", Icons.Rounded.CheckBox, "Option"),
-}
-
-private data class FormField(
-    val id: Int,
-    val type: FieldType,
+private val FormBuilderCode = """
+// Palette chips are copied, never moved
+Modifier.draggableItem(
+    key = "palette-${'$'}{type.name}",
+    data = FormDragData.PaletteItem(type),
+    state = dndState,
+    draggableContent = { Chip(type) },
 )
-
-/**
- * One payload type for both drag sources: palette items create a new field on
- * drop (the palette chip is never consumed), existing fields reorder.
- */
-private sealed interface FormDragData {
-    data class PaletteItem(
-        val type: FieldType
-    ) : FormDragData
-
-    data class ExistingField(
-        val field: FormField
-    ) : FormDragData
-}
-
-// -- Screen --
+// The end of the form creates a field
+Modifier.dropTarget(
+    key = "append-slot",
+    state = dndState,
+    onDrop = { add(it.data) },
+)
+"""
 
 @Composable
 fun FormBuilderScreen(
     onBack: () -> Unit,
 ) {
-    DemoScreenScaffold(
-        title = "Form Builder",
+    FormBuilderScreen(onBack = onBack, initialFields = emptyList())
+}
+
+/** Starts with [initialFields] already in the form, for previews and snapshots. */
+@Composable
+internal fun FormBuilderScreen(
+    onBack: () -> Unit,
+    initialFields: List<FieldType>,
+) {
+    DemoScaffold(
+        title = Demo.FormBuilder.title,
+        hint = "Drag a field into the form, then drag its handle to reorder.",
+        code = FormBuilderCode,
         onBack = onBack,
-    ) { paddingValues ->
+    ) { insets ->
         FormBuilderContent(
-            paddingValues = paddingValues,
+            initialFields = initialFields,
+            contentPadding = insets,
             modifier = Modifier.fillMaxSize(),
         )
     }
 }
 
-@OptIn(ExperimentalDndApi::class)
+/** The form's fields and the id the next new field gets. */
+private class FormState(
+    initialFields: List<FieldType>
+) {
+    var fields by mutableStateOf(initialFields.mapIndexed { index, type -> FormField(id = index + 1, type = type) })
+        private set
+    private var nextId by mutableIntStateOf(initialFields.size + 1)
+
+    fun insert(type: FieldType, index: Int) {
+        val field = FormField(id = nextId, type = type)
+        nextId += 1
+        val slot = index.coerceIn(0, fields.size)
+        fields = fields.take(slot) + field + fields.drop(slot)
+    }
+
+    fun insertBefore(type: FieldType, target: FormField) {
+        val index = fields.indexOfFirst { it.id == target.id }
+        if (index != -1) insert(type, index)
+    }
+
+    /** Existing fields reorder as soon as they enter another row. */
+    fun moveTo(field: FormField, target: FormField) {
+        if (field.id == target.id) return
+        val targetIndex = fields.indexOfFirst { it.id == target.id }
+        if (targetIndex == -1) return
+        val rest = fields.filter { it.id != field.id }
+        val slot = targetIndex.coerceAtMost(rest.size)
+        fields = rest.take(slot) + field + rest.drop(slot)
+    }
+
+    fun moveToEnd(field: FormField) {
+        fields = fields.filter { it.id != field.id } + field
+    }
+
+    fun remove(field: FormField) {
+        fields = fields.filter { it.id != field.id }
+    }
+}
+
 @Composable
 private fun FormBuilderContent(
-    paddingValues: PaddingValues,
+    initialFields: List<FieldType>,
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
     val dndState = rememberDragAndDropState<FormDragData>()
-    var fields by remember { mutableStateOf(emptyList<FormField>()) }
-    var nextId by remember { mutableIntStateOf(1) }
-    val listState = rememberLazyListState()
+    val form = remember { FormState(initialFields) }
 
-    fun newField(type: FieldType): FormField = FormField(id = nextId, type = type).also { nextId += 1 }
-
-    fun insertAt(index: Int, type: FieldType) {
-        fields = fields.toMutableList().apply { add(index.coerceIn(0, size), newField(type)) }
-    }
-
-    fun handleDropOnField(dropped: FormDragData, target: FormField) {
-        when (dropped) {
-            is FormDragData.PaletteItem -> {
-                val index = fields.indexOfFirst { it.id == target.id }
-                if (index != -1) insertAt(index, dropped.type)
-            }
-
-            // Reorder already happened in onDragEnter
-            is FormDragData.ExistingField -> {
-                Unit
-            }
-        }
-    }
-
-    fun handleEnterOnField(entered: FormDragData, target: FormField) {
-        // Only existing fields reorder on hover; palette items insert on drop
-        if (entered !is FormDragData.ExistingField) return
-        if (entered.field.id == target.id) return
-
-        fields = fields.toMutableList().apply {
-            val targetIndex = indexOfFirst { it.id == target.id }
-            if (targetIndex != -1) {
-                removeAll { it.id == entered.field.id }
-                add(targetIndex.coerceAtMost(size), entered.field)
-            }
-        }
-    }
-
-    DragAndDropContainer(
-        state = dndState,
-        modifier = modifier,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-        ) {
-            Spacer(Modifier.height(8.dp))
-
-            FieldPalette(dndState = dndState)
-
-            Spacer(Modifier.height(16.dp))
-
-            Text(
-                text = "Your form",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            LazyColumn(
-                state = listState,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(bottom = 16.dp),
+    DragAndDropContainer(state = dndState, modifier = modifier) {
+        Box(contentAlignment = Alignment.TopCenter, modifier = Modifier.fillMaxSize()) {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .dragAutoScroll(
-                        state = dndState,
-                        lazyListState = listState,
-                    ),
+                    .widthIn(max = MaxFormWidth)
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 4.dp, bottom = contentPadding.calculateBottomPadding() + 16.dp),
             ) {
-                items(fields, key = { it.id }) { field ->
-                    val isDragging = dndState.isDragging(field.id)
-                    val isPaletteItemHovering = dndState.draggedItem?.data is FormDragData.PaletteItem &&
-                        dndState.hoveredDropTargetKey == field.id
-
-                    FormFieldRow(
-                        field = field,
-                        showInsertIndicator = isPaletteItemHovering,
-                        onDelete = { fields = fields.filter { it.id != field.id } },
-                        handleModifier = Modifier.dragHandle(
-                            key = field.id,
-                            state = dndState,
-                        ),
-                        modifier = Modifier
-                            .animateItem()
-                            .graphicsLayer { alpha = if (isDragging) 0f else 1f }
-                            .reorderableItem(
-                                key = field.id,
-                                data = FormDragData.ExistingField(field),
-                                state = dndState,
-                                hasDragHandle = true,
-                                dropStrategy = DropStrategy.CenterDistance,
-                                onDragEnter = { state -> handleEnterOnField(state.data, field) },
-                                onDrop = { state -> handleDropOnField(state.data, field) },
-                                draggableContent = {
-                                    FormFieldRow(
-                                        field = field,
-                                        onDelete = {},
-                                        isDragShadow = true,
-                                    )
-                                },
-                            ).fillMaxWidth(),
-                    )
-                }
-
-                item(key = "append-slot") {
-                    AppendSlot(
-                        dndState = dndState,
-                        isFormEmpty = fields.isEmpty(),
-                        onDropData = { data ->
-                            when (data) {
-                                is FormDragData.PaletteItem -> {
-                                    insertAt(fields.size, data.type)
-                                }
-
-                                is FormDragData.ExistingField -> {
-                                    fields = fields.filter { it.id != data.field.id } + data.field
-                                }
-                            }
-                        },
-                    )
-                }
-            }
-        }
-    }
-}
-
-// -- Components --
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun FieldPalette(
-    dndState: DragAndDropState<FormDragData>,
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .padding(12.dp),
-    ) {
-        Text(
-            text = "Drag a field into the form below. The palette stays put.",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            FieldType.entries.forEach { type ->
-                PaletteChip(
-                    type = type,
+                FieldPalette(dndState = dndState)
+                Spacer(Modifier.height(16.dp))
+                FormCard(
+                    form = form,
                     dndState = dndState,
+                    // Wraps its fields, and scrolls once they outgrow the screen.
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false),
                 )
             }
         }
@@ -306,162 +180,89 @@ private fun FieldPalette(
 }
 
 @Composable
-private fun PaletteChip(
-    type: FieldType,
+private fun FormCard(
+    form: FormState,
+    dndState: DragAndDropState<FormDragData>,
+    modifier: Modifier = Modifier,
+) {
+    val listState = rememberLazyListState()
+    ItemSurface(shape = SampleTheme.shapes.well, modifier = modifier) {
+        LazyColumn(
+            state = listState,
+            contentPadding = PaddingValues(start = 8.dp, end = 12.dp, top = 20.dp, bottom = 16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .dragAutoScroll(state = dndState, lazyListState = listState),
+        ) {
+            item(key = "form-header") { FormHeader(fieldCount = form.fields.size) }
+            fieldRows(form = form, dndState = dndState)
+            item(key = AppendSlotKey) {
+                AppendSlot(
+                    dndState = dndState,
+                    isFormEmpty = form.fields.isEmpty(),
+                    onDrop = { data ->
+                        when (data) {
+                            is FormDragData.PaletteItem -> form.insert(data.type, form.fields.size)
+                            is FormDragData.ExistingField -> form.moveToEnd(data.field)
+                        }
+                    },
+                    modifier = Modifier.padding(start = 8.dp, top = 12.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FormHeader(fieldCount: Int) {
+    Column(modifier = Modifier.padding(start = 8.dp, end = 4.dp, bottom = 12.dp)) {
+        Text(
+            text = "Workshop sign-up",
+            style = MaterialTheme.typography.titleLarge,
+            color = SampleTheme.colors.ink,
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = if (fieldCount == 1) "1 field" else "$fieldCount fields",
+            style = MaterialTheme.typography.bodySmall,
+            color = SampleTheme.colors.inkMuted,
+        )
+    }
+}
+
+private fun LazyListScope.fieldRows(
+    form: FormState,
     dndState: DragAndDropState<FormDragData>,
 ) {
-    // The palette key is stable and never removed, so the chip stays in place
-    // while a copy is created on drop.
-    PaletteChipContent(
-        type = type,
-        modifier = Modifier.draggableItem(
-            key = "palette-${type.name}",
-            data = FormDragData.PaletteItem(type),
-            state = dndState,
-            draggableContent = {
-                PaletteChipContent(
-                    type = type,
-                    isDragShadow = true,
-                )
-            },
-        ),
-    )
-}
-
-@Composable
-private fun PaletteChipContent(
-    type: FieldType,
-    isDragShadow: Boolean = false,
-    modifier: Modifier = Modifier,
-) {
-    val shape = RoundedCornerShape(10.dp)
-    val accent = ExampleBrandColors.FormBuilder
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = modifier
-            .then(
-                if (isDragShadow) {
-                    Modifier
-                        .graphicsLayer { rotationZ = -2f }
-                        .shadow(elevation = 8.dp, shape = shape)
-                } else {
-                    Modifier
-                }
-            ).clip(shape)
-            .background(accent.copy(alpha = if (isDragShadow) 0.9f else 0.14f))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-    ) {
-        Icon(
-            imageVector = type.icon,
-            contentDescription = null,
-            tint = if (isDragShadow) Color.White else accent,
-            modifier = Modifier.size(16.dp),
+    items(form.fields, key = { it.id }) { field ->
+        val paletteHovering = dndState.draggedItem?.data is FormDragData.PaletteItem &&
+            dndState.isDropTargetHovered(field.id)
+        FormFieldRow(
+            field = field,
+            onRemove = { form.remove(field) },
+            handleModifier = Modifier.dragHandle(key = field.id, state = dndState),
+            modifier = Modifier
+                .animateItem()
+                .insertLineAbove(visible = paletteHovering)
+                .dragPlaceholder(active = dndState.isDragging(field.id))
+                .reorderableItem(
+                    key = field.id,
+                    data = FormDragData.ExistingField(field),
+                    state = dndState,
+                    hasDragHandle = true,
+                    dropStrategy = DropStrategy.CenterDistance,
+                    onDragEnter = { state ->
+                        val entered = state.data
+                        // Only existing fields reorder on hover; palette items insert on drop.
+                        if (entered is FormDragData.ExistingField) form.moveTo(entered.field, field)
+                    },
+                    onDrop = { state ->
+                        val dropped = state.data
+                        if (dropped is FormDragData.PaletteItem) form.insertBefore(dropped.type, field)
+                    },
+                    draggableContent = { LiftedFormField(field) },
+                ),
         )
-        Text(
-            text = type.label,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = if (isDragShadow) Color.White else MaterialTheme.colorScheme.onSurface,
-        )
-    }
-}
-
-@Composable
-private fun FormFieldRow(
-    field: FormField,
-    onDelete: () -> Unit,
-    isDragShadow: Boolean = false,
-    showInsertIndicator: Boolean = false,
-    modifier: Modifier = Modifier,
-    handleModifier: Modifier = Modifier,
-) {
-    val shape = RoundedCornerShape(14.dp)
-    val accent = ExampleBrandColors.FormBuilder
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .then(
-                if (isDragShadow) {
-                    Modifier
-                        .graphicsLayer { rotationZ = -1.5f }
-                        .shadow(elevation = 10.dp, shape = shape)
-                } else {
-                    Modifier
-                }
-            ).clip(shape)
-            .background(
-                if (showInsertIndicator) {
-                    accent.copy(alpha = 0.08f)
-                } else {
-                    MaterialTheme.colorScheme.surfaceContainer
-                },
-            ).drawBehind {
-                // The new field is inserted above this row, so mark its top edge
-                if (showInsertIndicator) {
-                    drawRoundRect(
-                        color = accent,
-                        size = Size(width = size.width, height = 3.dp.toPx()),
-                        cornerRadius = CornerRadius(1.5.dp.toPx()),
-                    )
-                }
-            }.padding(start = 12.dp, end = 4.dp, top = 12.dp, bottom = 12.dp),
-    ) {
-        Box(modifier = handleModifier.padding(end = 12.dp)) {
-            GripDots(color = MaterialTheme.colorScheme.outlineVariant)
-        }
-
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = field.type.icon,
-                    contentDescription = null,
-                    tint = ExampleBrandColors.FormBuilder,
-                    modifier = Modifier.size(14.dp),
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    text = field.type.label,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-
-            Spacer(Modifier.height(6.dp))
-
-            // Mock input preview
-            Box(
-                contentAlignment = Alignment.CenterStart,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(if (field.type == FieldType.LongText) 56.dp else 36.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        shape = RoundedCornerShape(8.dp),
-                    ).padding(horizontal = 10.dp),
-            ) {
-                Text(
-                    text = field.type.placeholder,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                )
-            }
-        }
-
-        IconButton(onClick = onDelete) {
-            Icon(
-                imageVector = Icons.Rounded.Close,
-                contentDescription = "Remove field",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp),
-            )
-        }
     }
 }
 
@@ -469,38 +270,60 @@ private fun FormFieldRow(
 private fun AppendSlot(
     dndState: DragAndDropState<FormDragData>,
     isFormEmpty: Boolean,
-    onDropData: (FormDragData) -> Unit,
+    onDrop: (FormDragData) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val isHovered = dndState.hoveredDropTargetKey == "append-slot"
-    val accent = ExampleBrandColors.FormBuilder
-
-    Box(
+    val state = wellState(
+        dragging = dndState.draggedItem != null,
+        hovered = dndState.isDropTargetHovered(AppendSlotKey),
+    )
+    DropWell(
+        state = state,
+        shape = SampleTheme.shapes.item,
         contentAlignment = Alignment.Center,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(if (isFormEmpty) 120.dp else 56.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(if (isHovered) accent.copy(alpha = 0.1f) else Color.Transparent)
-            .drawBehind {
-                drawRoundRect(
-                    color = if (isHovered) accent else Color.Gray.copy(alpha = 0.5f),
-                    cornerRadius = CornerRadius(14.dp.toPx()),
-                    style = Stroke(
-                        width = 1.5.dp.toPx(),
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 10f)),
-                    ),
-                )
-            }.dropTarget(
-                key = "append-slot",
+            .height(if (isFormEmpty) EmptySlotHeight else AppendSlotHeight)
+            .dropTarget(
+                key = AppendSlotKey,
                 state = dndState,
                 dropAnimationEnabled = false,
-                onDrop = { state -> onDropData(state.data) },
+                onDrop = { dragged -> onDrop(dragged.data) },
             ),
     ) {
+        if (isFormEmpty) EmptyFormPrompt() else AppendPrompt()
+    }
+}
+
+@Composable
+private fun EmptyFormPrompt() {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(
+            imageVector = Icons.Rounded.Add,
+            contentDescription = null,
+            tint = SampleTheme.colors.inkMuted,
+            modifier = Modifier.size(28.dp),
+        )
+        Spacer(Modifier.height(8.dp))
         Text(
-            text = if (isFormEmpty) "Drag a field here to start your form" else "Drop here to add at the end",
+            text = "Drag a field here",
+            style = MaterialTheme.typography.titleSmall,
+            color = SampleTheme.colors.ink,
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = "Your form starts with the first drop.",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = SampleTheme.colors.inkMuted,
         )
     }
+}
+
+@Composable
+private fun AppendPrompt() {
+    Text(
+        text = "Drop here to add at the end",
+        style = MaterialTheme.typography.bodySmall,
+        color = SampleTheme.colors.inkMuted,
+    )
 }
