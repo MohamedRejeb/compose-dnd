@@ -15,16 +15,18 @@
  */
 package ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,240 +34,274 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
+import com.mohamedrejeb.compose.dnd.DragAndDropState
 import com.mohamedrejeb.compose.dnd.drag.draggableItem
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
-import components.DemoScreenScaffold
+import components.CircleIconButton
+import components.DemoScaffold
+import components.SectionLabel
+import components.WellState
+import components.dragPlaceholder
+import components.lifted
+import components.wellState
+import theme.SampleTheme
 
+private const val FileTilt = 3f
+private const val GridColumns = 2
+
+private val ConditionalDropCode = """
+    val dragged = dndState.draggedItem?.data
+
+    Modifier.dropTarget(
+        key = folder,
+        state = dndState,
+        canDrop = dragged == null ||
+            folder.accepts(dragged, count),
+        onDrop = { file ->
+            placement += file.data to folder
+        },
+    )
+"""
+
+/**
+ * `canDrop` in action: folders only take their own file type and hold
+ * [FolderCapacity] files. A rejecting folder is never hovered by the library,
+ * so the screen finds it with a little geometry to show why it says no.
+ */
 @Composable
 fun ConditionalDropScreen(
     onBack: () -> Unit,
 ) {
-    DemoScreenScaffold(
-        title = "Conditional Drop",
+    ConditionalDrop(initialPlacement = emptyMap(), onBack = onBack)
+}
+
+/** The screen with some files already filed, for previews and snapshots. */
+@Composable
+internal fun ConditionalDrop(
+    initialPlacement: Map<SampleFile, Folder>,
+    onBack: () -> Unit,
+) {
+    var placement by remember { mutableStateOf(initialPlacement) }
+
+    DemoScaffold(
+        title = "Conditional drop",
+        hint = "Drag each file into a folder. Folders only take their own type.",
+        code = ConditionalDropCode,
         onBack = onBack,
-    ) { paddingValues ->
+        actions = {
+            CircleIconButton(
+                icon = Icons.Rounded.Refresh,
+                contentDescription = "Reset files",
+                onClick = { placement = emptyMap() },
+            )
+        },
+    ) { insets ->
         ConditionalDropContent(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
+            placement = placement,
+            onFile = { file, folder -> placement = placement + (file to folder) },
+            insets = insets,
         )
     }
 }
 
 @Composable
 private fun ConditionalDropContent(
-    modifier: Modifier = Modifier,
+    placement: Map<SampleFile, Folder>,
+    onFile: (SampleFile, Folder) -> Unit,
+    insets: PaddingValues,
 ) {
-    val state = rememberDragAndDropState<String>()
-
-    var evenTargetCount by remember { mutableStateOf(0) }
-    var oddTargetCount by remember { mutableStateOf(0) }
-
-    val evenFull = evenTargetCount >= 2
-    val oddFull = oddTargetCount >= 2
-
-    // Read the dragged item's data to validate parity in canDrop
-    val draggedNumber = state.draggedItem?.data?.toIntOrNull()
+    val state = rememberDragAndDropState<SampleFile>()
+    var fileBounds by remember { mutableStateOf(emptyMap<SampleFile, Rect>()) }
+    var folderBounds by remember { mutableStateOf(emptyMap<Folder, Rect>()) }
+    val looseFiles = SampleFiles.filter { it !in placement }
+    val rejecting = rejectingFolder(state, placement, fileBounds, folderBounds)
 
     DragAndDropContainer(
         state = state,
-        modifier = modifier,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(insets)
+            .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            Text(
-                text = "Drag numbers to matching targets. Each target accepts max 2 items.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Column(modifier = Modifier.fillMaxSize()) {
+            SectionLabel(
+                text = "Files",
+                trailing = "${looseFiles.size} left",
+                modifier = Modifier.padding(bottom = 12.dp),
             )
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                listOf("1", "2", "3", "4", "5", "6").forEach { number ->
-                    val isEven = number.toInt() % 2 == 0
-                    val isDragging = state.isDragging(number)
-
-                    NumberChip(
-                        number = number,
-                        isEven = isEven,
-                        modifier = Modifier
-                            .graphicsLayer { alpha = if (isDragging) 0.3f else 1f }
-                            .draggableItem(
-                                key = number,
-                                data = number,
-                                state = state,
-                                draggableContent = {
-                                    NumberChip(
-                                        number = number,
-                                        isEven = isEven,
-                                    )
-                                },
-                            ),
-                    )
-                }
-            }
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-            ) {
-                DropZone(
-                    label = "Even numbers",
-                    count = evenTargetCount,
-                    isFull = evenFull,
-                    isHovered = state.hoveredDropTargetKey == "even",
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxSize()
-                        .dropTarget(
-                            key = "even",
-                            state = state,
-                            canDrop = !evenFull && (draggedNumber == null || draggedNumber % 2 == 0),
-                            dropAnimationEnabled = false,
-                            onDrop = { droppedItem ->
-                                val num = droppedItem.data.toIntOrNull() ?: return@dropTarget
-                                if (num % 2 == 0) {
-                                    evenTargetCount++
-                                }
-                            },
-                        ),
-                )
-
-                DropZone(
-                    label = "Odd numbers",
-                    count = oddTargetCount,
-                    isFull = oddFull,
-                    isHovered = state.hoveredDropTargetKey == "odd",
-                    color = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxSize()
-                        .dropTarget(
-                            key = "odd",
-                            state = state,
-                            canDrop = !oddFull && (draggedNumber == null || draggedNumber % 2 != 0),
-                            dropAnimationEnabled = false,
-                            onDrop = { droppedItem ->
-                                val num = droppedItem.data.toIntOrNull() ?: return@dropTarget
-                                if (num % 2 != 0) {
-                                    oddTargetCount++
-                                }
-                            },
-                        ),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun NumberChip(
-    number: String,
-    isEven: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val color = if (isEven) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.tertiary
-    }
-    val contentColor = if (isEven) {
-        MaterialTheme.colorScheme.onPrimary
-    } else {
-        MaterialTheme.colorScheme.onTertiary
-    }
-    val shape = MaterialTheme.shapes.medium
-
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier
-            .size(48.dp)
-            .clip(shape)
-            .background(color),
-    ) {
-        Text(
-            text = number,
-            style = MaterialTheme.typography.titleMedium,
-            color = contentColor,
-        )
-    }
-}
-
-@Composable
-private fun DropZone(
-    label: String,
-    count: Int,
-    isFull: Boolean,
-    isHovered: Boolean,
-    color: Color,
-    modifier: Modifier = Modifier,
-) {
-    val shape = MaterialTheme.shapes.large
-    val borderColor = when {
-        isFull -> MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-        isHovered -> color
-        else -> MaterialTheme.colorScheme.outline
-    }
-
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier
-            .border(
-                width = if (isHovered) 2.dp else 1.dp,
-                color = borderColor,
-                shape = shape,
-            ).clip(shape)
-            .background(
-                if (isHovered && !isFull) {
-                    color.copy(alpha = 0.08f)
-                } else {
-                    Color.Transparent
-                }
-            ),
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.titleSmall,
-                color = if (isFull) {
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                } else {
-                    MaterialTheme.colorScheme.onSurface
+            FileGrid(
+                files = looseFiles,
+                state = state,
+                rejected = rejecting != null,
+                onPlaced = { file, rect ->
+                    if (fileBounds[file] != rect) fileBounds = fileBounds + (file to rect)
                 },
             )
-            Text(
-                text = "$count / 2",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            Spacer(Modifier.height(20.dp))
+            SectionLabel(text = "Folders", modifier = Modifier.padding(bottom = 12.dp))
+            FolderRow(
+                placement = placement,
+                state = state,
+                rejecting = rejecting,
+                onFile = onFile,
+                onPlaced = { folder, rect ->
+                    if (folderBounds[folder] != rect) folderBounds = folderBounds + (folder to rect)
+                },
+                modifier = Modifier.fillMaxWidth().weight(1f),
             )
-            if (isFull) {
-                Text(
-                    text = "Full",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
+        }
+    }
+}
+
+@Composable
+private fun FolderRow(
+    placement: Map<SampleFile, Folder>,
+    state: DragAndDropState<SampleFile>,
+    rejecting: Folder?,
+    onFile: (SampleFile, Folder) -> Unit,
+    onPlaced: (Folder, Rect) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier,
+    ) {
+        Folder.entries.forEach { folder ->
+            FolderTarget(
+                folder = folder,
+                files = SampleFiles.filter { placement[it] == folder },
+                state = state,
+                rejectedHere = rejecting == folder,
+                onDrop = { file -> onFile(file, folder) },
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .onPlaced { onPlaced(folder, it.boundsInRoot()) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun FileGrid(
+    files: List<SampleFile>,
+    state: DragAndDropState<SampleFile>,
+    rejected: Boolean,
+    onPlaced: (SampleFile, Rect) -> Unit,
+) {
+    if (files.isEmpty()) {
+        Text(
+            text = "Every file is in a folder.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = SampleTheme.colors.inkMuted,
+        )
+        return
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        files.chunked(GridColumns).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { file ->
+                    DraggableFile(
+                        file = file,
+                        state = state,
+                        rejected = rejected,
+                        modifier = Modifier
+                            .weight(1f)
+                            .onPlaced { onPlaced(file, it.boundsInRoot()) },
+                    )
+                }
+                repeat(GridColumns - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
     }
+}
+
+@Composable
+private fun DraggableFile(
+    file: SampleFile,
+    state: DragAndDropState<SampleFile>,
+    rejected: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    FileCard(
+        file = file,
+        modifier = modifier
+            .dragPlaceholder(active = state.isDragging(file.name))
+            .draggableItem(
+                key = file.name,
+                data = file,
+                state = state,
+                draggableContent = {
+                    FileCard(
+                        file = file,
+                        rejected = rejected,
+                        modifier = Modifier.lifted(tilt = FileTilt),
+                    )
+                },
+            ),
+    )
+}
+
+@Composable
+private fun FolderTarget(
+    folder: Folder,
+    files: List<SampleFile>,
+    state: DragAndDropState<SampleFile>,
+    rejectedHere: Boolean,
+    onDrop: (SampleFile) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val dragged = state.draggedItem?.data
+    val reason = dragged?.let { rejectReason(folder, it, files.size) }
+    val wellState = if (rejectedHere) {
+        WellState.Reject
+    } else {
+        wellState(
+            dragging = dragged != null,
+            hovered = state.isDropTargetHovered(folder),
+            canDrop = reason == null,
+        )
+    }
+    FolderWell(
+        folder = folder,
+        files = files,
+        state = wellState,
+        reason = reason,
+        modifier = modifier.dropTarget(
+            key = folder,
+            state = state,
+            canDrop = dragged == null || folder.accepts(dragged, files.size),
+            onDrop = { item -> onDrop(item.data) },
+        ),
+    )
+}
+
+/**
+ * The folder under the dragged file's center that refuses it. The library
+ * skips targets with `canDrop = false` when it picks the hovered one, so this
+ * is only the visual reason, never a drop.
+ */
+private fun rejectingFolder(
+    state: DragAndDropState<SampleFile>,
+    placement: Map<SampleFile, Folder>,
+    fileBounds: Map<SampleFile, Rect>,
+    folderBounds: Map<Folder, Rect>,
+): Folder? {
+    val dragged = state.draggedItem ?: return null
+    if (state.hoveredDropTargetKey != null) return null
+    val start = fileBounds[dragged.data] ?: return null
+    val center: Offset = start.center + dragged.dragAmount
+    return folderBounds.entries
+        .firstOrNull { (folder, rect) ->
+        val count = placement.count { it.value == folder }
+        rect.contains(center) && rejectReason(folder, dragged.data, count) != null
+    }?.key
 }

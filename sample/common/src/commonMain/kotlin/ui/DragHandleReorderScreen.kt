@@ -15,173 +15,114 @@
  */
 package ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.DragHandle
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.drag.dragHandle
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import com.mohamedrejeb.compose.dnd.reorder.reorderableItem
 import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
-import components.DemoScreenScaffold
+import components.DemoScaffold
+import components.SectionLabel
+import components.dragPlaceholder
+import components.lifted
+import navigation.Demo
+
+private const val DragHandleCode = """
+SettingRow(
+  setting,
+  onToggle = { settings = settings.toggle(id) },
+  modifier = Modifier.reorderableItem(
+    key = id,
+    data = setting,
+    state = dnd,
+    hasDragHandle = true,
+    onDragEnter = {
+      settings = settings.move(it.data, setting)
+    },
+    draggableContent = { SettingRow(setting) },
+  ),
+  handleModifier = Modifier.dragHandle(id, dnd),
+)
+"""
 
 @Composable
-fun DragHandleReorderScreen(
-    onBack: () -> Unit,
-) {
-    DemoScreenScaffold(
-        title = "Drag Handle Reorder",
+fun DragHandleReorderScreen(onBack: () -> Unit) {
+    DemoScaffold(
+        title = Demo.DragHandle.title,
+        hint = "Drag a grip to reorder. Tap a row to switch it on or off.",
+        code = DragHandleCode,
         onBack = onBack,
-    ) { paddingValues ->
-        DragHandleReorderContent(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-        )
+    ) { insets ->
+        QuickSettingsList(insets)
     }
 }
 
 @Composable
-private fun DragHandleReorderContent(
-    modifier: Modifier = Modifier,
-) {
-    val dndState = rememberDragAndDropState<String>()
-    var items by remember {
-        mutableStateOf(
-            listOf(
-                "Item 1",
-                "Item 2",
-                "Item 3",
-                "Item 4",
-                "Item 5",
-                "Item 6",
-                "Item 7",
-                "Item 8",
-            )
-        )
-    }
+private fun QuickSettingsList(insets: PaddingValues) {
+    val dndState = rememberDragAndDropState<QuickSetting>()
+    val listState = rememberLazyListState()
+    var settings by remember { mutableStateOf(InitialSettings) }
 
-    val lazyListState = rememberLazyListState()
-
-    DragAndDropContainer(
-        state = dndState,
-        modifier = modifier,
-    ) {
+    DragAndDropContainer(state = dndState, modifier = Modifier.fillMaxSize()) {
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            state = lazyListState,
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = 4.dp,
+                bottom = insets.calculateBottomPadding() + 16.dp,
+            ),
             modifier = Modifier
                 .fillMaxSize()
-                .dragAutoScroll(
-                    state = dndState,
-                    lazyListState = lazyListState,
-                ),
+                .dragAutoScroll(state = dndState, lazyListState = listState),
         ) {
-            items(items, key = { it }) { item ->
-                val isDragging = dndState.isDragging(item)
-
-                DragHandleListItem(
-                    text = item,
+            item(key = "header") {
+                SectionLabel(
+                    text = "Quick settings",
+                    trailing = "${settings.count { it.on }} on",
+                    modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
+                )
+            }
+            items(settings, key = { it.label }) { setting ->
+                SettingRow(
+                    setting = setting,
+                    onToggle = { settings = settings.toggle(setting.label) },
+                    handleModifier = Modifier.dragHandle(key = setting.label, state = dndState),
                     modifier = Modifier
                         .animateItem()
-                        .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+                        .dragPlaceholder(active = dndState.isDragging(setting.label))
                         .reorderableItem(
-                            key = item,
-                            data = item,
+                            key = setting.label,
+                            data = setting,
                             state = dndState,
                             hasDragHandle = true,
-                            onDrop = {},
-                            onDragEnter = { state ->
-                                items = items.toMutableList().apply {
-                                    val index = indexOf(item)
-                                    if (index == -1) return@reorderableItem
-                                    remove(state.data)
-                                    add(index, state.data)
-                                }
+                            onDragEnter = { dragged ->
+                                settings = settings.move(dragged.data, setting)
                             },
                             draggableContent = {
-                                DragHandleListItem(
-                                    text = item,
-                                    isDragShadow = true,
+                                SettingRow(
+                                    setting = setting,
+                                    onToggle = {},
+                                    modifier = Modifier.lifted(),
                                 )
                             },
                         ),
-                    handleModifier = Modifier.dragHandle(
-                        key = item,
-                        state = dndState,
-                    ),
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun DragHandleListItem(
-    text: String,
-    isDragShadow: Boolean = false,
-    modifier: Modifier = Modifier,
-    handleModifier: Modifier = Modifier,
-) {
-    val shape = MaterialTheme.shapes.medium
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .then(
-                if (isDragShadow) {
-                    Modifier.shadow(
-                        elevation = 12.dp,
-                        shape = shape,
-                    )
-                } else {
-                    Modifier
-                }
-            ).clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(horizontal = 16.dp),
-    ) {
-        Icon(
-            Icons.Rounded.DragHandle,
-            contentDescription = "Drag handle",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = handleModifier.size(24.dp),
-        )
-
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier
-                .padding(start = 16.dp)
-                .weight(1f),
-        )
     }
 }

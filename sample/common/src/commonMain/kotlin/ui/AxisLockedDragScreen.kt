@@ -16,22 +16,23 @@
 package ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -39,331 +40,185 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
+import com.mohamedrejeb.compose.dnd.DragAndDropState
 import com.mohamedrejeb.compose.dnd.drag.DragAxis
 import com.mohamedrejeb.compose.dnd.drag.draggableItem
 import com.mohamedrejeb.compose.dnd.drop.dropTarget
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
-import components.DemoScreenScaffold
+import components.DemoScaffold
+import components.DropWell
+import components.WellState
+import components.dragPlaceholder
+import components.lifted
+import components.wellState
+import navigation.Demo
+import theme.Hues
+import theme.SampleTheme
+
+private val Speeds = listOf("0.5x", "1x", "1.5x", "2x")
+private const val SpeedKey = "speed"
+private const val InitialSpeed = 1
+private val SpeedTokenWidth = 64.dp
+private val RailHeight = 56.dp
+
+private val Priorities = listOf("Urgent", "This week", "Later")
+private const val TaskKey = "task"
+private const val TaskLabel = "Login crash"
+private val LadderStepHeight = 60.dp
+
+private const val DeskColumns = 3
+private const val DeskRows = 2
+private val DeskHeight = 72.dp
+private val InitialSeats = mapOf("Maya" to 0, "Leo" to 5)
+private val SeatHues = mapOf("Maya" to Hues.Rose, "Leo" to Hues.Sky)
+
+private val SectionGap = 28.dp
 
 @Composable
 fun AxisLockedDragScreen(
     onBack: () -> Unit,
 ) {
-    DemoScreenScaffold(
-        title = "Axis-Locked Drag",
+    DemoScaffold(
+        title = Demo.AxisLock.title,
+        hint = "Drag each item. Some can only move one way.",
+        code = AxisLockCode,
         onBack = onBack,
-    ) { paddingValues ->
+    ) { insets ->
         Column(
-            verticalArrangement = Arrangement.spacedBy(24.dp),
+            verticalArrangement = Arrangement.spacedBy(SectionGap),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = insets.calculateBottomPadding() + 16.dp),
         ) {
-            HorizontalSlotDemo()
-            VerticalSlotDemo()
-            FreeMovementDemo()
+            SpeedRail()
+            PriorityLadder()
+            SeatingGrid()
         }
     }
 }
 
-// --- Horizontal: Slide item between horizontal slots ---
+// -- Horizontal: a speed knob that slides along a rail --
 
 @Composable
-private fun HorizontalSlotDemo() {
-    val slots = remember { listOf("h-slot-0", "h-slot-1", "h-slot-2", "h-slot-3") }
-    var itemSlot by remember { mutableStateOf(0) }
+private fun SpeedRail() {
+    val stops = remember { Speeds.indices.map { "speed-$it" } }
+    var selected by remember { mutableIntStateOf(InitialSpeed) }
     val state = rememberDragAndDropState<Int>()
+    val colors = SampleTheme.colors
+    val pill = SampleTheme.shapes.pill
 
-    Text(
-        text = "Horizontal Only",
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.onSurface,
-    )
-
-    DragAndDropContainer(
-        state = state,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(100.dp),
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            slots.forEachIndexed { index, slotKey ->
-                val isOccupied = index == itemSlot
-                val isHovered = state.hoveredDropTargetKey == slotKey
-                val shape = MaterialTheme.shapes.medium
-
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(80.dp)
-                        .clip(shape)
-                        .border(
-                            width = if (isHovered) 2.dp else 1.dp,
-                            color = when {
-                                isHovered -> MaterialTheme.colorScheme.primary
-                                isOccupied -> Color.Transparent
-                                else -> MaterialTheme.colorScheme.outlineVariant
-                            },
-                            shape = shape,
-                        ).dropTarget(
-                            key = slotKey,
-                            state = state,
-                            onDrop = { itemSlot = index },
-                        ),
-                ) {
-                    if (isOccupied) {
-                        val isDragging = state.isDragging("h-item")
-
-                        ColorChip(
-                            label = "H",
-                            color = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier
-                                .graphicsLayer { alpha = if (isDragging) 0.3f else 1f }
-                                .draggableItem(
-                                    key = "h-item",
-                                    data = index,
-                                    state = state,
-                                    dragAxis = DragAxis.Horizontal,
-                                    draggableContent = {
-                                        ColorChip(
-                                            label = "H",
-                                            color = MaterialTheme.colorScheme.primary,
-                                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                                        )
-                                    },
-                                ),
-                        )
-                    } else {
-                        Text(
-                            text = "${index + 1}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                        )
+    Column {
+        AxisSectionHeader(title = "Horizontal only", api = "DragAxis.Horizontal")
+        DragAndDropContainer(state = state, modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(RailHeight)
+                    .clip(pill)
+                    .background(colors.well)
+                    .padding(horizontal = 24.dp)
+                    .railLine(horizontal = true)
+                    .padding(vertical = 4.dp),
+            ) {
+                stops.forEachIndexed { i, stop ->
+                    DropWell(
+                        state = wellState(state.draggedItem != null, state.hoveredDropTargetKey == stop),
+                        shape = pill,
+                        color = Color.Transparent,
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .dropTarget(key = stop, state = state, onDrop = { selected = i }),
+                    ) {
+                        if (i == selected) SpeedToken(index = i, state = state) else AxisRailStop()
                     }
                 }
             }
         }
+        SpeedScale(selected = selected)
     }
 }
 
-// --- Vertical: Slide item between vertical slots ---
-
 @Composable
-private fun VerticalSlotDemo() {
-    val slots = remember { listOf("v-slot-0", "v-slot-1", "v-slot-2") }
-    var itemSlot by remember { mutableStateOf(0) }
-    val state = rememberDragAndDropState<Int>()
-
-    Text(
-        text = "Vertical Only",
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.onSurface,
+private fun SpeedToken(
+    index: Int,
+    state: DragAndDropState<Int>,
+) {
+    val speed = Speeds[index]
+    val pill = SampleTheme.shapes.pill
+    AxisHueToken(
+        label = speed,
+        hue = Hues.Sky,
+        modifier = Modifier
+            .width(SpeedTokenWidth)
+            .dragPlaceholder(active = state.isDragging(SpeedKey), shape = pill)
+            .draggableItem(
+                key = SpeedKey,
+                data = index,
+                state = state,
+                dragAxis = DragAxis.Horizontal,
+                draggableContent = {
+                    AxisHueToken(speed, Hues.Sky, Modifier.width(SpeedTokenWidth).lifted(shape = pill))
+                },
+            ),
     )
+}
 
-    DragAndDropContainer(
-        state = state,
+/** The speed names under the rail, lined up with its stops. */
+@Composable
+private fun SpeedScale(selected: Int) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(240.dp),
+            .padding(start = 24.dp, end = 24.dp, top = 8.dp),
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            slots.forEachIndexed { index, slotKey ->
-                val isOccupied = index == itemSlot
-                val isHovered = state.hoveredDropTargetKey == slotKey
-                val shape = MaterialTheme.shapes.medium
-
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .clip(shape)
-                        .border(
-                            width = if (isHovered) 2.dp else 1.dp,
-                            color = when {
-                                isHovered -> MaterialTheme.colorScheme.tertiary
-                                isOccupied -> Color.Transparent
-                                else -> MaterialTheme.colorScheme.outlineVariant
-                            },
-                            shape = shape,
-                        ).dropTarget(
-                            key = slotKey,
-                            state = state,
-                            onDrop = { itemSlot = index },
-                        ),
-                ) {
-                    if (isOccupied) {
-                        val isDragging = state.isDragging("v-item")
-
-                        ColorChip(
-                            label = "V",
-                            color = MaterialTheme.colorScheme.tertiary,
-                            contentColor = MaterialTheme.colorScheme.onTertiary,
-                            modifier = Modifier
-                                .graphicsLayer { alpha = if (isDragging) 0.3f else 1f }
-                                .draggableItem(
-                                    key = "v-item",
-                                    data = index,
-                                    state = state,
-                                    dragAxis = DragAxis.Vertical,
-                                    draggableContent = {
-                                        ColorChip(
-                                            label = "V",
-                                            color = MaterialTheme.colorScheme.tertiary,
-                                            contentColor = MaterialTheme.colorScheme.onTertiary,
-                                        )
-                                    },
-                                ),
-                        )
-                    } else {
-                        Text(
-                            text = "Slot ${index + 1}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                        )
-                    }
-                }
-            }
+        Speeds.forEachIndexed { i, speed ->
+            Text(
+                text = speed,
+                style = MaterialTheme.typography.labelMedium,
+                color = if (i == selected) SampleTheme.colors.ink else SampleTheme.colors.inkMuted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }
 
-// --- Free: Move items freely between grid positions ---
+// -- Vertical: a task that moves up and down a priority ladder --
 
 @Composable
-private fun FreeMovementDemo() {
-    val gridSlots = remember {
-        listOf(
-            "g-0-0", "g-0-1", "g-0-2",
-            "g-1-0", "g-1-1", "g-1-2",
-        )
-    }
-    var itemASlot by remember { mutableStateOf(0) }
-    var itemBSlot by remember { mutableStateOf(5) }
-    val state = rememberDragAndDropState<String>()
+private fun PriorityLadder() {
+    val steps = remember { Priorities.indices.map { "priority-$it" } }
+    var selected by remember { mutableIntStateOf(0) }
+    val state = rememberDragAndDropState<Int>()
 
-    Text(
-        text = "Free (Both Axes)",
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.onSurface,
-    )
-
-    DragAndDropContainer(
-        state = state,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp),
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            for (row in 0..1) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                ) {
-                    for (col in 0..2) {
-                        val slotIndex = row * 3 + col
-                        val slotKey = gridSlots[slotIndex]
-                        val hasItemA = slotIndex == itemASlot
-                        val hasItemB = slotIndex == itemBSlot
-                        val isHovered = state.hoveredDropTargetKey == slotKey
-                        val shape = MaterialTheme.shapes.medium
-
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxSize()
-                                .clip(shape)
-                                .border(
-                                    width = if (isHovered) 2.dp else 1.dp,
-                                    color = when {
-                                        isHovered -> MaterialTheme.colorScheme.secondary
-                                        else -> MaterialTheme.colorScheme.outlineVariant
-                                    },
-                                    shape = shape,
-                                ).dropTarget(
-                                    key = slotKey,
-                                    state = state,
-                                    canDrop = !hasItemA && !hasItemB,
-                                    onDrop = { droppedItem ->
-                                        when (droppedItem.data) {
-                                            "A" -> itemASlot = slotIndex
-                                            "B" -> itemBSlot = slotIndex
-                                        }
-                                    },
-                                ),
-                        ) {
-                            when {
-                                hasItemA -> {
-                                    val isDragging = state.isDragging("item-a")
-
-                                    ColorChip(
-                                        label = "A",
-                                        color = MaterialTheme.colorScheme.primary,
-                                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                                        modifier = Modifier
-                                            .graphicsLayer { alpha = if (isDragging) 0.3f else 1f }
-                                            .draggableItem(
-                                                key = "item-a",
-                                                data = "A",
-                                                state = state,
-                                                dragAxis = DragAxis.Free,
-                                                draggableContent = {
-                                                    ColorChip(
-                                                        label = "A",
-                                                        color = MaterialTheme.colorScheme.primary,
-                                                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                                                    )
-                                                },
-                                            ),
-                                    )
-                                }
-
-                                hasItemB -> {
-                                    val isDragging = state.isDragging("item-b")
-
-                                    ColorChip(
-                                        label = "B",
-                                        color = MaterialTheme.colorScheme.tertiary,
-                                        contentColor = MaterialTheme.colorScheme.onTertiary,
-                                        modifier = Modifier
-                                            .graphicsLayer { alpha = if (isDragging) 0.3f else 1f }
-                                            .draggableItem(
-                                                key = "item-b",
-                                                data = "B",
-                                                state = state,
-                                                dragAxis = DragAxis.Free,
-                                                draggableContent = {
-                                                    ColorChip(
-                                                        label = "B",
-                                                        color = MaterialTheme.colorScheme.tertiary,
-                                                        contentColor = MaterialTheme.colorScheme.onTertiary,
-                                                    )
-                                                },
-                                            ),
-                                    )
-                                }
-                            }
+    Column {
+        AxisSectionHeader(title = "Vertical only", api = "DragAxis.Vertical")
+        DragAndDropContainer(state = state, modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(SampleTheme.shapes.well)
+                    .background(SampleTheme.colors.well)
+                    .padding(4.dp),
+            ) {
+                steps.forEachIndexed { i, step ->
+                    DropWell(
+                        state = wellState(state.draggedItem != null, state.hoveredDropTargetKey == step),
+                        shape = SampleTheme.shapes.item,
+                        color = Color.Transparent,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(LadderStepHeight)
+                            .dropTarget(key = step, state = state, onDrop = { selected = i }),
+                    ) {
+                        LadderStep(label = Priorities[i]) {
+                            if (i == selected) TaskToken(index = i, state = state) else AxisRailStop()
                         }
                     }
                 }
@@ -373,25 +228,128 @@ private fun FreeMovementDemo() {
 }
 
 @Composable
-private fun ColorChip(
+private fun LadderStep(
     label: String,
-    color: Color,
-    contentColor: Color,
+    slot: @Composable () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        AxisLadderLabel(label)
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .railLine(horizontal = false),
+        ) {
+            slot()
+        }
+        // Balances the label so the rail sits in the middle of the free space.
+        Box(Modifier.width(AxisLadderLabelWidth / 2))
+    }
+}
+
+@Composable
+private fun TaskToken(
+    index: Int,
+    state: DragAndDropState<Int>,
+) {
+    val pill = SampleTheme.shapes.pill
+    AxisHueToken(
+        label = TaskLabel,
+        hue = Hues.Rose,
+        modifier = Modifier
+            .dragPlaceholder(active = state.isDragging(TaskKey), shape = pill)
+            .draggableItem(
+                key = TaskKey,
+                data = index,
+                state = state,
+                dragAxis = DragAxis.Vertical,
+                draggableContent = { AxisHueToken(TaskLabel, Hues.Rose, Modifier.lifted(shape = pill)) },
+            ),
+    )
+}
+
+// -- Free: people who can move to any empty desk --
+
+@Composable
+private fun SeatingGrid() {
+    var seats by remember { mutableStateOf(InitialSeats) }
+    val state = rememberDragAndDropState<String>()
+
+    Column {
+        AxisSectionHeader(title = "Free", api = "DragAxis.Free")
+        DragAndDropContainer(state = state, modifier = Modifier.fillMaxWidth()) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                repeat(DeskRows) { row ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        repeat(DeskColumns) { column ->
+                            val desk = row * DeskColumns + column
+                            Desk(
+                                desk = desk,
+                                occupant = seats.entries.firstOrNull { it.value == desk }?.key,
+                                state = state,
+                                onSeat = { name -> seats = seats + (name to desk) },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Desk(
+    desk: Int,
+    occupant: String?,
+    state: DragAndDropState<String>,
+    onSeat: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val shape = MaterialTheme.shapes.medium
+    val key = "desk-$desk"
+    val dragged = state.draggedItem?.data
+    // The desk a person was picked up from shows their placeholder, not a rejection.
+    val wellState = if (occupant != null && occupant == dragged) {
+        WellState.Idle
+    } else {
+        wellState(dragged != null, state.hoveredDropTargetKey == key, canDrop = occupant == null)
+    }
 
-    Box(
+    DropWell(
+        state = wellState,
+        shape = SampleTheme.shapes.item,
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .size(width = 56.dp, height = 48.dp)
-            .clip(shape)
-            .background(color),
+            .height(DeskHeight)
+            .dropTarget(
+                key = key,
+                state = state,
+                canDrop = occupant == null,
+                onDrop = { dropped -> onSeat(dropped.data) },
+            ),
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.titleMedium,
-            color = contentColor,
+        if (occupant == null) {
+            AxisSlotLabel("Desk ${desk + 1}")
+            return@DropWell
+        }
+        val hue = SeatHues.getValue(occupant)
+        val pill = SampleTheme.shapes.pill
+        AxisPersonToken(
+            name = occupant,
+            hue = hue,
+            modifier = Modifier
+                .dragPlaceholder(active = state.isDragging(occupant), shape = pill)
+                .draggableItem(
+                    key = occupant,
+                    data = occupant,
+                    state = state,
+                    dragAxis = DragAxis.Free,
+                    draggableContent = { AxisPersonToken(occupant, hue, Modifier.lifted(shape = pill, tilt = 3f)) },
+                ),
         )
     }
 }

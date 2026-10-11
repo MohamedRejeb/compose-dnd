@@ -16,9 +16,8 @@
 package ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,92 +28,92 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.DragAndDropContainer
 import com.mohamedrejeb.compose.dnd.rememberDragAndDropState
 import com.mohamedrejeb.compose.dnd.reorder.reorderableItem
 import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
-import components.DemoScreenScaffold
-import components.DndItemCard
+import components.DemoScaffold
+import components.SectionLabel
+import components.dragPlaceholder
+import components.lifted
+import navigation.Demo
+
+private const val ReorderListCode = """
+val dnd = rememberDragAndDropState<Language>(
+    dragAfterLongPress = true)
+
+LazyColumn(Modifier.dragAutoScroll(dnd, list)) {
+  items(languages, key = { it.name }) { language ->
+    LanguageRow(language, Modifier.animateItem()
+      .reorderableItem(
+        key = language.name,
+        data = language,
+        state = dnd,
+        onDragEnter = {
+          languages = languages.move(it.data, language)
+        },
+        draggableContent = { LanguageRow(language) },
+      ))
+  }
+}
+"""
 
 @Composable
-fun ReorderListScreen(
-    onBack: () -> Unit,
-) {
-    DemoScreenScaffold(
-        title = "Reorder List",
+fun ReorderListScreen(onBack: () -> Unit) {
+    DemoScaffold(
+        title = Demo.ReorderList.title,
+        hint = "Long-press a language and drag it to a new spot.",
+        code = ReorderListCode,
         onBack = onBack,
-    ) { paddingValues ->
-        ReorderScreenContent(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-        )
+    ) { insets ->
+        LearningQueue(insets)
     }
 }
 
 @Composable
-private fun ReorderScreenContent(
-    modifier: Modifier = Modifier,
-) {
-    val dndState = rememberDragAndDropState<String>()
-    var items by remember {
-        mutableStateOf(
-            (1..50).map { "item$it" }
-        )
-    }
+private fun LearningQueue(insets: PaddingValues) {
+    // Long press so a swipe on a row still scrolls the list on touch screens.
+    val dndState = rememberDragAndDropState<Language>(dragAfterLongPress = true)
+    val listState = rememberLazyListState()
+    var languages by remember { mutableStateOf(InitialLanguages) }
 
-    val lazyListState = rememberLazyListState()
-
-    DragAndDropContainer(
-        state = dndState,
-        modifier = modifier,
-    ) {
+    DragAndDropContainer(state = dndState, modifier = Modifier.fillMaxSize()) {
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            state = lazyListState,
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = 4.dp,
+                bottom = insets.calculateBottomPadding() + 16.dp,
+            ),
             modifier = Modifier
                 .fillMaxSize()
-                .dragAutoScroll(
-                    state = dndState,
-                    lazyListState = lazyListState,
-                ),
+                .dragAutoScroll(state = dndState, lazyListState = listState),
         ) {
-            items(items, key = { it }) { item ->
-                val number = item.removePrefix("item")
-                val isDragging = dndState.isDragging(item)
-
-                DndItemCard(
-                    label = "#$number",
+            item(key = "header") {
+                SectionLabel(
+                    text = "Learning queue",
+                    trailing = "${languages.size} languages",
+                    modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
+                )
+            }
+            items(languages, key = { it.name }) { language ->
+                LanguageRow(
+                    language = language,
                     modifier = Modifier
                         .animateItem()
-                        .graphicsLayer { alpha = if (isDragging) 0f else 1f }
+                        .dragPlaceholder(active = dndState.isDragging(language.name))
                         .reorderableItem(
-                            key = item,
-                            data = item,
+                            key = language.name,
+                            data = language,
                             state = dndState,
-                            onDragEnter = { state ->
-                                items = items.toMutableList().apply {
-                                    val index = indexOf(item)
-                                    if (index != -1) {
-                                        remove(state.data)
-                                        add(index, state.data)
-                                    }
-                                }
-                            },
+                            onDragEnter = { dragged -> languages = languages.move(dragged.data, language) },
                             draggableContent = {
-                                DndItemCard(
-                                    label = "#$number",
-                                    isDragShadow = true,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(60.dp),
-                                )
+                                LanguageRow(language = language, modifier = Modifier.lifted())
                             },
-                        ).fillMaxWidth()
-                        .height(60.dp),
+                        ),
                 )
             }
         }

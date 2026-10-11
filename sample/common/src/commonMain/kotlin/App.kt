@@ -13,42 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import navigation.AutoScrollDemoRoute
-import navigation.AxisLockedDragRoute
-import navigation.ConditionalDropRoute
-import navigation.DragHandleReorderRoute
-import navigation.DropStrategiesPlaygroundRoute
-import navigation.FormBuilderRoute
+import androidx.navigation.toRoute
+import navigation.Demo
+import navigation.DemoRoute
 import navigation.HomeRoute
-import navigation.ItemToItemOneDirectionRoute
-import navigation.ItemToItemTwoDirectionsRoute
-import navigation.KanbanBoardRoute
-import navigation.ListToListWithReorderRoute
-import navigation.ListToListWithoutReorderRoute
-import navigation.PhotoGalleryRoute
-import navigation.PinnedChatsRoute
-import navigation.ReorderListRoute
-import navigation.StickyNotesBoardRoute
 import theme.AppTheme
 import ui.AutoScrollDemoScreen
 import ui.AxisLockedDragScreen
+import ui.BetweenListsScreen
 import ui.ConditionalDropScreen
+import ui.DragAndDropScreen
 import ui.DragHandleReorderScreen
 import ui.DropStrategiesPlaygroundScreen
 import ui.FormBuilderScreen
 import ui.HomeScreen
-import ui.ItemToItemOneDirectionScreen
-import ui.ItemToItemTwoDirectionsScreen
 import ui.KanbanBoardScreen
-import ui.ListToListWithReorderScreen
-import ui.ListToListWithoutReorderScreen
 import ui.PhotoGalleryScreen
 import ui.PinnedChatsScreen
 import ui.ReorderListScreen
@@ -57,141 +40,45 @@ import ui.StickyNotesBoardScreen
 @Composable
 fun App() {
     AppTheme {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            val navController = rememberNavController()
+        val navController = rememberNavController()
 
-            NavHost(
-                navController = navController,
-                startDestination = HomeRoute,
-            ) {
-                composable<HomeRoute> {
-                    HomeScreen(
-                        onNavigateToItemToItemOneDirection = {
-                            navController.navigate(ItemToItemOneDirectionRoute)
-                        },
-                        onNavigateToItemToItemTwoDirections = {
-                            navController.navigate(ItemToItemTwoDirectionsRoute)
-                        },
-                        onNavigateToReorderList = {
-                            navController.navigate(ReorderListRoute)
-                        },
-                        onNavigateToListToListWithoutReorder = {
-                            navController.navigate(ListToListWithoutReorderRoute)
-                        },
-                        onNavigateToListToListWithReorder = {
-                            navController.navigate(ListToListWithReorderRoute)
-                        },
-                        onNavigateToDropStrategiesPlayground = {
-                            navController.navigate(DropStrategiesPlaygroundRoute)
-                        },
-                        onNavigateToDragHandleReorder = {
-                            navController.navigate(DragHandleReorderRoute)
-                        },
-                        onNavigateToAxisLockedDrag = {
-                            navController.navigate(AxisLockedDragRoute)
-                        },
-                        onNavigateToConditionalDrop = {
-                            navController.navigate(ConditionalDropRoute)
-                        },
-                        onNavigateToAutoScrollDemo = {
-                            navController.navigate(AutoScrollDemoRoute)
-                        },
-                        onNavigateToKanbanBoard = {
-                            navController.navigate(KanbanBoardRoute)
-                        },
-                        onNavigateToFormBuilder = {
-                            navController.navigate(FormBuilderRoute)
-                        },
-                        onNavigateToPinnedChats = {
-                            navController.navigate(PinnedChatsRoute)
-                        },
-                        onNavigateToPhotoGallery = {
-                            navController.navigate(PhotoGalleryRoute)
-                        },
-                        onNavigateToStickyNotesBoard = {
-                            navController.navigate(StickyNotesBoardRoute)
-                        },
-                    )
-                }
-                composable<ItemToItemOneDirectionRoute> {
-                    ItemToItemOneDirectionScreen(
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable<ItemToItemTwoDirectionsRoute> {
-                    ItemToItemTwoDirectionsScreen(
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable<ReorderListRoute> {
-                    ReorderListScreen(
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable<ListToListWithoutReorderRoute> {
-                    ListToListWithoutReorderScreen(
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable<ListToListWithReorderRoute> {
-                    ListToListWithReorderScreen(
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable<DropStrategiesPlaygroundRoute> {
-                    DropStrategiesPlaygroundScreen(
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable<DragHandleReorderRoute> {
-                    DragHandleReorderScreen(
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable<AxisLockedDragRoute> {
-                    AxisLockedDragScreen(
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable<ConditionalDropRoute> {
-                    ConditionalDropScreen(
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable<AutoScrollDemoRoute> {
-                    AutoScrollDemoScreen(
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable<KanbanBoardRoute> {
-                    KanbanBoardScreen(
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable<FormBuilderRoute> {
-                    FormBuilderScreen(
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable<PinnedChatsRoute> {
-                    PinnedChatsScreen(
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable<PhotoGalleryRoute> {
-                    PhotoGalleryScreen(
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable<StickyNotesBoardRoute> {
-                    StickyNotesBoardScreen(
-                        onBack = { navController.popBackStack() },
-                    )
-                }
+        NavHost(
+            navController = navController,
+            startDestination = HomeRoute,
+        ) {
+            composable<HomeRoute> {
+                HomeScreen(
+                    onOpen = { demo -> navController.navigate(DemoRoute(demo)) },
+                )
+            }
+            composable<DemoRoute> { entry ->
+                DemoScreen(
+                    demo = entry.toRoute<DemoRoute>().demo,
+                    onBack = { navController.popBackStack() },
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun DemoScreen(
+    demo: Demo,
+    onBack: () -> Unit,
+) {
+    when (demo) {
+        Demo.Kanban -> KanbanBoardScreen(onBack)
+        Demo.Photos -> PhotoGalleryScreen(onBack)
+        Demo.StickyNotes -> StickyNotesBoardScreen(onBack)
+        Demo.FormBuilder -> FormBuilderScreen(onBack)
+        Demo.PinnedChats -> PinnedChatsScreen(onBack)
+        Demo.DragAndDrop -> DragAndDropScreen(onBack)
+        Demo.ReorderList -> ReorderListScreen(onBack)
+        Demo.DragHandle -> DragHandleReorderScreen(onBack)
+        Demo.BetweenLists -> BetweenListsScreen(onBack)
+        Demo.AutoScroll -> AutoScrollDemoScreen(onBack)
+        Demo.AxisLock -> AxisLockedDragScreen(onBack)
+        Demo.ConditionalDrop -> ConditionalDropScreen(onBack)
+        Demo.DropStrategies -> DropStrategiesPlaygroundScreen(onBack)
     }
 }
