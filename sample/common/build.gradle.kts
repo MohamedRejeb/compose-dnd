@@ -105,3 +105,9 @@ tasks.withType<Test>().configureEach {
     (project.findProperty("snapshotDir") as String?)?.let { systemProperty("snapshotDir", it) }
     (project.findProperty("snapshotOnly") as String?)?.let { systemProperty("snapshotOnly", it) }
 }
+
+// Pass -PrecordDir=<dir> to record the demo clips used by the README and the docs (see recordings/Recorder).
+tasks.withType<Test>().configureEach {
+    (project.findProperty("recordDir") as String?)?.let { systemProperty("recordDir", it) }
+    (project.findProperty("recordOnly") as String?)?.let { systemProperty("recordOnly", it) }
+}

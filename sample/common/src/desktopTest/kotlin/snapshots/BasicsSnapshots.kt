@@ -30,7 +30,7 @@ class BasicsSnapshots {
         shot("dnd_drag", drag = HeldDrag("Invoice.pdf", Offset(0f, 430f))) { DragAndDropScreen {} }
 
         shot("reorder") { ReorderListScreen {} }
-        shot("reorder_drag", drag = HeldDrag("Midnight City", Offset(0f, 180f), longPress = true)) {
+        shot("reorder_drag", drag = HeldDrag("Kotlin", Offset(0f, 180f), longPress = true)) {
             ReorderListScreen {}
         }
 

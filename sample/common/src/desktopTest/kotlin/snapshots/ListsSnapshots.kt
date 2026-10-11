@@ -40,7 +40,7 @@ class ListsSnapshots {
             val name = "autoscroll_" + layout.name.lowercase()
             shot(name) { AutoScrollDemoScreen(onBack = {}, initialLayout = layout) }
         }
-        shot("autoscroll_drag", drag = HeldDrag("Night Drive", Offset(60f, 24f))) { AutoScrollDemoScreen {} }
+        shot("autoscroll_drag", drag = HeldDrag("Desk lamp", Offset(60f, 24f))) { AutoScrollDemoScreen {} }
         shot("autoscroll_griddrag", drag = HeldDrag("Maps", Offset(90f, 100f))) {
             AutoScrollDemoScreen(onBack = {}, initialLayout = AutoScrollLayout.Grid)
         }
