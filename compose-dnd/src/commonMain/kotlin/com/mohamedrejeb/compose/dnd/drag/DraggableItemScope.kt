@@ -52,23 +52,27 @@ internal class DraggableItemScopeImpl<T>(
     override val isDragging: Boolean
         get() = state.draggedItem?.key == key
 
-    override var hasDragHandle: Boolean = false
-        private set
+    private val handleCounter = DragHandleCounter()
+
+    override val hasDragHandle: Boolean
+        get() = handleCounter.hasDragHandle
 
     override fun Modifier.dragHandle(
         enabled: Boolean,
         dragAfterLongPress: Boolean,
         requireFirstDownUnconsumed: Boolean,
-    ): Modifier {
-        hasDragHandle = true
-        return DragHandleModifier(
-            key = key,
-            state = state,
-            enabled = enabled,
-            dragAfterLongPress = dragAfterLongPress,
-            requireFirstDownUnconsumed = requireFirstDownUnconsumed,
-        ).let { this then it }
-    }
+    ): Modifier =
+        this
+            .dragHandleRegistration(handleCounter)
+            .then(
+                DragHandleModifier(
+                    key = key,
+                    state = state,
+                    enabled = enabled,
+                    dragAfterLongPress = dragAfterLongPress,
+                    requireFirstDownUnconsumed = requireFirstDownUnconsumed,
+                ),
+            )
 }
 
 internal class DraggableItemScopeShadowImpl(

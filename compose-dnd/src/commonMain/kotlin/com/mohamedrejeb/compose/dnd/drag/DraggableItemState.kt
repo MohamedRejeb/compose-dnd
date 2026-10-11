@@ -31,6 +31,9 @@ internal class DraggableItemState<T>(
     var dragAxis: DragAxis = DragAxis.Free,
     var hasDragHandle: Boolean = false,
 
+    /** False when the item itself is disabled; a drag handle must not drag it either. */
+    var enabled: Boolean = true,
+
     var dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
 
     var positionInRoot: Offset,
@@ -71,6 +74,7 @@ internal class DraggableItemState<T>(
             dropStrategy = dropStrategy,
             dragAxis = dragAxis,
             hasDragHandle = hasDragHandle,
+            enabled = enabled,
             dragHandleOwner = dragHandleOwner,
             dropAnimationSpec = dropAnimationSpec,
             positionInRoot = positionInRoot,
@@ -88,4 +92,23 @@ internal class DraggableItemState<T>(
  */
 internal interface DragHandleOwner {
     val hasDragHandle: Boolean
+}
+
+/**
+ * Counts the scoped `dragHandle()` modifiers currently in the composition, so
+ * the item goes back to dragging as a whole once its handle is removed.
+ */
+internal class DragHandleCounter : DragHandleOwner {
+    private var attachedHandles = 0
+
+    override val hasDragHandle: Boolean
+        get() = attachedHandles > 0
+
+    fun onHandleAttached() {
+        attachedHandles++
+    }
+
+    fun onHandleDetached() {
+        attachedHandles--
+    }
 }

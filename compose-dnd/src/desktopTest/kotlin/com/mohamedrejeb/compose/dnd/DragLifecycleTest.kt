@@ -146,6 +146,36 @@ class DragLifecycleTest {
     }
 
     @Test
+    fun fingerRestingOnTheContainer_doesNotBlockTheNextDrag() = runComposeUiTest {
+        val dropped = mutableListOf<String>()
+        lateinit var state: DragAndDropState<String>
+
+        setContent {
+            state = rememberDragAndDropState()
+            TwoItemsAndTarget(state, dropped)
+        }
+        waitForIdle()
+
+        // A second finger rests on the container for the whole test (a thumb holding a tablet)
+        onNodeWithTag("container").performTouchInput { down(RestingFinger, Offset(20f, 380f)) }
+
+        listOf(50f, 150f).forEach { itemY ->
+            onNodeWithTag("container").performTouchInput { down(DraggingFinger, Offset(200f, itemY)) }
+            repeat(10) {
+                onNodeWithTag("container").performTouchInput {
+                    advanceEventTime(16)
+                    moveBy(DraggingFinger, Offset(0f, (300f - itemY) / 10))
+                }
+            }
+            onNodeWithTag("container").performTouchInput { up(DraggingFinger) }
+            waitForIdle()
+        }
+
+        assertEquals(listOf("A", "B"), dropped)
+        assertNull(state.draggedItem)
+    }
+
+    @Test
     fun disablingContainerMidDrag_cancelsTheDrag() = runComposeUiTest {
         val dropped = mutableListOf<String>()
         var enabled by mutableStateOf(true)
@@ -234,5 +264,10 @@ class DragLifecycleTest {
         assertEquals("B", state.draggedItem?.key)
         assertEquals(Offset(30f, 140f), state.dragPosition.value, "Shadow should move with the pointer")
         assertEquals(Offset(30f, 40f), state.draggedItem?.dragAmount)
+    }
+
+    private companion object {
+        const val DraggingFinger = 0
+        const val RestingFinger = 1
     }
 }

@@ -97,4 +97,99 @@ class LongPressDragInScrollableTest {
         waitForIdle()
         assertEquals(0, clicks, "Releasing a drag must not click the item")
     }
+
+    /** A real finger never holds perfectly still: it drifts a little during the long press. */
+    @Test
+    fun fingerDriftingDuringTheLongPress_stillDragsInsteadOfScrolling() = runComposeUiTest {
+        lateinit var state: DragAndDropState<Int>
+        lateinit var listState: LazyListState
+
+        setContent {
+            state = rememberDragAndDropState(dragAfterLongPress = true)
+            listState = rememberLazyListState()
+            DragAndDropContainer(state = state, modifier = Modifier.size(400.dp)) {
+                LazyColumn(state = listState, modifier = Modifier.testTag("list")) {
+                    items((0 until 30).toList(), key = { it }) { item ->
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(50.dp)
+                                .draggableItem(
+                                    key = item,
+                                    data = item,
+                                    state = state,
+                                    draggableContent = { Box(Modifier.size(400.dp, 50.dp)) },
+                                ),
+                        )
+                    }
+                }
+            }
+        }
+        waitForIdle()
+
+        onNodeWithTag("list").performTouchInput {
+            down(Offset(200f, 125f))
+            // drift upwards, staying under the touch slop
+            repeat(3) {
+                advanceEventTime(50)
+                moveBy(Offset(0f, -viewConfiguration.touchSlop * 0.2f))
+            }
+            // the long press fires, then the first move takes the whole gesture past the slop
+            advanceEventTime(viewConfiguration.longPressTimeoutMillis + 100)
+            moveBy(Offset(0f, -viewConfiguration.touchSlop * 0.6f))
+        }
+        waitForIdle()
+        assertTrue(state.isDragging(2), "Long press should start the drag")
+
+        onNodeWithTag("list").performTouchInput {
+            repeat(10) {
+                advanceEventTime(16)
+                moveBy(Offset(0f, -15f))
+            }
+        }
+        waitForIdle()
+
+        assertTrue(state.isDragging(2), "The drag must survive the first moves after the long press")
+        assertEquals(0, listState.firstVisibleItemIndex, "The list must not scroll with the drag")
+        assertEquals(0, listState.firstVisibleItemScrollOffset, "The list must not scroll with the drag")
+
+        onNodeWithTag("list").performTouchInput { up() }
+    }
+
+    @Test
+    fun longPressReleasedInPlace_doesNotClickTheItem() = runComposeUiTest {
+        lateinit var state: DragAndDropState<Int>
+        var clicks = 0
+        var dragEnds = 0
+
+        setContent {
+            state = rememberDragAndDropState(dragAfterLongPress = true)
+            DragAndDropContainer(state = state, modifier = Modifier.size(400.dp).testTag("container")) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .clickable { clicks++ }
+                        .draggableItem(
+                            key = 0,
+                            data = 0,
+                            state = state,
+                            onDragEnd = { dragEnds++ },
+                            draggableContent = { Box(Modifier.size(400.dp, 50.dp)) },
+                        ),
+                )
+            }
+        }
+        waitForIdle()
+
+        onNodeWithTag("container").performTouchInput {
+            down(Offset(200f, 25f))
+            advanceEventTime(viewConfiguration.longPressTimeoutMillis + 100)
+            up()
+        }
+        waitForIdle()
+
+        assertEquals(1, dragEnds, "The long press should have started a drag")
+        assertEquals(0, clicks, "Releasing a drag must not click the item")
+    }
 }

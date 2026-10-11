@@ -148,6 +148,50 @@ class ReorderHysteresisTest {
         assertEquals("A", hysteresis.excludedKey)
     }
 
+    // -- lifting once the swap has settled --
+
+    @Test
+    fun movingOnWhileTargetNoLongerWinsLiftsExclusion() {
+        val hysteresis = ReorderHysteresis()
+
+        hysteresis.armAfter(upDelta)
+        // sideways, the way a card moves along the list it was just inserted into
+        hysteresis.liftIfSettled(Offset(9f, 0f)) { false }
+
+        assertNull(hysteresis.excludedKey)
+    }
+
+    @Test
+    fun movingOnWhileTargetStillWinsKeepsExclusion() {
+        val hysteresis = ReorderHysteresis()
+
+        hysteresis.armAfter(upDelta)
+        hysteresis.liftIfSettled(Offset(0f, -100f)) { true }
+
+        assertEquals("A", hysteresis.excludedKey)
+    }
+
+    @Test
+    fun stayingNearTheSwapPointKeepsExclusion() {
+        val hysteresis = ReorderHysteresis()
+
+        hysteresis.armAfter(upDelta)
+        // exactly the threshold in every direction: jitter around the swap point can't undo it
+        hysteresis.liftIfSettled(Offset(0f, -8f)) { false }
+        hysteresis.liftIfSettled(Offset(8f, 0f)) { false }
+
+        assertEquals("A", hysteresis.excludedKey)
+    }
+
+    @Test
+    fun liftIfSettledSkipsTheHoverCheckWhenNotArmed() {
+        val hysteresis = ReorderHysteresis()
+
+        hysteresis.liftIfSettled(Offset(100f, 100f)) { error("hover must not be resolved") }
+
+        assertNull(hysteresis.excludedKey)
+    }
+
     @Test
     fun liftIfReversedIsNoOpWhenNotArmed() {
         val hysteresis = ReorderHysteresis()

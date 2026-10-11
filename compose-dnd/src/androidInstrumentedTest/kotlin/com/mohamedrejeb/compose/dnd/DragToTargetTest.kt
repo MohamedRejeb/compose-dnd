@@ -466,4 +466,66 @@ class DragToTargetTest {
         waitForIdle()
         assertFalse("Should NOT drop on target-b", droppedOnB)
     }
+
+    @Test
+    fun dragItem_gestureCanceledBySystem_doesNotDrop() = runComposeUiTest {
+        val events = mutableListOf<String>()
+        var density = Density(1f)
+        lateinit var state: DragAndDropState<Int>
+
+        setContent {
+            density = LocalDensity.current
+            state = rememberDragAndDropState()
+
+            DragAndDropContainer(
+                state = state,
+                modifier = Modifier.size(400.dp),
+            ) {
+                Column {
+                    DraggableItem(
+                        state = state,
+                        key = "item",
+                        data = 42,
+                        onDragEnd = { events += "end" },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                            .testTag("draggable"),
+                    ) {
+                        Box(Modifier.fillMaxWidth().height(100.dp))
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .dropTarget(
+                                key = "target",
+                                state = state,
+                                onDrop = { events += "drop" },
+                                onDragEnter = { events += "enter" },
+                                onDragExit = { events += "exit" },
+                            ),
+                    )
+                }
+            }
+        }
+
+        waitForIdle()
+
+        val distancePx = with(density) { 200.dp.toPx() }
+
+        // The system takes the gesture away while the item hovers the target
+        onNodeWithTag("draggable").performTouchInput {
+            immediateDrag(
+                start = center,
+                end = Offset(center.x, center.y + distancePx),
+            )
+            cancel()
+        }
+
+        waitForIdle()
+        assertEquals(listOf("enter", "exit", "end"), events)
+        assertEquals("The drag should be over", null, state.draggedItem)
+    }
 }

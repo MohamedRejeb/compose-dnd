@@ -136,16 +136,37 @@ class DragAndDropState<T>(
      * Does nothing when no drag is in progress or once the item was released.
      */
     fun cancelDrag() {
-        if (!isActiveDrag || isCancelRequested) return
+        // No pointer: the item was just released and its drop is about to run
+        if (!isActiveDrag || isCancelRequested || pointerId == null) return
         isCancelRequested = true
         pointerId = null
         val scope = containerScope
         if (scope == null) {
-            isActiveDrag = false
-            clearDragState()
+            abortDrag()
         } else {
             scope.launch { handleDragCancel() }
         }
+    }
+
+    /**
+     * End the drag right now, without animation: used when nothing is left to
+     * animate it, e.g. the container left the composition mid-drag. A drop
+     * already animating is completed, a drag still held is canceled.
+     */
+    internal fun abortDrag() {
+        pointerId = null
+        if (finishDrop != null) {
+            finishPendingDrop()
+            return
+        }
+
+        val currentDraggableItem = currentDraggableItem
+        val draggedItem = draggedItem
+        if (currentDraggableItem != null && draggedItem != null) {
+            exitHoveredDropTarget(draggedItem)
+            dispatchDragEnd(currentDraggableItem, draggedItem)
+        }
+        clearDragState()
     }
 
     /**
@@ -390,23 +411,34 @@ class DragAndDropState<T>(
         val dragAmount = currentDraggableItem.dragAxis.applyConstraint(rawDragAmount)
         val newTopLeft = dragStartPositionInRoot + dragAmount
         val draggedItemSize = draggedItemVisibleSize ?: currentDraggableItem.size
-        val hysteresisExcludedKey = reorderHysteresis.excludedKey
-        val hoveredDropTargets =
+        val intersectedDropTargets =
             dropTargetMap.values
                 .filter {
-                    it.key != hysteresisExcludedKey &&
-                        MathUtils.isRectangleIntersected(
-                            topLeft1 = newTopLeft,
-                            size1 = draggedItemSize,
-                            topLeft2 = it.topLeft,
-                            size2 = it.size,
-                        ) &&
+                    MathUtils.isRectangleIntersected(
+                        topLeft1 = newTopLeft,
+                        size1 = draggedItemSize,
+                        topLeft2 = it.topLeft,
+                        size2 = it.size,
+                    ) &&
                         (dropTargetIds.isEmpty() || it.key in dropTargetIds) &&
                         it.canDrop
-                }.groupBy { it.zIndex }
-                .maxByOrNull { it.key }
-                ?.value
-                .orEmpty()
+                }
+
+        reorderHysteresis.liftIfSettled(offset) {
+            val unguardedTarget =
+                currentDraggableItem.dropStrategy.getHoveredDropTarget(
+                    draggedItemTopLeft = newTopLeft,
+                    draggedItemSize = draggedItemSize,
+                    dropTargets = intersectedDropTargets.topmost(),
+                )
+            unguardedTarget?.key == reorderHysteresis.excludedKey
+        }
+
+        val hysteresisExcludedKey = reorderHysteresis.excludedKey
+        val hoveredDropTargets =
+            intersectedDropTargets
+                .filter { it.key != hysteresisExcludedKey }
+                .topmost()
 
         val hoveredDropTarget =
             currentDraggableItem.dropStrategy.getHoveredDropTarget(
@@ -477,7 +509,9 @@ class DragAndDropState<T>(
         val currentDraggableItem = currentDraggableItem ?: return
         val draggedItem = draggedItem ?: return
 
-        val dropTarget = hoveredDropTargetKey?.let { dropTargetMap[it] }
+        // The hovered target may have stopped accepting since the pointer last moved
+        val dropTarget = hoveredDropTargetKey?.let { dropTargetMap[it] }?.takeIf { it.canDrop }
+        if (dropTarget == null) exitHoveredDropTarget(draggedItem)
 
         runDrop(
             onFinish = {
@@ -504,6 +538,8 @@ class DragAndDropState<T>(
         isActiveDrag = false
         val currentDraggableItem = currentDraggableItem ?: return
         val draggedItem = draggedItem ?: return
+
+        exitHoveredDropTarget(draggedItem)
 
         runDrop(
             onFinish = { dispatchDragEnd(currentDraggableItem, draggedItem) },
@@ -560,6 +596,16 @@ class DragAndDropState<T>(
     }
 
     /**
+     * Leave the hovered drop target, if any, when the drag ends without dropping
+     * on it, so a target that reacted to `onDragEnter` gets its `onDragExit`.
+     */
+    private fun exitHoveredDropTarget(draggedItem: DraggedItemState<T>) {
+        val hoveredDropTarget = hoveredDropTargetKey?.let { dropTargetMap[it] }
+        hoveredDropTargetKey = null
+        hoveredDropTarget?.onDragExit?.invoke(draggedItem)
+    }
+
+    /**
      * Invoke the dragged item's onDragEnd, preferring the live registration
      * so the latest lambda runs even if the item recomposed during the drag.
      */
@@ -588,3 +634,10 @@ class DragAndDropState<T>(
         dragPosition.value = Offset.Zero
     }
 }
+
+/** The targets on the highest z-index among this list; only those compete for the hover. */
+private fun <T> List<DropTargetState<T>>.topmost(): List<DropTargetState<T>> =
+    groupBy { it.zIndex }
+        .maxByOrNull { it.key }
+        ?.value
+        .orEmpty()

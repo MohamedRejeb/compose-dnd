@@ -21,6 +21,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.platform.InspectorInfo
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 import com.mohamedrejeb.compose.dnd.gesture.detectDragStartGesture
 
@@ -100,4 +102,43 @@ internal fun <T> DragHandleModifier(
                 },
             )
         }
+}
+
+/** Tells [counter] while a scoped drag handle is part of the composition. */
+internal fun Modifier.dragHandleRegistration(counter: DragHandleCounter): Modifier =
+    this then DragHandleRegistrationElement(counter)
+
+private data class DragHandleRegistrationElement(
+    val counter: DragHandleCounter,
+) : ModifierNodeElement<DragHandleRegistrationNode>() {
+    override fun create(): DragHandleRegistrationNode = DragHandleRegistrationNode(counter)
+
+    override fun update(node: DragHandleRegistrationNode) {
+        node.moveTo(counter)
+    }
+
+    override fun InspectorInfo.inspectableProperties() {
+        name = "dragHandleRegistration"
+    }
+}
+
+private class DragHandleRegistrationNode(
+    private var counter: DragHandleCounter,
+) : Modifier.Node() {
+    fun moveTo(newCounter: DragHandleCounter) {
+        if (newCounter === counter) return
+        if (isAttached) {
+            counter.onHandleDetached()
+            newCounter.onHandleAttached()
+        }
+        counter = newCounter
+    }
+
+    override fun onAttach() {
+        counter.onHandleAttached()
+    }
+
+    override fun onDetach() {
+        counter.onHandleDetached()
+    }
 }

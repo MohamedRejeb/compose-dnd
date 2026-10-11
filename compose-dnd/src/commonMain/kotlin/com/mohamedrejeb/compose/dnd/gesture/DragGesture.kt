@@ -55,6 +55,9 @@ internal suspend fun <T> PointerInputScope.detectDragStartGesture(
         // the drag; the rest of the item stays interactive.
         if (draggableItemState?.usesDragHandle() == true) return@awaitEachGesture
 
+        // A drag handle doesn't drag an item that is itself disabled
+        if (state.draggableItemMap[key]?.enabled == false) return@awaitEachGesture
+
         // Another pointer is already dragging (multi-touch)
         if (!state.canStartDrag()) return@awaitEachGesture
 

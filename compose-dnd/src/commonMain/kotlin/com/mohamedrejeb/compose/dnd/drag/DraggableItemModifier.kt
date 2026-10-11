@@ -182,6 +182,7 @@ private data class DraggableItemNodeElement<T>(
                 dropStrategy = dropStrategy,
                 dragAxis = dragAxis,
                 hasDragHandle = hasDragHandle,
+                enabled = enabled,
                 dragHandleOwner = dragHandleOwner,
                 dropAnimationSpec = dropAnimationSpec,
                 onDragStart = onDragStart,
@@ -216,6 +217,7 @@ private data class DraggableItemNodeElement<T>(
         itemState.dropStrategy = dropStrategy
         itemState.dragAxis = dragAxis
         itemState.hasDragHandle = hasDragHandle
+        itemState.enabled = enabled
         itemState.dragHandleOwner = dragHandleOwner
         itemState.dropAnimationSpec = dropAnimationSpec
         itemState.onDragStart = onDragStart

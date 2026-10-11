@@ -90,6 +90,26 @@ internal class ReorderHysteresis(
         }
     }
 
+    /**
+     * Lift the exclusion once the drag has left the swap point by [reverseDistancePx] in any
+     * direction and the excluded target would no longer win the hover on its own. From there
+     * the swap can't oscillate, so hovering the target again is a new move: a card inserted
+     * into another list reaches the card it pushed along by moving on, not by reversing.
+     */
+    fun liftIfSettled(
+        pointerOffset: Offset,
+        excludedTargetStillWins: () -> Boolean,
+    ) {
+        if (excludedKey == null || enterOffset.isUnspecified || pointerOffset.isUnspecified) {
+            return
+        }
+
+        if ((pointerOffset - enterOffset).getDistance() <= reverseDistancePx) return
+        if (excludedTargetStillWins()) return
+
+        clearExclusion()
+    }
+
     /** Clear all state; called on drag start and drag end. */
     fun reset() {
         clearExclusion()
