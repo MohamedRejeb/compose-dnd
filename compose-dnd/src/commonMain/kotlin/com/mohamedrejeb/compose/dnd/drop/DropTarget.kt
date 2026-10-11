@@ -22,6 +22,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
+import androidx.compose.ui.node.GlobalPositionAwareModifierNode
 import androidx.compose.ui.node.LayoutAwareModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.currentValueOf
@@ -154,6 +155,7 @@ private class DropTargetNode<T>(
     var state: DragAndDropState<T>,
 ) : Modifier.Node(),
     LayoutAwareModifierNode,
+    GlobalPositionAwareModifierNode,
     CompositionLocalConsumerModifierNode {
 
     private val key get() = dropTargetState.key
@@ -194,6 +196,16 @@ private class DropTargetNode<T>(
         dropTargetState.layoutCoordinates = coordinates
         dropTargetState.size = size
         dropTargetState.topLeft = topLeft
+    }
+
+    // onPlaced is not called again when only an ancestor moved, e.g. a list scrolling
+    override fun onGloballyPositioned(coordinates: LayoutCoordinates) {
+        if (isShadow) {
+            return
+        }
+
+        dropTargetState.layoutCoordinates = coordinates
+        dropTargetState.topLeft = coordinates.positionInRoot()
     }
 
     override fun onRemeasured(size: IntSize) {

@@ -31,6 +31,9 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -45,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.compose.dnd.reorder.reorderableItem
 import com.mohamedrejeb.compose.dnd.scroll.dragAutoScroll
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /** The list scrolls toward the edge the dragged item is held at, whatever its layout direction. */
@@ -52,7 +56,14 @@ import kotlin.test.assertTrue
 class DragAutoScrollTest {
 
     private val listState = LazyListState()
-    private val items = List(40) { "item-$it" }
+    private var items by mutableStateOf(List(40) { "item-$it" })
+
+    /** Puts [dragged] in the slot of [target], like a reorderable list does on drag enter. */
+    private fun move(dragged: String, target: String) {
+        val to = items.indexOf(target)
+        if (dragged == target || to == -1) return
+        items = (items - dragged).toMutableList().apply { add(to, dragged) }
+    }
 
     private fun Modifier.testItem(id: String, state: DragAndDropState<String>): Modifier =
         reorderableItem(
@@ -80,7 +91,11 @@ class DragAutoScrollTest {
         waitForIdle()
     }
 
-    private fun ComposeUiTest.setRow(layoutDirection: LayoutDirection) {
+    private fun ComposeUiTest.setRow(
+        layoutDirection: LayoutDirection = LayoutDirection.Ltr,
+        itemWidth: Int = ItemSize,
+        reorderOnEnter: Boolean = false,
+    ) {
         setContent {
             val state = rememberDragAndDropState<String>()
             CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
@@ -90,7 +105,19 @@ class DragAutoScrollTest {
                         modifier = Modifier.fillMaxSize().dragAutoScroll(state, listState),
                     ) {
                         items(items, key = { it }) { id ->
-                            Box(Modifier.fillMaxHeight().width(ItemSize.dp).testItem(id, state))
+                            Box(
+                                Modifier
+                                    .animateItem()
+                                    .fillMaxHeight()
+                                    .width(itemWidth.dp)
+                                    .reorderableItem(
+                                        key = id,
+                                        data = id,
+                                        state = state,
+                                        onDragEnter = { dragged -> if (reorderOnEnter) move(dragged.data, id) },
+                                        draggableContent = { Box(Modifier.size(itemWidth.dp, ItemSize.dp)) },
+                                    ),
+                            )
                         }
                     }
                 }
@@ -113,8 +140,8 @@ class DragAutoScrollTest {
         repeat(holdFrames) { mainClock.advanceTimeBy(FrameMs) }
     }
 
-    private fun scrolledPx(): Int =
-        listState.firstVisibleItemIndex * ItemSize + listState.firstVisibleItemScrollOffset
+    private fun scrolledPx(itemSize: Int = ItemSize): Int =
+        listState.firstVisibleItemIndex * itemSize + listState.firstVisibleItemScrollOffset
 
     @Test
     fun column_heldAtTheBottom_scrollsForward() = runComposeUiTest {
@@ -173,6 +200,61 @@ class DragAutoScrollTest {
     }
 
     @Test
+    fun itemWiderThanTheFreeSpace_grabbedInTheMiddle_scrollsOnlyOnceThePointerHeadsToTheEdge() = runComposeUiTest {
+        // A phone-sized board: 280 wide columns in a 400 wide row
+        setRow(itemWidth = WideItem)
+
+        dragAndHold(from = Offset(140f, 200f), to = Offset(180f, 200f))
+        assertEquals(0, listState.firstVisibleItemScrollOffset, "A small move must not scroll the board")
+
+        repeat(DragSteps) {
+            onNodeWithTag(ContainerTag).performTouchInput {
+                advanceEventTime(FrameMs)
+                moveBy(Offset(17f, 0f))
+            }
+            mainClock.advanceTimeBy(FrameMs)
+        }
+        repeat(30) { mainClock.advanceTimeBy(FrameMs) }
+        assertTrue(scrolledPx(WideItem) > 0, "Should scroll once the pointer is at the edge")
+    }
+
+    @Test
+    fun itemWiderThanTheFreeSpace_grabbedNearTheEdge_scrollsAfterAShortMove() = runComposeUiTest {
+        setRow(itemWidth = WideItem)
+
+        // The first item starts inside the start zone and is grabbed by its far end
+        dragAndHold(from = Offset(250f, 200f), to = Offset(310f, 200f))
+        assertTrue(scrolledPx(WideItem) > 0, "Should have scrolled, was ${scrolledPx(WideItem)}")
+    }
+
+    @Test
+    fun heldAtTheEdge_keepsScrollingWhileItemsSwapUnderIt() = runComposeUiTest {
+        // Board columns: each one the dragged column passes swaps with it
+        setRow(itemWidth = WideItem, reorderOnEnter = true)
+
+        dragAndHold(from = Offset(250f, 200f), to = Offset(340f, 200f), holdFrames = 240)
+
+        val passed = items.indexOf("item-0")
+        assertTrue(passed >= 4, "The dragged item should have passed several items, passed $passed")
+    }
+
+    @Test
+    fun itemPickedUpAtTheEdge_doesNotScrollUntilItMoves() = runComposeUiTest {
+        setColumn()
+        mainClock.autoAdvance = false
+
+        // The last visible row, just past the touch slop
+        onNodeWithTag(ContainerTag).performTouchInput { down(Offset(200f, 350f)) }
+        onNodeWithTag(ContainerTag).performTouchInput {
+            advanceEventTime(FrameMs)
+            moveBy(Offset(30f, 0f))
+        }
+        repeat(30) { mainClock.advanceTimeBy(FrameMs) }
+
+        assertEquals(0, scrolledPx(), "Picking an item up must not scroll the list")
+    }
+
+    @Test
     fun column_keepsScrollingWhileThePointerKeepsMovingInTheEdgeZone() = runComposeUiTest {
         setColumn()
         mainClock.autoAdvance = false
@@ -195,7 +277,6 @@ class DragAutoScrollTest {
             }
             mainClock.advanceTimeBy(FrameMs)
         }
-
         assertTrue(scrolledPx() > before, "Must scroll while the pointer moves, stayed at $before")
     }
 
@@ -203,6 +284,7 @@ class DragAutoScrollTest {
         const val ContainerTag = "container"
         const val ListSize = 400
         const val ItemSize = 100
+        const val WideItem = 280
         const val DragSteps = 10
         const val FrameMs = 16L
     }

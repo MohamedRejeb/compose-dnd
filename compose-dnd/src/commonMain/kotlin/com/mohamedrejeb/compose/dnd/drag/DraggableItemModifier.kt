@@ -26,6 +26,7 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
 import androidx.compose.ui.node.DelegatingNode
+import androidx.compose.ui.node.GlobalPositionAwareModifierNode
 import androidx.compose.ui.node.LayoutAwareModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.currentValueOf
@@ -78,7 +79,7 @@ fun <T> Modifier.draggableItem(
     dragAfterLongPress: Boolean = state.dragAfterLongPress,
     requireFirstDownUnconsumed: Boolean = state.requireFirstDownUnconsumed,
     dropTargets: List<Any> = emptyList(),
-    dropStrategy: DropStrategy = DropStrategy.SurfacePercentage,
+    dropStrategy: DropStrategy = DropStrategy.Surface,
     dragAxis: DragAxis = DragAxis.Free,
     hasDragHandle: Boolean = false,
     dropAnimationSpec: AnimationSpec<Offset> = SpringSpec(),
@@ -256,6 +257,7 @@ private class DraggableItemNode<T>(
     var requireFirstDownUnconsumed: Boolean,
 ) : DelegatingNode(),
     LayoutAwareModifierNode,
+    GlobalPositionAwareModifierNode,
     CompositionLocalConsumerModifierNode {
 
     private val key get() = draggableItemState.key
@@ -307,6 +309,14 @@ private class DraggableItemNode<T>(
         draggableItemState.layoutCoordinates = coordinates
         draggableItemState.positionInRoot = coordinates.positionInRoot()
         draggableItemState.size = coordinates.size.toSize()
+    }
+
+    // onPlaced is not called again when only an ancestor moved, e.g. a list scrolling
+    override fun onGloballyPositioned(coordinates: LayoutCoordinates) {
+        if (isShadow) return
+
+        draggableItemState.layoutCoordinates = coordinates
+        draggableItemState.positionInRoot = coordinates.positionInRoot()
     }
 
     override fun onRemeasured(size: IntSize) {

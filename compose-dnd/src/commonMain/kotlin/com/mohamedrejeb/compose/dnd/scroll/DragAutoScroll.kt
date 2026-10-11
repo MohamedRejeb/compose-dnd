@@ -40,6 +40,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 import kotlinx.coroutines.flow.collectLatest
@@ -198,6 +199,7 @@ fun <T> Modifier.dragAutoScroll(
     val minThresholdPx = with(density) { config.minScrollThreshold.toPx() }
     val maxThresholdPx = with(density) { config.maxScrollThreshold.toPx() }
     val maxScrollSpeedPx = config.maxScrollSpeedPx(density)
+    val intentDistancePx = with(density) { AutoScrollIntentDistance.toPx() }
 
     var containerTopLeft by remember { mutableStateOf(Offset.Zero) }
     var containerSize by remember { mutableStateOf(Size.Zero) }
@@ -210,7 +212,10 @@ fun <T> Modifier.dragAutoScroll(
         minThresholdPx,
         maxThresholdPx,
         maxScrollSpeedPx,
+        intentDistancePx,
     ) {
+        val intent = AutoScrollIntent(intentDistancePx)
+
         // Unlike LazyList/Grid where containerTopLeft is stable during scroll,
         // ScrollState's onPlaced position shifts with every scroll when this modifier
         // is inside the scroll container. Using snapshotFlow + collectLatest would
@@ -220,6 +225,7 @@ fun <T> Modifier.dragAutoScroll(
         // until the drag position, the container or the scroll bounds change.
         snapshotFlow { state.isActiveDrag }
             .collectLatest { isActive ->
+                intent.reset()
                 if (!isActive) return@collectLatest
 
                 var lastFrameMs = withFrameMillis { it }
@@ -230,6 +236,7 @@ fun <T> Modifier.dragAutoScroll(
                         scrollState = scrollState,
                         orientation = orientation,
                         isReversed = isReversed,
+                        intent = intent,
                         containerTopLeft = containerTopLeft,
                         containerSize = containerSize,
                         minThresholdPx = minThresholdPx,
@@ -279,6 +286,7 @@ private fun <T> scrollStateSpeed(
     scrollState: ScrollState,
     orientation: Orientation,
     isReversed: Boolean,
+    intent: AutoScrollIntent,
     containerTopLeft: Offset,
     containerSize: Size,
     minThresholdPx: Float,
@@ -318,34 +326,79 @@ private fun <T> scrollStateSpeed(
         Size(viewportPx, containerSize.height)
     }
 
-    val (itemStart, itemEnd, containerStart, containerEnd) = resolveScrollAxis(
+    // ScrollState has no visible items: use 20% of the viewport
+    val zonePx = edgeZoneSize(
+        preferredPx = viewportPx * 0.2f,
+        minPx = minThresholdPx,
+        maxPx = maxThresholdPx,
+        viewportPx = viewportPx,
+    )
+
+    return edgeScrollSpeed(
+        state = state,
         orientation = orientation,
+        isReversed = isReversed,
+        intent = intent,
         dragPosition = dragPosition,
         itemSize = itemSize,
         containerTopLeft = viewportTopLeft,
         containerSize = viewportSize,
+        startZonePx = zonePx,
+        endZonePx = zonePx,
+        maxScrollSpeedPx = maxScrollSpeedPx,
+        canScrollBackward = scrollState.canScrollBackward,
+        canScrollForward = scrollState.canScrollForward,
     )
+}
 
-    // ScrollState has no visible items — use 20% of viewport,
-    // clamped between min and max threshold
-    val thresholdPx = (viewportPx * 0.2f).coerceIn(minThresholdPx, maxThresholdPx)
+/**
+ * Speed to scroll the content at, in px per second: positive scrolls forward.
+ * Resolves the drag along the scroll axis and maps the edge the item heads to
+ * onto the scroll direction, which is flipped in reversed and RTL layouts.
+ */
+private fun <T> edgeScrollSpeed(
+    state: DragAndDropState<T>,
+    orientation: Orientation,
+    isReversed: Boolean,
+    intent: AutoScrollIntent,
+    dragPosition: Offset,
+    itemSize: Size,
+    containerTopLeft: Offset,
+    containerSize: Size,
+    startZonePx: Float,
+    endZonePx: Float,
+    maxScrollSpeedPx: Float,
+    canScrollBackward: Boolean,
+    canScrollForward: Boolean,
+): Float {
+    val (itemStart, itemEnd, containerStart, containerEnd) = resolveScrollAxis(
+        orientation = orientation,
+        dragPosition = dragPosition,
+        itemSize = itemSize,
+        containerTopLeft = containerTopLeft,
+        containerSize = containerSize,
+    )
+    val isVertical = orientation == Orientation.Vertical
+    val pointer = state.dragPointerPosition
+    val dragAmount = state.draggedItem?.dragAmount ?: Offset.Zero
 
-    val edgeSpeed = computeScrollSpeed(
+    val edgeSpeed = computeEdgeScrollSpeed(
         itemStart = itemStart,
         itemEnd = itemEnd,
+        pointer = pointer?.let { if (isVertical) it.y else it.x } ?: Float.NaN,
         containerStart = containerStart,
         containerEnd = containerEnd,
-        startThresholdPx = thresholdPx,
-        endThresholdPx = thresholdPx,
+        startZonePx = startZonePx,
+        endZonePx = endZonePx,
         maxScrollSpeed = maxScrollSpeedPx,
+        intent = intent,
+        movedTowardEnd = if (isVertical) dragAmount.y else dragAmount.x,
+        // The first item sits at the bottom or right edge of a reversed or RTL layout
+        canScrollTowardStart = if (isReversed) canScrollForward else canScrollBackward,
+        canScrollTowardEnd = if (isReversed) canScrollBackward else canScrollForward,
     )
-    val speed = if (isReversed) -edgeSpeed else edgeSpeed
 
-    return when {
-        speed < 0f && !scrollState.canScrollBackward -> 0f
-        speed > 0f && !scrollState.canScrollForward -> 0f
-        else -> speed
-    }
+    return if (isReversed) -edgeSpeed else edgeSpeed
 }
 
 /**
@@ -360,6 +413,9 @@ private fun isScrollReversed(
     val isMirrored = orientation == Orientation.Horizontal && layoutDirection == LayoutDirection.Rtl
     return reverseLayout != isMirrored
 }
+
+/** How far the pointer must head toward an edge to scroll an item picked up next to it. */
+private val AutoScrollIntentDistance = 8.dp
 
 /** Main-axis sizes of the first and last visible items of a lazy layout, in px. */
 private class EdgeItemSizes(
@@ -389,6 +445,7 @@ private fun <T> Modifier.lazyLayoutDragAutoScroll(
     val minThresholdPx = with(density) { config.minScrollThreshold.toPx() }
     val maxThresholdPx = with(density) { config.maxScrollThreshold.toPx() }
     val maxScrollSpeedPx = config.maxScrollSpeedPx(density)
+    val intentDistancePx = with(density) { AutoScrollIntentDistance.toPx() }
     val currentOrientation by rememberUpdatedState(orientation)
     val currentReverseLayout by rememberUpdatedState(reverseLayout)
     val currentEdgeItemSizes by rememberUpdatedState(edgeItemSizes)
@@ -403,69 +460,80 @@ private fun <T> Modifier.lazyLayoutDragAutoScroll(
         minThresholdPx,
         maxThresholdPx,
         maxScrollSpeedPx,
+        intentDistancePx,
     ) {
-        snapshotFlow {
-            if (!state.isActiveDrag) return@snapshotFlow null
+        val intent = AutoScrollIntent(intentDistancePx)
+
+        // Speed to scroll at right now, in px per second; zero when there is nothing to scroll
+        val currentScrollSpeed = speed@{
+            if (!state.isActiveDrag) {
+                intent.reset()
+                return@speed 0f
+            }
             val dragPosition = state.dragPosition.value
-            val itemSize = state.draggedItemVisibleSize ?: return@snapshotFlow null
+            val itemSize = state.draggedItemVisibleSize ?: return@speed 0f
             val axis = currentOrientation()
 
             // Don't scroll if the item isn't within this container on the cross axis
             if (!hasCrossAxisOverlap(axis, dragPosition, itemSize, containerTopLeft, containerSize)) {
-                return@snapshotFlow null
+                return@speed 0f
             }
-
-            val (itemStart, itemEnd, containerStart, containerEnd) = resolveScrollAxis(
-                orientation = axis,
-                dragPosition = dragPosition,
-                itemSize = itemSize,
-                containerTopLeft = containerTopLeft,
-                containerSize = containerSize,
-            )
 
             // The first item sits at the bottom or right edge of a reversed or RTL layout
             val isReversed = isScrollReversed(axis, currentReverseLayout(), layoutDirection)
 
-            // Dynamic threshold: clamp(itemSize, min, max)
+            // Each edge zone is as large as the item next to it, within the configured bounds
+            val viewportPx = if (axis == Orientation.Vertical) containerSize.height else containerSize.width
             val edgeSizes = currentEdgeItemSizes()
             val startItemSize = if (isReversed) edgeSizes.last else edgeSizes.first
             val endItemSize = if (isReversed) edgeSizes.first else edgeSizes.last
-            val startThresholdPx = (startItemSize?.toFloat() ?: minThresholdPx)
-                .coerceIn(minThresholdPx, maxThresholdPx)
-            val endThresholdPx = (endItemSize?.toFloat() ?: minThresholdPx)
-                .coerceIn(minThresholdPx, maxThresholdPx)
 
-            val edgeSpeed = computeScrollSpeed(
-                itemStart = itemStart,
-                itemEnd = itemEnd,
-                containerStart = containerStart,
-                containerEnd = containerEnd,
-                startThresholdPx = startThresholdPx,
-                endThresholdPx = endThresholdPx,
-                maxScrollSpeed = maxScrollSpeedPx,
+            edgeScrollSpeed(
+                state = state,
+                orientation = axis,
+                isReversed = isReversed,
+                intent = intent,
+                dragPosition = dragPosition,
+                itemSize = itemSize,
+                containerTopLeft = containerTopLeft,
+                containerSize = containerSize,
+                startZonePx = edgeZoneSize(
+                    preferredPx = startItemSize?.toFloat() ?: minThresholdPx,
+                    minPx = minThresholdPx,
+                    maxPx = maxThresholdPx,
+                    viewportPx = viewportPx,
+                ),
+                endZonePx = edgeZoneSize(
+                    preferredPx = endItemSize?.toFloat() ?: minThresholdPx,
+                    minPx = minThresholdPx,
+                    maxPx = maxThresholdPx,
+                    viewportPx = viewportPx,
+                ),
+                maxScrollSpeedPx = maxScrollSpeedPx,
+                canScrollBackward = scrollableState.canScrollBackward,
+                canScrollForward = scrollableState.canScrollForward,
             )
-            val speed = if (isReversed) -edgeSpeed else edgeSpeed
-
-            // Nothing left to scroll that way: stay idle instead of spinning
-            // frames until the item leaves the edge zone
-            when {
-                speed < 0f && !scrollableState.canScrollBackward -> 0f
-                speed > 0f && !scrollableState.canScrollForward -> 0f
-                else -> speed
-            }
-        }.collectLatest { scrollSpeed ->
-            if (scrollSpeed == null || scrollSpeed == 0f) return@collectLatest
-
-            var lastFrameMs = withFrameMillis { it }
-            while (true) {
-                val currentFrameMs = withFrameMillis { it }
-                val deltaMs = currentFrameMs - lastFrameMs
-                lastFrameMs = currentFrameMs
-                val scrollAmount = scrollSpeed * deltaMs / 1000f
-                scrollableState.scrollBy(scrollAmount)
-                state.reevaluateDropTargets()
-            }
         }
+
+        // Keyed on whether to scroll at all, not on the speed: the speed changes with every
+        // pointer move, and restarting the frame loop each time would break its pacing
+        snapshotFlow { currentScrollSpeed() != 0f }
+            .collectLatest { shouldScroll ->
+                if (!shouldScroll) return@collectLatest
+
+                var lastFrameMs = withFrameMillis { it }
+                while (true) {
+                    val currentFrameMs = withFrameMillis { it }
+                    val deltaMs = currentFrameMs - lastFrameMs
+                    lastFrameMs = currentFrameMs
+
+                    val scrollSpeed = currentScrollSpeed()
+                    if (scrollSpeed == 0f) continue
+
+                    scrollableState.scrollBy(scrollSpeed * deltaMs / 1000f)
+                    state.reevaluateDropTargets()
+                }
+            }
     }
 
     return this.onPlaced { coordinates ->
@@ -532,47 +600,3 @@ private fun resolveScrollAxis(
             containerEnd = containerTopLeft.x + containerSize.width,
         )
     }
-
-/**
- * Computes the scroll speed based on how close the dragged item is to the container edge.
- *
- * Uses a quadratic ease-in curve (ratio^2) so scrolling starts gently and accelerates
- * as the item gets closer to the edge.
- *
- * Returns:
- * - Negative value: scroll toward start (up / left)
- * - Positive value: scroll toward end (down / right)
- * - Zero: no scroll needed
- */
-internal fun computeScrollSpeed(
-    itemStart: Float,
-    itemEnd: Float,
-    containerStart: Float,
-    containerEnd: Float,
-    startThresholdPx: Float,
-    endThresholdPx: Float,
-    maxScrollSpeed: Float,
-): Float {
-    // How far into the start threshold zone the item is
-    val startOverlap = (containerStart + startThresholdPx) - itemStart
-    // How far into the end threshold zone the item is
-    val endOverlap = itemEnd - (containerEnd - endThresholdPx)
-
-    return when {
-        // Item's start edge is within the start threshold → scroll toward start
-        startOverlap > 0f -> {
-            val ratio = (startOverlap / startThresholdPx).coerceIn(0f, 1f)
-            -maxScrollSpeed * ratio * ratio
-        }
-
-        // Item's end edge is within the end threshold → scroll toward end
-        endOverlap > 0f -> {
-            val ratio = (endOverlap / endThresholdPx).coerceIn(0f, 1f)
-            maxScrollSpeed * ratio * ratio
-        }
-
-        else -> {
-            0f
-        }
-    }
-}

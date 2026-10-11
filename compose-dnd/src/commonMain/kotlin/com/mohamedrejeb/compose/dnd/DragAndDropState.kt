@@ -326,6 +326,13 @@ class DragAndDropState<T>(
     internal val dragPosition: MutableState<Offset> = mutableStateOf(Offset.Zero)
 
     /**
+     * Pointer position in root coordinates, following the drag axis like the
+     * shadow does, or null when no item is dragged.
+     */
+    internal val dragPointerPosition: Offset?
+        get() = draggedItem?.let { dragStartOffset + it.dragAmount }
+
+    /**
      * Coroutine running the current drop (or cancel) animation, null when idle.
      */
     private var dropJob: Job? = null
