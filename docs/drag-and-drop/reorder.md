@@ -143,8 +143,8 @@ ItemCard(
             key = item.id,
             data = item,
             state = dndState,
-            enabled = item.isPinned,   // locked items can't be dragged
-            canDrop = item.isPinned,   // locked items can't be swapped into either
+            enabled = !item.isLocked,  // locked items can't be dragged
+            canDrop = !item.isLocked,  // locked items can't be swapped into either
             onDragEnter = { state -> /* reorder logic */ },
             draggableContent = { ItemCard(text = item.text, isDragShadow = true) },
         ),
@@ -156,6 +156,8 @@ See [Conditional Drop](conditional-drop.md) for the equivalent `canDrop` on a pl
 ## Reorder Hysteresis
 
 When two items of different sizes swap, the swap itself can move the target back under the cursor and immediately trigger the reverse swap, causing the two items to oscillate during a slow drag. Compose DND prevents this with a built-in hysteresis: after a swap, the cursor has to travel a minimum distance in the opposite direction before the just-swapped target can be re-entered.
+
+The guard also lifts on its own once the drag has moved that distance away from the swap point and the just-swapped target is no longer the one the drop strategy would pick. So an item inserted into another list (a Kanban card entering a column) can go on to swap with the item it pushed along, without reversing first.
 
 The default distance is `8.dp` and works out of the box. You can tune it when creating the state:
 

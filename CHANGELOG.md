@@ -27,6 +27,7 @@ The first 1.0 alpha. It unifies the API around `DragAndDropState`, removes the l
 - `DragAutoScrollConfig` is a regular class instead of a `data class`. It still exposes `copy()`, but no longer supports `componentN()` destructuring.
 - Auto-scroll now stays idle once the container can't scroll further in a direction, instead of spinning frames against the end of the list.
 - A draggable item's configuration (`dropTargets`, `dropStrategy`, `dragAxis`, `dropAnimationSpec`, `draggableContent`) is now captured when a drag starts and applies for the whole drag.
+- **Breaking:** the `DraggableItem` and `ReorderableItem` composables now take `key, data, state, modifier` first, in that order, like the `draggableItem` and `reorderableItem` modifiers. `ReorderableItem` also takes `zIndex` after `dragAxis`. Calls with named arguments are not affected; calls passing these positionally need to be reordered.
 - The drag is anchored at the point where the pointer went down instead of where the touch slop was crossed, so the grabbed point stays under the pointer and `DraggedItemState.dragAmount` matches the pointer movement exactly.
 
 ### Deprecated
@@ -40,7 +41,18 @@ The first 1.0 alpha. It unifies the API around `DragAndDropState`, removes the l
 - The drop animation after a fast reorder no longer lands the ghost on the neighboring slot before jumping to the final target; scrolling during the settle animation no longer stalls it (#73).
 - Starting a new drag while the previous drop animation is still running no longer clears that drop's state -- the previous drop now completes instantly, including its `onDrop` callback, before the new drag starts.
 - A second pointer can no longer start a concurrent drag.
+- A drag started by a long press inside a scrollable is no longer taken over by the scrollable when the finger drifted during the press. Once a drag is on, the container follows the pointer before its children see the event.
+- Releasing a long-press drag without moving no longer also clicks the item.
+- An item inserted into another list (a Kanban card entering a column) now swaps with the item it pushed along when the drag moves on to it. Before, the reorder hysteresis kept that item excluded until the drag reversed, so `onDragEnter` never fired for it.
 - Disabling a `DragAndDropContainer` (`enabled = false`) mid-drag now cancels the drag instead of leaving it stuck.
+- A gesture canceled by the system (an incoming call, a parent taking over the touch, the container leaving the composition) now cancels the drag. Before, it was handled as a release and dropped the item on the hovered target.
+- A `DragAndDropContainer` that leaves the composition mid-drag now ends the drag, so a state hoisted above it is ready for the next one.
+- A drag that ends over a target without dropping on it (canceled, or the target turned `canDrop = false`) now calls that target's `onDragExit`, so a highlight set in `onDragEnter` no longer stays on.
+- A target whose `canDrop` turned `false` while it was hovered no longer receives the drop.
+- `cancelDrag()` called right after the item was released no longer runs the drop and the cancel together, which called `onDragEnd` twice.
+- `enabled = false` on an item now also stops its drag handle.
+- An item whose scoped `dragHandle()` is removed from its content can be dragged as a whole again.
+- `dragAutoScroll` now scrolls the right way in lists and grids with `reverseLayout = true` and in horizontal layouts in right-to-left locales. Before, it did not scroll at all toward the far end of such a list.
 - Changing an item's key (for example on lazy layout node reuse) no longer leaves a stale registration behind.
 - Drag handles no longer poll for their item every millisecond while waiting for it to register.
 - The drag start position now uses live coordinates, so it is never stale after a reorder.

@@ -178,7 +178,7 @@ If you can't convert your tuned pixel value to `Dp` right away, a deprecated fac
 
 ## DragAutoScrollConfig Is No Longer a data class
 
-`DragAutoScrollConfig` is a regular class now (its internals need a bit more than a data class' generated methods can offer), but it still exposes a `copy()` function with the same parameters. The only thing that breaks is destructuring with `componentN()`, such as `val (a, b, c) = config` -- use named properties or `copy()` instead.
+`DragAutoScrollConfig` is a regular class now (its internals need a bit more than a data class' generated methods can offer), but it still exposes a `copy()` function with the same parameter names (`maxScrollSpeed` is a `Dp` there too). The only thing that breaks is destructuring with `componentN()`, such as `val (a, b, c) = config` -- use named properties or `copy()` instead.
 
 **Before:**
 
@@ -197,7 +197,34 @@ val speed = config.maxScrollSpeed
 val faster = config.copy(maxScrollSpeed = config.maxScrollSpeed * 1.5f)
 ```
 
-`copy()` itself is unchanged, so most code that builds a config from a base one is unaffected.
+`copy()` keeps its shape, so code that builds a config from a base one is unaffected unless it passes `maxScrollSpeed` as a `Float`.
+
+## DraggableItem and ReorderableItem: Parameter Order
+
+The `DraggableItem` and `ReorderableItem` composables now start with `key, data, state, modifier`, the same order as the `draggableItem` and `reorderableItem` modifiers. `ReorderableItem` also takes `zIndex` after `dragAxis`.
+
+Calls using named arguments compile unchanged. Only calls passing these arguments positionally need to change:
+
+=== "Before"
+
+    ```kotlin
+    ReorderableItem(Modifier.fillMaxWidth(), dndState, item.id, item) {
+        ItemRow(item)
+    }
+    ```
+
+=== "After"
+
+    ```kotlin
+    ReorderableItem(
+        key = item.id,
+        data = item,
+        state = dndState,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        ItemRow(item)
+    }
+    ```
 
 ## What's New (Not a Breaking Change)
 

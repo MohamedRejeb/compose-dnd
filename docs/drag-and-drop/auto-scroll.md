@@ -119,6 +119,12 @@ fun AutoScrollColumnExample() {
 }
 ```
 
+## Reversed and Right-to-Left Layouts
+
+Auto scroll follows the layout: a lazy list or grid with `reverseLayout = true`, and any horizontal layout in a right-to-left locale, scrolls toward the edge the dragged item is held at.
+
+Two cases are not supported yet: a staggered grid with `reverseLayout = true`, and a `ScrollState` used with `reverseScrolling = true`.
+
 ## DragAutoScrollConfig
 
 You can customize the auto scroll behavior using `DragAutoScrollConfig`:

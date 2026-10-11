@@ -235,7 +235,7 @@ val isDragging = dragAndDropState.draggedItem != null
 
 ## Cancelling a Drag Programmatically
 
-`DragAndDropState.cancelDrag()` aborts the drag in progress, if any: the drag shadow animates back to the dragged item, no drop target receives `onDrop`, and the item's `onDragEnd` fires once the return animation ends. It does nothing when no drag is in progress or the item was already released.
+`DragAndDropState.cancelDrag()` aborts the drag in progress, if any: the drag shadow animates back to the dragged item, no drop target receives `onDrop`, the hovered target (if any) gets its `onDragExit`, and the item's `onDragEnd` fires once the return animation ends. It does nothing when no drag is in progress or the item was already released.
 
 This is useful to abort a drag on a back press, an Escape key, or when the dragged data becomes invalid mid-drag:
 
@@ -245,7 +245,7 @@ BackHandler(enabled = dragAndDropState.draggedItem != null) {
 }
 ```
 
-Disabling a `DragAndDropContainer` (`enabled = false`) while a drag is in progress also calls `cancelDrag()` internally, so the drag never gets stuck.
+Disabling a `DragAndDropContainer` (`enabled = false`) while a drag is in progress also calls `cancelDrag()` internally, so the drag never gets stuck. A gesture canceled by the system is canceled the same way.
 
 ## Full Working Example
 
