@@ -37,7 +37,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.toSize
 import com.mohamedrejeb.compose.dnd.DragAndDropState
 import kotlinx.coroutines.flow.collectLatest
@@ -83,6 +85,7 @@ fun <T> Modifier.dragAutoScroll(
             scrollableState = lazyListState,
             config = config,
             orientation = { lazyListState.layoutInfo.orientation },
+            reverseLayout = { lazyListState.layoutInfo.reverseLayout },
             edgeItemSizes = {
                 val items = lazyListState.layoutInfo.visibleItemsInfo
                 EdgeItemSizes(first = items.firstOrNull()?.size, last = items.lastOrNull()?.size)
@@ -116,6 +119,7 @@ fun <T> Modifier.dragAutoScroll(
             scrollableState = lazyGridState,
             config = config,
             orientation = { lazyGridState.layoutInfo.orientation },
+            reverseLayout = { lazyGridState.layoutInfo.reverseLayout },
             edgeItemSizes = {
                 val layoutInfo = lazyGridState.layoutInfo
                 val items = layoutInfo.visibleItemsInfo
@@ -138,6 +142,8 @@ fun <T> Modifier.dragAutoScroll(
  *
  * Also pins the scroll position while items swap, like [dragScrollPin].
  *
+ * A staggered grid with `reverseLayout = true` is not supported yet.
+ *
  * @param state The drag and drop state to observe.
  * @param lazyStaggeredGridState The lazy staggered grid state to scroll.
  * @param config Auto-scroll configuration (threshold and speed).
@@ -155,6 +161,8 @@ fun <T> Modifier.dragAutoScroll(
             scrollableState = lazyStaggeredGridState,
             config = config,
             orientation = { lazyStaggeredGridState.layoutInfo.orientation },
+            // Its layout info doesn't expose reverseLayout yet
+            reverseLayout = { false },
             edgeItemSizes = {
                 val layoutInfo = lazyStaggeredGridState.layoutInfo
                 val items = layoutInfo.visibleItemsInfo
@@ -170,6 +178,8 @@ fun <T> Modifier.dragAutoScroll(
  * the edges of the scrollable container.
  *
  * Since [ScrollState] does not expose its orientation, you must provide it explicitly.
+ * It doesn't expose `reverseScrolling` either, so a scroll modifier with
+ * `reverseScrolling = true` is not supported: use a lazy layout with `reverseLayout` instead.
  *
  * @param state The drag and drop state to observe.
  * @param scrollState The scroll state to scroll.
@@ -184,6 +194,7 @@ fun <T> Modifier.dragAutoScroll(
     config: DragAutoScrollConfig = DragAutoScrollConfig(),
 ): Modifier {
     val density = LocalDensity.current
+    val isReversed = isScrollReversed(orientation, reverseLayout = false, LocalLayoutDirection.current)
     val minThresholdPx = with(density) { config.minScrollThreshold.toPx() }
     val maxThresholdPx = with(density) { config.maxScrollThreshold.toPx() }
     val maxScrollSpeedPx = config.maxScrollSpeedPx(density)
@@ -195,6 +206,7 @@ fun <T> Modifier.dragAutoScroll(
         state,
         scrollState,
         orientation,
+        isReversed,
         minThresholdPx,
         maxThresholdPx,
         maxScrollSpeedPx,
@@ -217,6 +229,7 @@ fun <T> Modifier.dragAutoScroll(
                         state = state,
                         scrollState = scrollState,
                         orientation = orientation,
+                        isReversed = isReversed,
                         containerTopLeft = containerTopLeft,
                         containerSize = containerSize,
                         minThresholdPx = minThresholdPx,
@@ -265,6 +278,7 @@ private fun <T> scrollStateSpeed(
     state: DragAndDropState<T>,
     scrollState: ScrollState,
     orientation: Orientation,
+    isReversed: Boolean,
     containerTopLeft: Offset,
     containerSize: Size,
     minThresholdPx: Float,
@@ -284,7 +298,14 @@ private fun <T> scrollStateSpeed(
     val isVertical = orientation == Orientation.Vertical
     val reportedAxisSize = if (isVertical) containerSize.height else containerSize.width
     val scrollCompensation =
-        if (reportedAxisSize > viewportPx + 1f) scrollState.value.toFloat() else 0f
+        when {
+            reportedAxisSize <= viewportPx + 1f -> 0f
+
+            // Mirrored content starts scrolled to its far end
+            isReversed -> (scrollState.maxValue - scrollState.value).toFloat()
+
+            else -> scrollState.value.toFloat()
+        }
 
     val viewportTopLeft = if (isVertical) {
         Offset(containerTopLeft.x, containerTopLeft.y + scrollCompensation)
@@ -309,7 +330,7 @@ private fun <T> scrollStateSpeed(
     // clamped between min and max threshold
     val thresholdPx = (viewportPx * 0.2f).coerceIn(minThresholdPx, maxThresholdPx)
 
-    val speed = computeScrollSpeed(
+    val edgeSpeed = computeScrollSpeed(
         itemStart = itemStart,
         itemEnd = itemEnd,
         containerStart = containerStart,
@@ -318,12 +339,26 @@ private fun <T> scrollStateSpeed(
         endThresholdPx = thresholdPx,
         maxScrollSpeed = maxScrollSpeedPx,
     )
+    val speed = if (isReversed) -edgeSpeed else edgeSpeed
 
     return when {
         speed < 0f && !scrollState.canScrollBackward -> 0f
         speed > 0f && !scrollState.canScrollForward -> 0f
         else -> speed
     }
+}
+
+/**
+ * True when scrolling forward moves the content toward the bottom or right edge:
+ * a reversed layout, or a horizontal one in a right-to-left locale.
+ */
+private fun isScrollReversed(
+    orientation: Orientation,
+    reverseLayout: Boolean,
+    layoutDirection: LayoutDirection,
+): Boolean {
+    val isMirrored = orientation == Orientation.Horizontal && layoutDirection == LayoutDirection.Rtl
+    return reverseLayout != isMirrored
 }
 
 /** Main-axis sizes of the first and last visible items of a lazy layout, in px. */
@@ -346,13 +381,16 @@ private fun <T> Modifier.lazyLayoutDragAutoScroll(
     scrollableState: ScrollableState,
     config: DragAutoScrollConfig,
     orientation: () -> Orientation,
+    reverseLayout: () -> Boolean,
     edgeItemSizes: () -> EdgeItemSizes,
 ): Modifier {
     val density = LocalDensity.current
+    val layoutDirection = LocalLayoutDirection.current
     val minThresholdPx = with(density) { config.minScrollThreshold.toPx() }
     val maxThresholdPx = with(density) { config.maxScrollThreshold.toPx() }
     val maxScrollSpeedPx = config.maxScrollSpeedPx(density)
     val currentOrientation by rememberUpdatedState(orientation)
+    val currentReverseLayout by rememberUpdatedState(reverseLayout)
     val currentEdgeItemSizes by rememberUpdatedState(edgeItemSizes)
 
     var containerTopLeft by remember { mutableStateOf(Offset.Zero) }
@@ -361,6 +399,7 @@ private fun <T> Modifier.lazyLayoutDragAutoScroll(
     LaunchedEffect(
         state,
         scrollableState,
+        layoutDirection,
         minThresholdPx,
         maxThresholdPx,
         maxScrollSpeedPx,
@@ -384,14 +423,19 @@ private fun <T> Modifier.lazyLayoutDragAutoScroll(
                 containerSize = containerSize,
             )
 
+            // The first item sits at the bottom or right edge of a reversed or RTL layout
+            val isReversed = isScrollReversed(axis, currentReverseLayout(), layoutDirection)
+
             // Dynamic threshold: clamp(itemSize, min, max)
             val edgeSizes = currentEdgeItemSizes()
-            val startThresholdPx = (edgeSizes.first?.toFloat() ?: minThresholdPx)
+            val startItemSize = if (isReversed) edgeSizes.last else edgeSizes.first
+            val endItemSize = if (isReversed) edgeSizes.first else edgeSizes.last
+            val startThresholdPx = (startItemSize?.toFloat() ?: minThresholdPx)
                 .coerceIn(minThresholdPx, maxThresholdPx)
-            val endThresholdPx = (edgeSizes.last?.toFloat() ?: minThresholdPx)
+            val endThresholdPx = (endItemSize?.toFloat() ?: minThresholdPx)
                 .coerceIn(minThresholdPx, maxThresholdPx)
 
-            val speed = computeScrollSpeed(
+            val edgeSpeed = computeScrollSpeed(
                 itemStart = itemStart,
                 itemEnd = itemEnd,
                 containerStart = containerStart,
@@ -400,6 +444,7 @@ private fun <T> Modifier.lazyLayoutDragAutoScroll(
                 endThresholdPx = endThresholdPx,
                 maxScrollSpeed = maxScrollSpeedPx,
             )
+            val speed = if (isReversed) -edgeSpeed else edgeSpeed
 
             // Nothing left to scroll that way: stay idle instead of spinning
             // frames until the item leaves the edge zone

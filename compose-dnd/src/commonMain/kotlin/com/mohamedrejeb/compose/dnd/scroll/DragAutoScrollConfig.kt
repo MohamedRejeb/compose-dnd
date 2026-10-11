@@ -98,11 +98,7 @@ class DragAutoScrollConfig(
  */
 @Deprecated(
     message = "maxScrollSpeed is now a Dp distance per second, so auto-scroll feels the " +
-        "same on every screen density.",
-    replaceWith = ReplaceWith(
-        "DragAutoScrollConfig(minScrollThreshold, maxScrollThreshold, maxScrollSpeed = 600.dp)",
-        "androidx.compose.ui.unit.dp",
-    ),
+        "same on every screen density. Pass your speed as a Dp, the default is 600.dp.",
 )
 fun DragAutoScrollConfig(
     minScrollThreshold: Dp = DragAutoScrollConfig.DefaultMinScrollThreshold,
