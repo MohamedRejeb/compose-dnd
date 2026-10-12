@@ -12,7 +12,8 @@ permissions:
 
 jobs:
     build:
-        runs-on: macos-latest
+        # Compose Multiplatform's iOS binaries need the Xcode 26 SDK to link
+        runs-on: macos-26
 
         steps:
             - uses: actions/checkout@v6
@@ -85,12 +86,12 @@ jobs:
                   api-level: 34
                   arch: x86_64
                   disable-animations: true
-                  script: ./gradlew :compose-dnd:connectedDebugAndroidTest
+                  script: ./gradlew :compose-dnd:connectedAndroidDeviceTest
 
     deploy:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         needs: [ build, instrumented-tests ]
-        runs-on: macos-latest
+        runs-on: macos-26
         steps:
             - uses: actions/checkout@v6
             - name: Set up JDK 17

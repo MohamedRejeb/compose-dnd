@@ -1,18 +1,19 @@
 [versions]
-kotlin = "2.3.20"
-compose = "1.10.3"
-material3 = "1.10.0-alpha05"
+kotlin = "2.4.21"
+compose = "1.12.1"
+material3 = "1.12.0-alpha03"
 material-icons-extended = "1.7.3"
-agp = "8.13.2"
+agp = "9.4.1"
 android-minSdk = "23"
-android-compileSdk = "36"
-android-targetSdk = "36"
+android-sample-minSdk = "24"
+android-compileSdk = "37"
+android-targetSdk = "37"
 androidx-activityCompose = "1.13.0"
-androidx-core-ktx = "1.18.0"
-jetbrains-navigation-compose = "2.9.2"
+androidx-core-ktx = "1.19.1"
+jetbrains-navigation-compose = "2.10.0-beta01"
 runner = "1.7.0"
-spotless = "8.4.0"
-vanniktech-maven-publish = "0.36.0"
+spotless = "8.9.0"
+vanniktech-maven-publish = "0.37.0"
 
 [libraries]
 androidx-runner = { module = "androidx.test:runner", version.ref = "runner" }
@@ -37,8 +38,7 @@ jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 androidApplication = { id = "com.android.application", version.ref = "agp" }
-androidLibrary = { id = "com.android.library", version.ref = "agp" }
+androidKotlinMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 vanniktech-maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech-maven-publish" }

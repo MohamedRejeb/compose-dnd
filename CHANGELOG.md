@@ -4,6 +4,11 @@ All notable changes to Compose DND are documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- Built with Kotlin `2.4.21` and Compose Multiplatform `1.12.1` (was `2.3.20` and `1.10.3`). On Android, Compose `1.12` needs `compileSdk` 37 and Android Gradle Plugin `9.1.0` or newer.
+- **Breaking:** the `iosX64` target is gone, since Compose Multiplatform no longer supports Apple x86_64 targets. Intel Mac simulators are not supported anymore; `iosArm64` and `iosSimulatorArm64` are unchanged.
+
 ### Fixed
 
 - Reordering in a `LazyVerticalStaggeredGrid` or `LazyHorizontalStaggeredGrid` with `dragAutoScroll` or `dragScrollPin` no longer throws the scroll position back on every swap. Before, an item held at the bottom edge kept swapping with the same two items and the grid never scrolled further. The scroll position is now only pinned when the swap moves the first visible item.

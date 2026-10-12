@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.androidKotlinMultiplatformLibrary)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.composeCompiler)
     id("module.publication")
@@ -33,14 +33,26 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     // Tracks the public API in api/ so any change to it shows up in review
-    abiValidation {
-        enabled.set(true)
-    }
+    abiValidation()
 
-    androidTarget {
-        publishLibraryVariants("release")
+    android {
+        namespace = "com.mohamedrejeb.compose.dnd"
+        compileSdk = libs.versions.android.compileSdk
+            .get()
+            .toInt()
+        minSdk = libs.versions.android.minSdk
+            .get()
+            .toInt()
+
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
+        }
+
+        // Runs commonTest on the JVM
+        withHostTest {}
+
+        withDeviceTest {
+            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         }
     }
 
@@ -50,8 +62,10 @@ kotlin {
         }
     }
 
-    js(IR) {
+    // The browser tests need an executable so that webpack bundles the Skiko runtime for them
+    js {
         browser()
+        binaries.executable()
     }
 
     wasmJs {
@@ -60,9 +74,9 @@ kotlin {
                 enabled = false
             }
         }
+        binaries.executable()
     }
 
-    iosX64()
     iosArm64()
     iosSimulatorArm64()
 
@@ -80,35 +94,15 @@ kotlin {
         implementation(compose.desktop.currentOs)
     }
 
-    sourceSets.androidInstrumentedTest.dependencies {
+    sourceSets.named("androidDeviceTest").dependencies {
         implementation(libs.compose.ui.test)
         implementation(libs.androidx.ui.test.junit4)
         implementation(libs.androidx.runner)
     }
 }
 
-android {
-    namespace = "com.mohamedrejeb.compose.dnd"
-    compileSdk = libs.versions.android.compileSdk
-        .get()
-        .toInt()
-
-    defaultConfig {
-        minSdk = libs.versions.android.minSdk
-            .get()
-            .toInt()
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    testOptions {
-        // Without this the test APK targets minSdk and Android 13+ covers it with a permission prompt.
-        targetSdk = libs.versions.android.compileSdk
-            .get()
-            .toInt()
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
+// The library has no Compose resources, and the task that would copy them into the
+// device test APK has no output directory with the Android KMP library plugin
+tasks.named { it == "copyAndroidDeviceTestComposeResourcesToAndroidAssets" }.configureEach {
+    enabled = false
 }

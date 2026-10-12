@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.androidKotlinMultiplatformLibrary)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
@@ -29,9 +29,22 @@ plugins {
 kotlin {
     applyDefaultHierarchyTemplate()
 
-    androidTarget {
+    android {
+        namespace = "com.mohamedrejeb.compose.dnd.sample.common"
+        compileSdk = libs.versions.android.compileSdk
+            .get()
+            .toInt()
+        minSdk = libs.versions.android.sample.minSdk
+            .get()
+            .toInt()
+
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
+        }
+
+        // The fonts are Compose resources
+        androidResources {
+            enable = true
         }
     }
 
@@ -41,7 +54,7 @@ kotlin {
         }
     }
 
-    js(IR) {
+    js {
         browser()
     }
 
@@ -50,7 +63,6 @@ kotlin {
     }
 
     listOf(
-        iosX64(),
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
@@ -80,24 +92,6 @@ kotlin {
 
 compose.resources {
     packageOfResClass = "sample.resources"
-}
-
-android {
-    namespace = "com.mohamedrejeb.compose.dnd.sample"
-    compileSdk = libs.versions.android.compileSdk
-        .get()
-        .toInt()
-
-    defaultConfig {
-        minSdk = libs.versions.android.minSdk
-            .get()
-            .toInt()
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
 }
 
 // Pass -PsnapshotDir=<dir> to render every sample screen to PNG (see ScreenSnapshots).
