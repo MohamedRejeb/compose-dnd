@@ -6,7 +6,8 @@
 
 | Kotlin version | Compose version | Compose DND version                 |
 |----------------|-----------------|--------------------------------------|
-| 2.3.20         | 1.10.3          | {{ compose_dnd_version }}            |
+| 2.4.21         | 1.12.1          | {{ compose_dnd_version }}            |
+| 2.3.20         | 1.10.3          | 1.0.0-alpha01                        |
 
 ## Gradle Setup
 

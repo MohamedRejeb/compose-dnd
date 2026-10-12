@@ -73,7 +73,7 @@ import navigation.Demo
 import theme.LocalThemeController
 import theme.SampleTheme
 
-private const val InstallSnippet = "com.mohamedrejeb.dnd:compose-dnd:1.0.0-alpha01"
+private const val InstallSnippet = "com.mohamedrejeb.dnd:compose-dnd:1.0.0-alpha02"
 
 @Composable
 fun HomeScreen(
