@@ -43,7 +43,7 @@ fun <T> Modifier.dragScrollPin(
     state: DragAndDropState<T>,
     lazyListState: LazyListState,
 ): Modifier =
-    pinScrollBeforeHoverChange(state, lazyListState) {
+    pinScrollBeforeHoverChange(state, lazyListState) { _, _ ->
         lazyListState.requestScrollToItem(
             lazyListState.firstVisibleItemIndex,
             lazyListState.firstVisibleItemScrollOffset,
@@ -64,7 +64,7 @@ fun <T> Modifier.dragScrollPin(
     state: DragAndDropState<T>,
     lazyGridState: LazyGridState,
 ): Modifier =
-    pinScrollBeforeHoverChange(state, lazyGridState) {
+    pinScrollBeforeHoverChange(state, lazyGridState) { _, _ ->
         lazyGridState.requestScrollToItem(
             lazyGridState.firstVisibleItemIndex,
             lazyGridState.firstVisibleItemScrollOffset,
@@ -77,6 +77,11 @@ fun <T> Modifier.dragScrollPin(
  * Staggered grid equivalent of [dragScrollPin] for [LazyListState].
  * [dragAutoScroll] already includes this behavior, so you do **not** need both.
  *
+ * A staggered grid keeps one scroll offset per lane, and pinning resets them all to the
+ * offset of the first visible item. So the position is only pinned when the swap moves
+ * that first item, which is when the grid would follow it; any other swap leaves the
+ * scroll position alone.
+ *
  * @param state The drag and drop state to observe.
  * @param lazyStaggeredGridState The lazy staggered grid state whose scroll position should be pinned.
  */
@@ -85,12 +90,31 @@ fun <T> Modifier.dragScrollPin(
     state: DragAndDropState<T>,
     lazyStaggeredGridState: LazyStaggeredGridState,
 ): Modifier =
-    pinScrollBeforeHoverChange(state, lazyStaggeredGridState) {
+    pinScrollBeforeHoverChange(state, lazyStaggeredGridState) { draggedKey, enteredKey ->
+        if (!lazyStaggeredGridState.movesFirstVisibleItem(draggedKey, enteredKey)) {
+            return@pinScrollBeforeHoverChange
+        }
         lazyStaggeredGridState.requestScrollToItem(
             lazyStaggeredGridState.firstVisibleItemIndex,
             lazyStaggeredGridState.firstVisibleItemScrollOffset,
         )
     }
+
+/**
+ * Whether moving the dragged item to the slot of the entered one changes the index of
+ * the first visible item, the one the grid anchors its scroll position to.
+ *
+ * True when it can't be told, e.g. when the slot of the dragged item is not visible.
+ */
+private fun LazyStaggeredGridState.movesFirstVisibleItem(draggedKey: Any, enteredKey: Any?): Boolean {
+    if (enteredKey == null) return false
+
+    val visibleItems = layoutInfo.visibleItemsInfo
+    val draggedIndex = visibleItems.firstOrNull { it.key == draggedKey }?.index ?: return true
+    val enteredIndex = visibleItems.firstOrNull { it.key == enteredKey }?.index ?: return true
+
+    return minOf(draggedIndex, enteredIndex) <= firstVisibleItemIndex
+}
 
 /**
  * Register [pin] to run synchronously **before** onDragEnter/onDragExit fire, so
@@ -101,7 +125,7 @@ fun <T> Modifier.dragScrollPin(
 private fun <T> Modifier.pinScrollBeforeHoverChange(
     state: DragAndDropState<T>,
     lazyState: Any,
-    pin: () -> Unit,
+    pin: (draggedKey: Any, enteredKey: Any?) -> Unit,
 ): Modifier {
     DisposableEffect(state, lazyState) {
         state.onBeforeHoverTargetChange.add(pin)

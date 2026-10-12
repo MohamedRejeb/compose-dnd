@@ -18,7 +18,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: macos-latest
+    runs-on: macos-26
 
     env:
       VERSION: ${{ inputs.version }}

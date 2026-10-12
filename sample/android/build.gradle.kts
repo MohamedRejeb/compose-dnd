@@ -1,10 +1,7 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.kotlinAndroid)
 }
 
 android {
@@ -12,7 +9,7 @@ android {
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = libs.versions.android.minSdk.get().toInt()
+        minSdk = libs.versions.android.sample.minSdk.get().toInt()
         targetSdk = libs.versions.android.compileSdk.get().toInt()
 
         applicationId = "com.mohamedrejeb.compose.dnd.sample"
@@ -24,11 +21,9 @@ android {
         compose = true
     }
     compileOptions {
+        // The Kotlin jvmTarget follows targetCompatibility
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlin {
-        compilerOptions.jvmTarget.set(JvmTarget.JVM_11)
     }
     packaging {
         resources {
