@@ -10,7 +10,7 @@ plugins {
     alias(libs.plugins.spotless) apply false
 }
 
-val composeDndVersion = System.getenv("VERSION") ?: "1.0.0-alpha01"
+val composeDndVersion = System.getenv("VERSION") ?: "1.0.0-alpha02"
 
 allprojects {
     group = "com.mohamedrejeb.dnd"

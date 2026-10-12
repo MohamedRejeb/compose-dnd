@@ -119,12 +119,13 @@ Every clip below is a screen of the [sample app](sample/common/src/commonMain/ko
 
 | Kotlin version | Compose version | Compose DND version |
 |----------------|-----------------|---------------------|
+| 2.4.21         | 1.12.1          | 1.0.0-alpha02       |
 | 2.3.20         | 1.10.3          | 1.0.0-alpha01       |
 
 Add the following dependency to your module `build.gradle.kts` file:
 
 ```kotlin
-implementation("com.mohamedrejeb.dnd:compose-dnd:1.0.0-alpha01")
+implementation("com.mohamedrejeb.dnd:compose-dnd:1.0.0-alpha02")
 ```
 
 For Kotlin Multiplatform projects, add the dependency to your `commonMain` source set:
@@ -133,7 +134,7 @@ For Kotlin Multiplatform projects, add the dependency to your `commonMain` sourc
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("com.mohamedrejeb.dnd:compose-dnd:1.0.0-alpha01")
+            implementation("com.mohamedrejeb.dnd:compose-dnd:1.0.0-alpha02")
         }
     }
 }

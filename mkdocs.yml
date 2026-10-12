@@ -31,7 +31,7 @@ repo_name: 'Compose DND'
 repo_url: 'https://github.com/MohamedRejeb/compose-dnd'
 
 extra:
-  compose_dnd_version: '1.0.0-alpha01'
+  compose_dnd_version: '1.0.0-alpha02'
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/MohamedRejeb

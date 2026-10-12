@@ -2,7 +2,7 @@
 
 All notable changes to Compose DND are documented in this file.
 
-## Unreleased
+## 1.0.0-alpha02
 
 ### Changed
 
