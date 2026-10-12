@@ -189,9 +189,10 @@ class DragAndDropState<T>(
      * and before [DropTargetState.onDragEnter] / [DropTargetState.onDragExit] fire.
      *
      * Used by [com.mohamedrejeb.compose.dnd.scroll.dragScrollPin] to snapshot
-     * scroll positions before a reorder mutates the list.
+     * scroll positions before a reorder mutates the list. Called with the key of the
+     * dragged item and the key of the drop target about to be entered, if any.
      */
-    internal val onBeforeHoverTargetChange = mutableListOf<() -> Unit>()
+    internal val onBeforeHoverTargetChange = mutableListOf<(draggedKey: Any, enteredKey: Any?) -> Unit>()
 
     /**
      * Add or update [DropTargetState] in [dropTargetMap]
@@ -470,7 +471,7 @@ class DragAndDropState<T>(
 
         val isHoverChange = hoveredDropTarget?.key != hoveredDropTargetKey || isSameSlotReachedAgain
         if (isHoverChange && newDraggedItemState != null) {
-            onBeforeHoverTargetChange.forEach { it.invoke() }
+            onBeforeHoverTargetChange.forEach { it.invoke(currentDraggableItem.key, hoveredDropTarget?.key) }
             dropTargetMap.values
                 .find { it.key == hoveredDropTargetKey }
                 ?.onDragExit

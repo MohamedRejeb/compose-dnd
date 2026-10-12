@@ -2,6 +2,12 @@
 
 All notable changes to Compose DND are documented in this file.
 
+## Unreleased
+
+### Fixed
+
+- Reordering in a `LazyVerticalStaggeredGrid` or `LazyHorizontalStaggeredGrid` with `dragAutoScroll` or `dragScrollPin` no longer throws the scroll position back on every swap. Before, an item held at the bottom edge kept swapping with the same two items and the grid never scrolled further. The scroll position is now only pinned when the swap moves the first visible item.
+
 ## 1.0.0-alpha01
 
 The first 1.0 alpha. It unifies the API around `DragAndDropState`, removes the last experimental opt-ins, and fixes several drag lifecycle races. See the [migration guide](https://mohamedrejeb.github.io/compose-dnd/migration-1.0/) if you're upgrading from `0.5.0`.
